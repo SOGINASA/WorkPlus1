@@ -17,7 +17,7 @@ import RegisterForm from '../src/components/auth/RegisterForm'
 import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
-import ResetPasswordPage from './components/auth/Resetpassword';
+import ResetPasswordPage from '../src/components/auth/ResetPassword';
 // import JobDetailPage from './pages/JobDetail';
 // import ResumesPage from './pages/Resumes';
 // import CreateResumePage from './pages/CreateResume';
