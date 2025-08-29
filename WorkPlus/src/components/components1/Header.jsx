@@ -24,7 +24,7 @@ const Header = () => {
           <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             <a href="/" className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm xl:text-base">Главная</a>
             <a href="/jobs" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Вакансии</a>
-            <a href="/resumes" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
+            <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
             <a href="/post-job" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Разместить вакансию</a>
             {/* <a href="/pricing" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Тарифы</a>
             <a href="/blog" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Блог</a>
