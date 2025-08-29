@@ -3,7 +3,7 @@ import { Search, Users, Building, TrendingUp, ChevronRight, MapPin, Clock, Award
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Петропавловск');
+  const [selectedCity, setSelectedCity] = useState('Астана');
 
   const stats = [
     { number: '2,500+', label: 'Активных вакансий' },
@@ -93,6 +93,7 @@ const HomePage = () => {
                     onChange={(e) => setSelectedCity(e.target.value)}
                     className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
                   >
+                    <option value="Астана">Астана</option>
                     <option value="Петропавловск">Петропавловск</option>
                     <option value="Костанай">Костанай</option>
                     <option value="Актау">Актау</option>
@@ -127,7 +128,7 @@ const HomePage = () => {
           <div className="text-center mb-8 md:mb-12">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
               Популярные вакансии в 
-              <span className="text-yellow-400"> Петропавловске</span>
+              <span className="text-yellow-400"> Казахстане</span>
             </h2>
             <p className="text-gray-300 text-base md:text-lg">Актуальные предложения от проверенных работодателей</p>
           </div>

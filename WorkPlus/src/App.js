@@ -17,7 +17,7 @@ import RegisterForm from '../src/components/auth/RegisterForm'
 import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
-import ResetPasswordPage from './components/auth/Resetpassword';
+import ResetPasswordPage from '../src/components/auth/Resetpassword';
 // import JobDetailPage from './pages/JobDetail';
 // import ResumesPage from './pages/Resumes';
 // import CreateResumePage from './pages/CreateResume';
@@ -31,7 +31,7 @@ import ResetPasswordPage from './components/auth/Resetpassword';
 // import ContactPage from './pages/Contact';
 // import LoginPage from './pages/Login';
 // import RegisterPage from './pages/Register';
-// import NotFoundPage from './pages/NotFound';
+import NotFoundPage from './pages/NotFound';
 
 // // Company specific pages
 // import CompanyProfilePage from './pages/CompanyProfile';
@@ -72,7 +72,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* 404 страница */}
-          {/* <Route path="*" element={<NotFoundPage />} /> */}
+          <Route path="*" element={<NotFoundPage />} /> 
         </Routes>
       </Layout>
     </Router>
