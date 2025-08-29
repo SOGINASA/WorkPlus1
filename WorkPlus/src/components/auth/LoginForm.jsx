@@ -1,4 +1,3 @@
-// src/pages/LoginForm.jsx
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight, AlertCircle } from 'lucide-react';
 
@@ -80,7 +79,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-yellow-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -89,14 +88,14 @@ const LoginForm = () => {
               <Building className="w-6 h-6 text-black" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">WorkPlus.kz</h1>
+              <h1 className="text-2xl font-bold text-white">WorkPlus.kz</h1>
             </div>
           </div>
-          <p className="mt-2 text-gray-600">Войдите в свой аккаунт</p>
+          <p className="mt-2 text-gray-300">Войдите в свой аккаунт</p>
         </div>
 
         {/* Main Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl shadow-xl overflow-hidden">
           {/* User Type Tabs */}
           <div className="flex">
             <button
@@ -104,7 +103,7 @@ const LoginForm = () => {
               className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
                 activeTab === 'jobseeker'
                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
@@ -117,7 +116,7 @@ const LoginForm = () => {
               className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
                 activeTab === 'employer'
                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
@@ -130,10 +129,10 @@ const LoginForm = () => {
           {/* Form */}
           <div className="p-8">
             {errors.general && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
                 <div className="flex items-center">
-                  <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                  <span className="text-red-700 text-sm">{errors.general}</span>
+                  <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
+                  <span className="text-red-300 text-sm">{errors.general}</span>
                 </div>
               </div>
             )}
@@ -141,7 +140,7 @@ const LoginForm = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                   Email
                 </label>
                 <div className="relative">
@@ -154,20 +153,20 @@ const LoginForm = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`block w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`block w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
+                      errors.email ? 'border-red-500 bg-red-900/20' : 'border-gray-700 hover:border-gray-600'
                     }`}
                     placeholder="your@email.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                 )}
               </div>
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                   Пароль
                 </label>
                 <div className="relative">
@@ -180,8 +179,8 @@ const LoginForm = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={handleChange}
-                    className={`block w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                      errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`block w-full pl-10 pr-12 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
+                      errors.password ? 'border-red-500 bg-red-900/20' : 'border-gray-700 hover:border-gray-600'
                     }`}
                     placeholder="Введите пароль"
                   />
@@ -191,14 +190,14 @@ const LoginForm = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-300 transition-colors" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-300 transition-colors" />
                     )}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.password}</p>
                 )}
               </div>
 
@@ -211,13 +210,13 @@ const LoginForm = () => {
                     type="checkbox"
                     checked={formData.rememberMe}
                     onChange={handleChange}
-                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 bg-gray-800 border-gray-600 rounded"
                   />
-                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-300">
                     Запомнить меня
                   </label>
                 </div>
-                <a href="/forgot-password" className="text-sm text-yellow-600 hover:text-yellow-700">
+                <a href="/forgot-password" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
                   Забыли пароль?
                 </a>
               </div>
@@ -243,10 +242,10 @@ const LoginForm = () => {
             <div className="mt-8 mb-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">или войдите через</span>
+                  <span className="px-2 bg-white/5 text-gray-400">или войдите через</span>
                 </div>
               </div>
             </div>
@@ -255,7 +254,7 @@ const LoginForm = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleSocialLogin('google')}
-                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center px-4 py-3 border border-gray-700 rounded-lg text-sm font-medium text-gray-300 bg-white/5 hover:bg-white/10 hover:border-gray-600 transition-all"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -265,23 +264,13 @@ const LoginForm = () => {
                 </svg>
                 Google
               </button>
-              
-              <button
-                onClick={() => handleSocialLogin('kaspi')}
-                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-5 h-5 mr-2 bg-red-600 rounded flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">K</span>
-                </div>
-                Kaspi ID
-              </button>
             </div>
 
             {/* Sign Up Link */}
             <div className="mt-8 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Нет аккаунта?{' '}
-                <a href="/register" className="text-yellow-600 hover:text-yellow-700 font-medium">
+                <a href="/register" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors">
                   Зарегистрироваться
                 </a>
               </p>
@@ -293,11 +282,11 @@ const LoginForm = () => {
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
             Входя в систему, вы соглашаетесь с нашими{' '}
-            <a href="/privacy-policy" className="text-yellow-600 hover:text-yellow-700">
+            <a href="/privacy-policy" className="text-yellow-400 hover:text-yellow-300 transition-colors">
               Условиями использования
             </a>{' '}
             и{' '}
-            <a href="/privacy-policy" className="text-yellow-600 hover:text-yellow-700">
+            <a href="/privacy-policy" className="text-yellow-400 hover:text-yellow-300 transition-colors">
               Политикой конфиденциальности
             </a>
           </p>
