@@ -11,12 +11,16 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div className="relative min-h-screen flex items-center justify-center px-4">
+      {/* Фон */}
+      <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent"></div>
+
+      {/* Контент */}
+      <div className="w-full max-w-md text-center">
         {/* Заголовок */}
-        <div className="text-center mb-10">
+        <div className="mb-10">
           <Lock className="w-12 h-12 md:w-16 md:h-16 text-yellow-400 mx-auto mb-4" />
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
             Восстановление{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
               пароля
@@ -31,7 +35,7 @@ const ResetPasswordPage = () => {
         {/* Форма */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 md:p-8 shadow-lg"
+          className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 md:p-8 shadow-lg text-left"
         >
           <div className="mb-6">
             <label
