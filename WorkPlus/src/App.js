@@ -17,6 +17,7 @@ import RegisterForm from '../src/components/auth/RegisterForm'
 import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
+import ResetPasswordPage from './components/auth/Resetpassword';
 // import JobDetailPage from './pages/JobDetail';
 // import ResumesPage from './pages/Resumes';
 // import CreateResumePage from './pages/CreateResume';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/jobdetail" element={<JobDetail/>} />
           <Route path="/create-job" element={<CreateJob/>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* 404 страница */}
           {/* <Route path="*" element={<NotFoundPage />} /> */}
