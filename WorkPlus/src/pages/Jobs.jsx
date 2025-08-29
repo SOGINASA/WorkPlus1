@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, MapPin, Clock, Building, ChevronRight, Filter, Star, Briefcase, DollarSign, Calendar, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Clock, Building, ChevronRight, Filter, Star, Briefcase, DollarSign, Calendar, Users, Loader } from 'lucide-react';
 
 const JobsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,6 +8,14 @@ const JobsPage = () => {
   const [selectedSalary, setSelectedSalary] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [filters, setFilters] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const jobCategories = [
     'Все категории',
@@ -35,124 +43,179 @@ const JobsPage = () => {
   ];
 
   const salaryRanges = [
-    'Любая зарплата',
-    'До 150,000 ₸',
-    '150,000 - 250,000 ₸',
-    '250,000 - 400,000 ₸',
-    '400,000 - 600,000 ₸',
-    'От 600,000 ₸'
+    { label: 'Любая зарплата', min: null, max: null },
+    { label: 'До 150,000 ₸', min: null, max: 150000 },
+    { label: '150,000 - 250,000 ₸', min: 150000, max: 250000 },
+    { label: '250,000 - 400,000 ₸', min: 250000, max: 400000 },
+    { label: '400,000 - 600,000 ₸', min: 400000, max: 600000 },
+    { label: 'От 600,000 ₸', min: 600000, max: null }
   ];
 
   const jobTypes = [
     'Все типы',
-    'Полная занятость',
-    'Частичная занятость',
-    'Удаленная работа',
-    'Проектная работа',
-    'Стажировка'
+    'full_time',
+    'part_time',
+    'remote',
+    'contract',
+    'internship'
   ];
 
-  const jobs = [
-    {
-      id: 1,
-      title: 'Продавец-консультант',
-      company: 'Kaspi Red',
-      logo: '🛍️',
-      salary: '150,000 - 200,000 ₸',
-      location: 'Петропавловск',
-      type: 'Полная занятость',
-      description: 'Ищем активного продавца-консультанта в магазин электроники. Опыт приветствуется.',
-      requirements: ['Опыт в продажах от 1 года', 'Коммуникабельность', 'Знание казахского языка'],
-      postedDate: '2 дня назад',
-      isHot: true,
-      rating: 4.5,
-      applicants: 23
-    },
-    {
-      id: 2,
-      title: 'Курьер на личном транспорте',
-      company: 'Glovo Kazakhstan',
-      logo: '🚗',
-      salary: '200,000 - 300,000 ₸',
-      location: 'Петропавловск',
-      type: 'Свободный график',
-      description: 'Доставляй заказы в удобное время и зарабатывай от 200,000 тенге в месяц.',
-      requirements: ['Наличие личного транспорта', 'Права категории B', 'Ответственность'],
-      postedDate: '1 день назад',
-      isHot: true,
-      rating: 4.2,
-      applicants: 45
-    },
-    {
-      id: 3,
-      title: 'Администратор отеля',
-      company: 'Hotel Plaza',
-      logo: '🏨',
-      salary: '180,000 - 220,000 ₸',
-      location: 'Петропавловск',
-      type: 'Сменный график',
-      description: 'Требуется администратор на ресепшн в гостиницу. Работа в дневные и ночные смены.',
-      requirements: ['Опыт работы в сфере услуг', 'Знание английского языка', 'Стрессоустойчивость'],
-      postedDate: '3 дня назад',
-      isHot: false,
-      rating: 4.0,
-      applicants: 12
-    },
-    {
-      id: 4,
-      title: 'SMM-менеджер',
-      company: 'Digital Agency KZ',
-      logo: '📱',
-      salary: '250,000 - 350,000 ₸',
-      location: 'Петропавловск',
-      type: 'Удаленно',
-      description: 'Ведение социальных сетей для клиентов агентства. Креативность и знание трендов обязательно.',
-      requirements: ['Портфолио работ', 'Знание Instagram, TikTok', 'Креативное мышление'],
-      postedDate: '5 дней назад',
-      isHot: false,
-      rating: 4.3,
-      applicants: 31
-    },
-    {
-      id: 5,
-      title: 'Бухгалтер',
-      company: 'ТОО "Северные технологии"',
-      logo: '📊',
-      salary: '200,000 - 280,000 ₸',
-      location: 'Петропавловск',
-      type: 'Полная занятость',
-      description: 'В растущую IT-компанию требуется опытный бухгалтер для ведения учета.',
-      requirements: ['Высшее экономическое образование', 'Опыт от 2 лет', 'Знание 1С'],
-      postedDate: '1 неделю назад',
-      isHot: false,
-      rating: 4.1,
-      applicants: 18
-    },
-    {
-      id: 6,
-      title: 'Водитель категории C',
-      company: 'Логистик Плюс',
-      logo: '🚛',
-      salary: '220,000 - 300,000 ₸',
-      location: 'Костанай',
-      type: 'Полная занятость',
-      description: 'Требуется водитель на грузовой автомобиль для межгородских перевозок.',
-      requirements: ['Права категории C', 'Опыт от 3 лет', 'Готовность к командировкам'],
-      postedDate: '4 дня назад',
-      isHot: true,
-      rating: 3.9,
-      applicants: 8
-    }
-  ];
+  const jobTypeLabels = {
+    'full_time': 'Полная занятость',
+    'part_time': 'Частичная занятость',
+    'remote': 'Удаленная работа',
+    'contract': 'Проектная работа',
+    'internship': 'Стажировка'
+  };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCity = !selectedCity || selectedCity === 'Все города' || job.location === selectedCity;
-    const matchesType = !selectedType || selectedType === 'Все типы' || job.type === selectedType;
+  const experienceLevels = {
+    'junior': 'Начинающий',
+    'middle': 'Средний',
+    'senior': 'Старший'
+  };
+
+  // Функция для получения вакансий
+  const fetchJobs = async (page = 1, params = {}) => {
+    setLoading(true);
+    setError(null);
     
-    return matchesSearch && matchesCity && matchesType;
-  });
+    try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        per_page: '20',
+        sort: sortBy,
+        order: sortOrder,
+        ...params
+      });
+
+      // Удаляем пустые параметры
+      Object.keys(params).forEach(key => {
+        if (!params[key] || params[key] === 'Все города' || params[key] === 'Все категории' || params[key] === 'Все типы') {
+          queryParams.delete(key);
+        }
+      });
+
+      const response = await fetch(`http://127.0.0.1:5000/api/jobs/?${queryParams}`);
+      
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке вакансий');
+      }
+
+      const data = await response.json();
+      setJobs(data.jobs || []);
+      setPagination(data.pagination || {});
+      setFilters(data.filters || {});
+    } catch (err) {
+      setError(err.message);
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Загружаем вакансии при монтировании компонента
+  useEffect(() => {
+    fetchJobs(1);
+  }, [sortBy, sortOrder]);
+
+  // Функция поиска
+  const handleSearch = () => {
+    const searchParams = {};
+    
+    if (searchQuery.trim()) {
+      searchParams.search = searchQuery.trim();
+    }
+    if (selectedCity && selectedCity !== 'Все города') {
+      searchParams.city = selectedCity;
+    }
+    if (selectedCategory && selectedCategory !== 'Все категории') {
+      searchParams.category = selectedCategory;
+    }
+    if (selectedType && selectedType !== 'Все типы') {
+      searchParams.employment_type = selectedType;
+    }
+
+    // Обработка зарплатного диапазона
+    const selectedSalaryRange = salaryRanges.find(range => range.label === selectedSalary);
+    if (selectedSalaryRange && selectedSalaryRange.min !== null) {
+      searchParams.salary_min = selectedSalaryRange.min;
+    }
+    if (selectedSalaryRange && selectedSalaryRange.max !== null) {
+      searchParams.salary_max = selectedSalaryRange.max;
+    }
+
+    setCurrentPage(1);
+    fetchJobs(1, searchParams);
+  };
+
+  // Функция для загрузки следующей страницы
+  const handleLoadMore = () => {
+    if (pagination.has_next) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      
+      const searchParams = {};
+      if (searchQuery.trim()) searchParams.search = searchQuery.trim();
+      if (selectedCity && selectedCity !== 'Все города') searchParams.city = selectedCity;
+      if (selectedCategory && selectedCategory !== 'Все категории') searchParams.category = selectedCategory;
+      if (selectedType && selectedType !== 'Все типы') searchParams.employment_type = selectedType;
+      
+      fetchJobs(nextPage, searchParams);
+    }
+  };
+
+  // Функция для подачи заявки на вакансию
+  const handleApplyJob = async (jobId) => {
+    try {
+      const token = localStorage.getItem('access_token'); // Предполагаем, что токен хранится в localStorage
+      
+      if (!token) {
+        alert('Для подачи заявки необходимо войти в систему');
+        return;
+      }
+
+      const response = await fetch(`http://127.0.0.1:5000/jobs/${jobId}/apply`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка при подаче заявки');
+      }
+
+      const data = await response.json();
+      alert('Заявка успешно подана!');
+      
+      // Обновляем список вакансий
+      fetchJobs(currentPage);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Функция для форматирования даты
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Сегодня';
+    if (diffDays === 1) return '1 день назад';
+    if (diffDays < 7) return `${diffDays} дня назад`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} недель назад`;
+    return date.toLocaleDateString('ru-RU');
+  };
+
+  // Функция для получения отображаемого названия типа занятости
+  const getEmploymentTypeLabel = (type) => {
+    return jobTypeLabels[type] || type;
+  };
 
   return (
     <div>
@@ -165,7 +228,7 @@ const JobsPage = () => {
               <span className="text-yellow-400"> Северном Казахстане</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-              {filteredJobs.length} актуальных вакансий от проверенных работодателей
+              {pagination.total || 0} актуальных вакансий от проверенных работодателей
             </p>
           </div>
 
@@ -181,6 +244,7 @@ const JobsPage = () => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Должность, компания или навык..."
                       className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     />
@@ -200,9 +264,19 @@ const JobsPage = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <button className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-3 px-6 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center justify-center">
-                    <Search className="w-5 h-5 mr-2" />
-                    Найти
+                  <button 
+                    onClick={handleSearch}
+                    disabled={loading}
+                    className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-3 px-6 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center justify-center disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <Loader className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="w-5 h-5 mr-2" />
+                        Найти
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => setShowFilters(!showFilters)}
@@ -239,7 +313,7 @@ const JobsPage = () => {
                       className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     >
                       {salaryRanges.map(salary => (
-                        <option key={salary} value={salary}>{salary}</option>
+                        <option key={salary.label} value={salary.label}>{salary.label}</option>
                       ))}
                     </select>
                   </div>
@@ -251,8 +325,9 @@ const JobsPage = () => {
                       onChange={(e) => setSelectedType(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     >
-                      {jobTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      <option value="Все типы">Все типы</option>
+                      {Object.entries(jobTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </div>
@@ -269,45 +344,73 @@ const JobsPage = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                Найдено {filteredJobs.length} вакансий
+                Найдено {pagination.total || 0} вакансий
               </h2>
-              <p className="text-gray-400">Отсортировано по релевантности</p>
+              <p className="text-gray-400">Отсортировано по {sortBy === 'created_at' ? 'дате' : sortBy === 'salary_min' ? 'зарплате' : 'релевантности'}</p>
             </div>
             
             <div className="hidden md:flex items-center space-x-4">
               <span className="text-sm text-gray-400">Сортировать по:</span>
-              <select className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <option>Релевантности</option>
-                <option>Дате публикации</option>
-                <option>Зарплате (по возрастанию)</option>
-                <option>Зарплате (по убыванию)</option>
+              <select 
+                value={`${sortBy}_${sortOrder}`}
+                onChange={(e) => {
+                  const [sort, order] = e.target.value.split('_');
+                  setSortBy(sort);
+                  setSortOrder(order);
+                }}
+                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="created_at_desc">Дате публикации (новые)</option>
+                <option value="created_at_asc">Дате публикации (старые)</option>
+                <option value="salary_min_desc">Зарплате (по убыванию)</option>
+                <option value="salary_min_asc">Зарплате (по возрастанию)</option>
+                <option value="views_desc">Популярности</option>
               </select>
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Loading Spinner */}
+          {loading && jobs.length === 0 && (
+            <div className="flex justify-center items-center py-12">
+              <Loader className="w-8 h-8 animate-spin text-yellow-400" />
+            </div>
+          )}
+
           {/* Jobs Grid */}
           <div className="space-y-6">
-            {filteredJobs.map((job) => (
+            {jobs.map((job) => (
               <div key={job.id} className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-4 md:p-6 hover:border-yellow-400/30 transition-all group cursor-pointer">
                 <div className="flex flex-col md:flex-row md:items-start gap-4">
                   {/* Company Logo */}
                   <div className="flex-shrink-0">
                     <div className="w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-400/30 rounded-xl flex items-center justify-center text-2xl">
-                      {job.logo}
+                      {job.company?.logo || '🏢'}
                     </div>
                   </div>
 
                   {/* Job Info */}
-                  <div className="flex-grow min-w-0">
+                  <a className="flex-grow min-w-0" href='#adout_job'>
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-xl md:text-2xl font-semibold text-white group-hover:text-yellow-400 transition-colors truncate">
                             {job.title}
                           </h3>
-                          {job.isHot && (
+                          {job.is_urgent && (
                             <span className="px-2 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-full">
-                              HOT
+                              СРОЧНО
+                            </span>
+                          )}
+                          {job.is_featured && (
+                            <span className="px-2 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-xs font-medium rounded-full">
+                              ТОП
                             </span>
                           )}
                         </div>
@@ -315,58 +418,81 @@ const JobsPage = () => {
                         <div className="flex items-center gap-4 text-gray-300 mb-3">
                           <span className="flex items-center gap-1">
                             <Building className="w-4 h-4" />
-                            {job.company}
+                            {job.company?.name || 'Компания'}
                           </span>
                           <span className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
-                            {job.location}
+                            {job.city}
+                            {job.remote_work && ' (Удаленно)'}
                           </span>
                           <span className="flex items-center gap-1">
                             <Briefcase className="w-4 h-4" />
-                            {job.type}
+                            {getEmploymentTypeLabel(job.employment_type)}
                           </span>
+                          {job.salary.min && (
+                            <span className="flex items-center gap-1 text-green-400 font-medium">
+                              💰 {job.salary.max 
+                                ? `${job.salary.min} - ${job.salary.max} ₸`
+                                : `от ${job.salary.min} ₸`}
+                            </span>
+                          )}
                         </div>
+
 
                         <p className="text-gray-300 text-sm md:text-base mb-4 line-clamp-2">
                           {job.description}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {job.requirements.slice(0, 3).map((req, index) => (
+                          {job.skills && job.skills.split(',').slice(0, 3).map((skill, index) => (
                             <span key={index} className="px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs rounded-full">
-                              {req}
+                              {skill.trim()}
                             </span>
                           ))}
+                          {job.experience_level && (
+                            <span className="px-3 py-1 bg-blue-400/10 border border-blue-400/20 text-blue-400 text-xs rounded-full">
+                              {experienceLevels[job.experience_level] || job.experience_level}
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       <div className="text-right flex-shrink-0">
                         <div className="text-2xl font-bold text-yellow-400 mb-2">
-                          {job.salary}
+                          {job.salary_display || (
+                            job.salary_min && job.salary_max 
+                              ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ₸`
+                              : job.salary_min
+                              ? `От ${job.salary_min.toLocaleString()} ₸`
+                              : 'По договоренности'
+                          )}
                         </div>
                         
                         <div className="flex items-center justify-end gap-4 mb-3 text-sm text-gray-400">
                           <span className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-400" />
-                            {job.rating}
+                            <Users className="w-4 h-4" />
+                            {job.applications_count || 0} откликов
                           </span>
                           <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {job.applicants} откликов
+                            <Star className="w-4 h-4" />
+                            {job.views_count || 0} просмотров
                           </span>
                         </div>
 
                         <div className="flex items-center justify-end gap-2 text-xs text-gray-500 mb-4">
                           <Clock className="w-3 h-3" />
-                          {job.postedDate}
+                          {formatDate(job.created_at)}
                         </div>
 
-                        <button className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all">
+                        <button 
+                          onClick={() => handleApplyJob(job.id)}
+                          className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+                        >
                           Откликнуться
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </a>
 
                   {/* Arrow */}
                   <div className="flex-shrink-0 hidden md:block">
@@ -378,11 +504,28 @@ const JobsPage = () => {
           </div>
 
           {/* Load More */}
-          <div className="text-center mt-12">
-            <button className="bg-white/5 border border-yellow-400/20 text-white px-8 py-3 rounded-lg hover:bg-yellow-400/10 hover:border-yellow-400/40 transition-all">
-              Показать еще вакансии
-            </button>
-          </div>
+          {pagination.has_next && (
+            <div className="text-center mt-12">
+              <button 
+                onClick={handleLoadMore}
+                disabled={loading}
+                className="bg-white/5 border border-yellow-400/20 text-white px-8 py-3 rounded-lg hover:bg-yellow-400/10 hover:border-yellow-400/40 transition-all disabled:opacity-50 flex items-center gap-2 mx-auto"
+              >
+                {loading ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : null}
+                Показать еще вакансии
+              </button>
+            </div>
+          )}
+
+          {/* No Jobs Found */}
+          {!loading && jobs.length === 0 && !error && (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold text-white mb-2">Вакансии не найдены</h3>
+              <p className="text-gray-400">Попробуйте изменить параметры поиска</p>
+            </div>
+          )}
         </div>
       </section>
 
