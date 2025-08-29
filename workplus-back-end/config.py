@@ -2,305 +2,382 @@ import os
 from datetime import timedelta
 
 class Config:
-    """Базовая конфигурация приложения"""
-    
-    # Основные настройки Flask
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'workplus-secret-key-2024-kazakhstan'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'workplus-dev-secret-key-change-in-production'
     
     # Настройки базы данных
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///workplus.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_timeout': 20,
-        'pool_recycle': -1,
-        'pool_pre_ping': True
-    }
     
-    # Настройки приложения
-    DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-    HOST = os.environ.get('HOST', '0.0.0.0')
-    PORT = int(os.environ.get('PORT', 5000))
+    # Настройки CORS
+    CORS_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000", "https://workplus.kz"]
+    
+    # Настройки JWT
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-change-in-production'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    
+    # Email настройки
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'noreply@workplus.kz'
+    
+    # SMS настройки (Казахстан)
+    SMS_PROVIDER = os.environ.get('SMS_PROVIDER') or 'smsc'  # smsc, kcell, etc.
+    SMS_API_KEY = os.environ.get('SMS_API_KEY')
+    SMS_LOGIN = os.environ.get('SMS_LOGIN')
+    SMS_PASSWORD = os.environ.get('SMS_PASSWORD')
+    
+    # Настройки файлов
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'gif'}
+    
+    # Социальные сети API
+    INSTAGRAM_ACCESS_TOKEN = os.environ.get('INSTAGRAM_ACCESS_TOKEN')
+    INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ.get('INSTAGRAM_BUSINESS_ACCOUNT_ID')
+    
+    TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+    TELEGRAM_CHANNEL_ID = os.environ.get('TELEGRAM_CHANNEL_ID')  # Канал для публикации вакансий
+    
+    FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
+    FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET')
+    FACEBOOK_ACCESS_TOKEN = os.environ.get('FACEBOOK_ACCESS_TOKEN')
+    FACEBOOK_PAGE_ID = os.environ.get('FACEBOOK_PAGE_ID')
+    
+    LINKEDIN_CLIENT_ID = os.environ.get('LINKEDIN_CLIENT_ID')
+    LINKEDIN_CLIENT_SECRET = os.environ.get('LINKEDIN_CLIENT_SECRET')
+    LINKEDIN_ACCESS_TOKEN = os.environ.get('LINKEDIN_ACCESS_TOKEN')
+    
+    # Настройки пагинации
+    JOBS_PER_PAGE = 20
+    APPLICATIONS_PER_PAGE = 50
+    USERS_PER_PAGE = 30
+    
+    # Настройки кеширования
+    CACHE_TYPE = os.environ.get('CACHE_TYPE') or 'simple'
+    CACHE_DEFAULT_TIMEOUT = 300
     
     # Настройки безопасности
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_TIME_LIMIT = 3600  # 1 час
-    
-    # Настройки сессий
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
-    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    
-    # Настройки загрузки файлов
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB максимальный размер файла
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
-    
-    # Разрешенные форматы файлов
-    ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx'}
-    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'}
-    
-    # Настройки почты
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@workplus.kz')
-    
-    # Настройки SMS (например, через SMS.ru или местного провайдера)
-    SMS_API_URL = os.environ.get('SMS_API_URL')
-    SMS_API_KEY = os.environ.get('SMS_API_KEY')
-    SMS_SENDER = os.environ.get('SMS_SENDER', 'WorkPlus')
-    
-    # Настройки Telegram Bot
-    TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-    TELEGRAM_WEBHOOK_URL = os.environ.get('TELEGRAM_WEBHOOK_URL')
-    
-    # Настройки социальных сетей для автопостинга
-    INSTAGRAM_ACCESS_TOKEN = os.environ.get('INSTAGRAM_ACCESS_TOKEN')
-    TELEGRAM_CHANNEL_TOKEN = os.environ.get('TELEGRAM_CHANNEL_TOKEN')
-    TIKTOK_API_KEY = os.environ.get('TIKTOK_API_KEY')
-    
-    # Настройки платежных систем
-    # Kaspi.kz
-    KASPI_MERCHANT_ID = os.environ.get('KASPI_MERCHANT_ID')
-    KASPI_SECRET_KEY = os.environ.get('KASPI_SECRET_KEY')
-    KASPI_CALLBACK_URL = os.environ.get('KASPI_CALLBACK_URL')
-    
-    # Другие платежные системы
-    PAYBOX_MERCHANT_ID = os.environ.get('PAYBOX_MERCHANT_ID')
-    PAYBOX_SECRET_KEY = os.environ.get('PAYBOX_SECRET_KEY')
-    
-    # Настройки интеграций
-    # enbek.kz API (если будет доступно)
-    ENBEK_API_URL = os.environ.get('ENBEK_API_URL')
-    ENBEK_API_KEY = os.environ.get('ENBEK_API_KEY')
-    
-    # Настройки кеширования
-    CACHE_TYPE = os.environ.get('CACHE_TYPE', 'simple')
-    CACHE_DEFAULT_TIMEOUT = int(os.environ.get('CACHE_DEFAULT_TIMEOUT', 300))
-    
-    # Настройки Redis (для продакшена)
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    WTF_CSRF_TIME_LIMIT = None
     
     # Настройки логирования
-    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-    LOG_FILE = os.environ.get('LOG_FILE', 'workplus.log')
+    LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'
+    LOG_FILE = os.environ.get('LOG_FILE') or 'workplus.log'
     
-    # Настройки CORS
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
-    
-    # Настройки аналитики
-    GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID')
-    YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID')
-    
-    # Настройки тарифных планов (цены в тенге)
-    SUBSCRIPTION_PRICES = {
-        'start': 25000,      # 25,000 тенге/месяц
-        'growth': 120000,    # 120,000 тенге/месяц  
-        'pro': 350000        # 350,000 тенге/месяц
-    }
-    
-    # Лимиты по тарифам
-    SUBSCRIPTION_LIMITS = {
-        'free': {
-            'vacancies': 1,
-            'applications_view': 5,
-            'social_posting': False,
-            'analytics': False,
-            'priority_support': False
-        },
-        'start': {
-            'vacancies': 5,
-            'applications_view': 50,
-            'social_posting': True,
-            'analytics': False,
-            'priority_support': False
-        },
-        'growth': {
-            'vacancies': 15,
-            'applications_view': 200,
-            'social_posting': True,
-            'analytics': True,
-            'priority_support': False
-        },
-        'pro': {
-            'vacancies': -1,  # Безлимит
-            'applications_view': -1,  # Безлимит
-            'social_posting': True,
-            'analytics': True,
-            'priority_support': True
-        }
-    }
-    
-    # Настройки поиска и рекомендаций
-    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
-    SEARCH_RESULTS_PER_PAGE = 20
-    RECOMMENDATIONS_COUNT = 10
+    # API настройки
+    API_RATE_LIMIT = os.environ.get('API_RATE_LIMIT') or '1000/hour'
     
     # Настройки уведомлений
     NOTIFICATION_SETTINGS = {
-        'new_application': {
-            'email': True,
-            'sms': False,
-            'telegram': True,
-            'delay_minutes': 0
+        'email_enabled': True,
+        'sms_enabled': True,
+        'telegram_enabled': True,
+        'push_enabled': False
+    }
+    
+    # Бизнес настройки
+    BUSINESS_SETTINGS = {
+        'company_name': 'WorkPlus.kz',
+        'company_phone': '+7 (777) 123-45-67',
+        'company_email': 'info@workplus.kz',
+        'support_email': 'support@workplus.kz',
+        'company_address': 'г. Павлодар, Павлодарская область, Казахстан',
+        'working_hours': 'Пн-Пт: 9:00-18:00',
+        'timezone': 'Asia/Almaty',
+        'currency': 'KZT',
+        'currency_symbol': '₸',
+        'default_language': 'ru',
+        'supported_languages': ['ru', 'kk', 'en']
+    }
+    
+    # Социальные сети компании
+    SOCIAL_MEDIA = {
+        'instagram': 'https://instagram.com/workplus_kz',
+        'telegram': 'https://t.me/workplus_kz',
+        'facebook': 'https://facebook.com/workplus.kz',
+        'linkedin': 'https://linkedin.com/company/workplus-kz',
+        'youtube': 'https://youtube.com/@workplus_kz'
+    }
+    
+    # SEO настройки
+    SEO_SETTINGS = {
+        'site_name': 'WorkPlus.kz - HR-экосистема Казахстана',
+        'site_description': 'Найдите работу мечты или лучших сотрудников. Мультиканальная публикация вакансий в соцсетях, скоринг кандидатов, аналитика.',
+        'site_keywords': 'работа, вакансии, резюме, Казахстан, HR, рекрутинг, поиск работы, найм сотрудников',
+        'site_url': 'https://workplus.kz',
+        'robots_txt': 'User-agent: *\nAllow: /',
+        'sitemap_enabled': True
+    }
+    
+    # Настройки тарифных планов
+    PRICING_PLANS = {
+        'free': {
+            'name': 'Бесплатный',
+            'jobs_limit': 3,
+            'featured_jobs': 0,
+            'social_publishing': False,
+            'analytics': False,
+            'price': 0
         },
-        'interview_reminder': {
-            'email': True,
-            'sms': True,
-            'telegram': True,
-            'delay_minutes': 60  # За час до интервью
+        'start': {
+            'name': 'Start',
+            'jobs_limit': 10,
+            'featured_jobs': 2,
+            'social_publishing': True,
+            'analytics': True,
+            'price': 25000
         },
-        'subscription_expiry': {
-            'email': True,
-            'sms': False,
-            'telegram': False,
-            'delay_days': [7, 3, 1]  # За 7, 3 и 1 день до истечения
+        'growth': {
+            'name': 'Growth',
+            'jobs_limit': 50,
+            'featured_jobs': 10,
+            'social_publishing': True,
+            'analytics': True,
+            'ats_lite': True,
+            'price': 150000
+        },
+        'pro': {
+            'name': 'Pro',
+            'jobs_limit': -1,  # Безлимит
+            'featured_jobs': -1,
+            'social_publishing': True,
+            'analytics': True,
+            'ats_lite': True,
+            'custom_scoring': True,
+            'price': 400000
         }
     }
     
-    # Настройки модерации контента
-    MODERATION_SETTINGS = {
-        'auto_publish_verified_employers': True,
-        'require_phone_verification': True,
-        'require_email_verification': True,
-        'ban_suspicious_domains': True,
-        'max_daily_applications': 50,  # Лимит откликов в день для одного пользователя
+    # Настройки скоринга
+    SCORING_SETTINGS = {
+        'enabled': True,
+        'skills_weight': 0.4,
+        'experience_weight': 0.3,
+        'education_weight': 0.2,
+        'location_weight': 0.1,
+        'auto_threshold': 0.7,
+        'min_score': 0.0,
+        'max_score': 1.0
     }
     
-    # API лимиты
-    API_RATE_LIMITS = {
-        'default': '100/hour',
-        'search': '500/hour',
-        'applications': '50/hour',
-        'auth': '20/hour'
+    # Настройки модерации
+    MODERATION_SETTINGS = {
+        'auto_approve_companies': False,
+        'auto_approve_jobs': False,
+        'require_phone_verification': True,
+        'require_email_verification': True,
+        'banned_keywords': [
+            'пирамида', 'mlm', 'сетевой маркетинг',
+            'работа на дому без вложений', 'легкие деньги'
+        ]
     }
+    
+    # Настройки интеграций
+    INTEGRATION_SETTINGS = {
+        'kaspi_integration': False,
+        'enbek_integration': False,
+        'olx_integration': False,
+        'google_analytics_id': os.environ.get('GOOGLE_ANALYTICS_ID'),
+        'yandex_metrika_id': os.environ.get('YANDEX_METRIKA_ID')
+    }
+    
+    # Категории вакансий
+    JOB_CATEGORIES = [
+        'IT', 'Продажи', 'Маркетинг', 'HR', 'Финансы',
+        'Производство', 'Строительство', 'Медицина', 'Образование',
+        'Туризм', 'Общепит', 'Розничная торговля', 'Логистика',
+        'Дизайн', 'Консалтинг', 'Недвижимость', 'Автомобили',
+        'Красота', 'Спорт', 'Другое'
+    ]
+    
+    # Города Казахстана
+    CITIES = [
+        'Алматы', 'Нур-Султан', 'Шымкент', 'Актобе', 'Караганда',
+        'Тараз', 'Павлодар', 'Усть-Каменогорск', 'Семей', 'Атырау',
+        'Костанай', 'Кызылорда', 'Уральск', 'Петропавловск', 'Актау',
+        'Темиртау', 'Туркестан', 'Кокшетау', 'Талдыкорган', 'Экибастуз'
+    ]
 
 class DevelopmentConfig(Config):
     """Конфигурация для разработки"""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///workplus_dev.db'
+    
+    # Отключаем некоторые проверки для разработки
+    MAIL_SUPPRESS_SEND = True
     WTF_CSRF_ENABLED = False
-    MAIL_SUPPRESS_SEND = True  # Не отправлять реальные письма в dev
+    
+    # Тестовые токены
+    INSTAGRAM_ACCESS_TOKEN = 'test_instagram_token'
+    TELEGRAM_BOT_TOKEN = 'test_telegram_token'
+
+class TestingConfig(Config):
+    """Конфигурация для тестирования"""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=1)
+    
+    # Отключаем внешние сервисы
+    MAIL_SUPPRESS_SEND = True
+    SMS_PROVIDER = 'mock'
     
 class ProductionConfig(Config):
     """Конфигурация для продакшена"""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://user:pass@localhost/workplus_prod'
-    SESSION_COOKIE_SECURE = True
-    WTF_CSRF_ENABLED = True
     
-    # Дополнительные настройки безопасности для продакшена
-    PREFERRED_URL_SCHEME = 'https'
+    # PostgreSQL для продакшена
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'postgresql://workplus_user:password@localhost/workplus_prod'
     
-class TestingConfig(Config):
-    """Конфигурация для тестирования"""
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///workplus_test.db'
-    WTF_CSRF_ENABLED = False
-    MAIL_SUPPRESS_SEND = True
+    # SSL для PostgreSQL
+    if SQLALCHEMY_DATABASE_URI.startswith('postgresql://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            'postgresql://', 'postgresql+psycopg2://'
+        )
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
+    
+    @staticmethod
+    def init_app(app):
+        Config.init_app(app)
+        
+        # Логирование в файл
+        import logging
+        from logging.handlers import RotatingFileHandler
+        
+        if not app.debug:
+            file_handler = RotatingFileHandler(
+                Config.LOG_FILE, 
+                maxBytes=10240000,  # 10MB
+                backupCount=10
+            )
+            file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+            ))
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+            app.logger.info('WorkPlus.kz startup')
 
-# Словарь конфигураций
+# Выбор конфигурации по переменной окружения
 config = {
     'development': DevelopmentConfig,
-    'production': ProductionConfig,
     'testing': TestingConfig,
+    'production': ProductionConfig,
     'default': DevelopmentConfig
 }
 
 def get_config():
-    """Получить конфигурацию на основе переменной окружения"""
-    env = os.environ.get('FLASK_ENV', 'development')
-    return config.get(env, config['default'])
+    """Получить текущую конфигурацию"""
+    return config[os.environ.get('FLASK_ENV') or 'default']
 
-# Константы приложения
-class Constants:
-    """Константы приложения"""
+# Валидация критически важных настроек
+def validate_config():
+    """Проверить корректность конфигурации"""
+    errors = []
     
-    # Статусы вакансий
-    VACANCY_STATUSES = [
-        ('draft', 'Черновик'),
-        ('active', 'Активна'),
-        ('paused', 'Приостановлена'),
-        ('closed', 'Закрыта'),
-        ('filled', 'Закрыта (найден кандидат)')
-    ]
+    if not Config.SECRET_KEY or Config.SECRET_KEY == 'workplus-dev-secret-key-change-in-production':
+        if os.environ.get('FLASK_ENV') == 'production':
+            errors.append("SECRET_KEY должен быть установлен в продакшене")
     
-    # Статусы откликов
-    APPLICATION_STATUSES = [
-        ('new', 'Новый'),
-        ('viewed', 'Просмотрен'),
-        ('screening', 'Скрининг'),
-        ('interview_scheduled', 'Интервью назначено'),
-        ('interviewed', 'Прошел интервью'),
-        ('offer_sent', 'Отправлено предложение'),
-        ('hired', 'Принят на работу'),
-        ('rejected', 'Отклонен')
-    ]
+    if os.environ.get('FLASK_ENV') == 'production':
+        required_env_vars = [
+            'DATABASE_URL',
+            'MAIL_USERNAME',
+            'MAIL_PASSWORD',
+            'JWT_SECRET_KEY'
+        ]
+        
+        for var in required_env_vars:
+            if not os.environ.get(var):
+                errors.append(f"Переменная окружения {var} обязательна в продакшене")
     
-    # Типы занятости
-    EMPLOYMENT_TYPES = [
-        ('full_time', 'Полная занятость'),
-        ('part_time', 'Частичная занятость'),
-        ('contract', 'Контракт'),
-        ('internship', 'Стажировка'),
-        ('freelance', 'Фриланс')
-    ]
+    if errors:
+        print("Ошибки конфигурации:")
+        for error in errors:
+            print(f"   • {error}")
+        return False
     
-    # Уровни опыта
-    EXPERIENCE_LEVELS = [
-        (0, 'Без опыта'),
-        (1, 'До 1 года'),
-        (2, '1-3 года'),
-        (3, '3-5 лет'),
-        (5, '5+ лет')
-    ]
+    print("Конфигурация корректна")
+    return True
+
+# Утилита для создания .env файла
+def create_env_template():
+    """Создать шаблон .env файла"""
+    env_template = """# Flask настройки
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-here
+
+# База данных
+DATABASE_URL=sqlite:///workplus.db
+
+# Email настройки
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=noreply@workplus.kz
+
+# SMS настройки (для Казахстана)
+SMS_PROVIDER=smsc
+SMS_API_KEY=your-sms-api-key
+SMS_LOGIN=your-sms-login
+SMS_PASSWORD=your-sms-password
+
+# Социальные сети
+INSTAGRAM_ACCESS_TOKEN=your-instagram-token
+INSTAGRAM_BUSINESS_ACCOUNT_ID=your-instagram-account-id
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHANNEL_ID=your-telegram-channel-id
+FACEBOOK_APP_ID=your-facebook-app-id
+FACEBOOK_APP_SECRET=your-facebook-app-secret
+FACEBOOK_ACCESS_TOKEN=your-facebook-access-token
+FACEBOOK_PAGE_ID=your-facebook-page-id
+LINKEDIN_CLIENT_ID=your-linkedin-client-id
+LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
+LINKEDIN_ACCESS_TOKEN=your-linkedin-access-token
+
+# Файлы
+UPLOAD_FOLDER=uploads
+
+# Логирование
+LOG_LEVEL=INFO
+LOG_FILE=workplus.log
+
+# API
+API_RATE_LIMIT=1000/hour
+
+# Кеширование
+CACHE_TYPE=simple
+
+# Аналитика
+GOOGLE_ANALYTICS_ID=your-ga-id
+YANDEX_METRIKA_ID=your-metrika-id
+"""
     
-    # Размеры компаний
-    COMPANY_SIZES = [
-        ('1-10', '1-10 сотрудников'),
-        ('11-50', '11-50 сотрудников'),
-        ('51-200', '51-200 сотрудников'),
-        ('201-500', '201-500 сотрудников'),
-        ('500+', 'Более 500 сотрудников')
-    ]
+    with open('.env.template', 'w', encoding='utf-8') as f:
+        f.write(env_template)
     
-    # Отрасли
-    INDUSTRIES = [
-        'Информационные технологии',
-        'Торговля и продажи',
-        'Финансы и банки',
-        'Производство',
-        'Строительство',
-        'Медицина и фармацевтика',
-        'Образование',
-        'Транспорт и логистика',
-        'Нефть и газ',
-        'Горнодобывающая промышленность',
-        'Сельское хозяйство',
-        'Туризм и гостиничное дело',
-        'Реклама и маркетинг',
-        'Консалтинг',
-        'Другое'
-    ]
+    print("Создан файл .env.template")
+    print("Скопируйте его в .env и заполните своими значениями")
+
+if __name__ == "__main__":
+    import sys
     
-    # Социальные сети для постинга
-    SOCIAL_PLATFORMS = [
-        ('instagram', 'Instagram'),
-        ('telegram', 'Telegram'),
-        ('tiktok', 'TikTok'),
-        ('vk', 'ВКонтакте'),
-        ('facebook', 'Facebook')
-    ]
-    
-    # Причины жалоб
-    REPORT_REASONS = [
-        ('fraud', 'Мошенничество'),
-        ('inappropriate', 'Неприемлемый контент'),
-        ('spam', 'Спам'),
-        ('fake_vacancy', 'Фиктивная вакансия'),
-        ('discrimination', 'Дискриминация'),
-        ('other', 'Другое')
-    ]
+    if len(sys.argv) > 1 and sys.argv[1] == "validate":
+        validate_config()
+    elif len(sys.argv) > 1 and sys.argv[1] == "create-env":
+        create_env_template()
+    else:
+        print("Использование:")
+        print("  python config.py validate     - Проверить конфигурацию")
+        print("  python config.py create-env   - Создать шаблон .env файла")
