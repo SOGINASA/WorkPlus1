@@ -25,7 +25,7 @@ const Header = () => {
             <a href="/" className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm xl:text-base">Главная</a>
             <a href="/jobs" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Вакансии</a>
             <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
-            <a href="/post-job" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Разместить вакансию</a>
+            <a href="/create-job" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Разместить вакансию</a>
             {/* <a href="/pricing" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Тарифы</a>
             <a href="/blog" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Блог</a>
             <a href="/about" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">О нас</a>
@@ -33,15 +33,21 @@ const Header = () => {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Войти</button>
-            <a 
-              href="/post-job" 
-              className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
-            >
-              Разместить вакансию
-            </a>
-          </div>
+<div className="hidden md:flex items-center space-x-4">
+  <a 
+    href="/login" 
+    className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base"
+  >
+    Войти
+  </a>
+  <a 
+    href="/create-job" 
+    className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
+  >
+    Разместить вакансию
+  </a>
+</div>
+
 
           {/* Mobile Menu Button */}
           <button

@@ -160,10 +160,14 @@ const HomePage = () => {
           </div>
 
           <div className="text-center">
-            <button className="bg-white/5 border border-yellow-400/20 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-lg hover:bg-yellow-400/10 hover:border-yellow-400/40 transition-all text-sm md:text-base">
-              Посмотреть все вакансии
-            </button>
-          </div>
+  <a 
+    href="/jobs" 
+    className="bg-white/5 border border-yellow-400/20 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-lg hover:bg-yellow-400/10 hover:border-yellow-400/40 transition-all text-sm md:text-base inline-block"
+  >
+    Посмотреть все вакансии
+  </a>
+</div>
+
         </div>
       </section>
 

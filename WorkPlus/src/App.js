@@ -6,6 +6,17 @@ import Layout from '../src/components/components1/Layout';
 // Import pages
 import HomePage from './pages/Home';
 import JobsPage from './pages/Jobs';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Blog from './pages/Blog';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import ResumeDashboard from './pages/ResumeDashboard';
+import CreateResume from './pages/CreateResume';
+import LoginForm from '../src/components/auth/LoginForm'
+import RegisterForm from '../src/components/auth/RegisterForm'
+import Profile from '../src/components/auth/ProfileForm'
+import JobDetail from './pages/JobDetail'
+import CreateJob from './pages/CreateJobPage'
 // import JobDetailPage from './pages/JobDetail';
 // import ResumesPage from './pages/Resumes';
 // import CreateResumePage from './pages/CreateResume';
@@ -46,6 +57,17 @@ function App() {
           {/* Главные страницы */}
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/resume-dashboard" element={<ResumeDashboard />} />
+          <Route path="/create-resume" element={<CreateResume />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/jobdetail" element={<JobDetail/>} />
+          <Route path="/create-job" element={<CreateJob/>} />
           
           {/* 404 страница */}
           {/* <Route path="*" element={<NotFoundPage />} /> */}
