@@ -13,6 +13,7 @@ const ResetPasswordPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
+        {/* Заголовок */}
         <div className="text-center mb-10">
           <Lock className="w-12 h-12 md:w-16 md:h-16 text-yellow-400 mx-auto mb-4" />
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
@@ -22,11 +23,12 @@ const ResetPasswordPage = () => {
             </span>
           </h1>
           <p className="text-gray-300 text-base md:text-lg">
-            Введите e-mail, указанный при регистрации.
+            Введите e-mail, указанный при регистрации.  
             Мы отправим ссылку для сброса пароля.
           </p>
         </div>
 
+        {/* Форма */}
         <form
           onSubmit={handleSubmit}
           className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 md:p-8 shadow-lg"
@@ -61,6 +63,7 @@ const ResetPasswordPage = () => {
           </button>
         </form>
 
+        {/* Доп. ссылка */}
         <div className="text-center mt-6">
           <a
             href="/login"
