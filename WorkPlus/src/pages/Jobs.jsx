@@ -17,19 +17,20 @@ const JobsPage = () => {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  const jobCategories = [
-    'Все категории',
-    'Продажи',
-    'IT и Digital',
-    'Логистика',
-    'Администрирование',
-    'Маркетинг и реклама',
-    'Банки и финансы',
-    'Образование',
-    'Медицина',
-    'Строительство',
-    'Производство'
-  ];
+const [jobCategories, setJobCategories] = useState([]);
+
+useEffect(() => {
+  async function fetchJobCategories() {
+    const res = await fetch("http://localhost:5000/api/jobs/categories");
+    const data = await res.json();
+
+    const categoriesArr = ["Все категории", ...data.categories.map(cat => cat.name)];
+    setJobCategories(categoriesArr); // теперь можно юзать
+  }
+
+  fetchJobCategories();
+}, []);
+
 
   const cities = [
     'Все города',

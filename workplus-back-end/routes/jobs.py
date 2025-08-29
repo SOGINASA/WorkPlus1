@@ -55,7 +55,7 @@ def get_jobs():
             query = query.filter(Job.category == category)
         
         if city:
-            query = query.filter(Job.city.ilike(f'%{city}%'))
+            query = query.filter(Job.city == city)
         
         if employment_type:
             query = query.filter(Job.employment_type == employment_type)
