@@ -1,263 +1,450 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_login import login_user, logout_user, current_user, login_required
-from werkzeug.utils import secure_filename
-import os
-from datetime import datetime
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from models import db, User, Company
+from datetime import timedelta
+import re
 
-from db_models import db, User, Employer, Admin
-from utils.helpers import allowed_file, validate_phone, validate_email, validate_iin, save_uploaded_file
+auth_bp = Blueprint('auth', __name__)
 
-auth_bp = Blueprint('auth', __name__, template_folder='../templates/auth')
+def validate_email(email):
+    """Валидация email"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+def validate_phone(phone):
+    """Валидация номера телефона (Казахстан)"""
+    # Убираем все кроме цифр
+    clean_phone = re.sub(r'\D', '', phone)
+    
+    # Казахстанские номера: +7 7XX XXX XXXX или 8 7XX XXX XXXX
+    if len(clean_phone) == 11 and clean_phone.startswith('7'):
+        return True
+    elif len(clean_phone) == 11 and clean_phone.startswith('87'):
+        return True
+    
+    return False
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    """Регистрация пользователя"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Данные не предоставлены'}), 400
+    
+    # Валидация обязательных полей
+    required_fields = ['email', 'password', 'name', 'user_type']
+    missing_fields = [field for field in required_fields if not data.get(field)]
+    
+    if missing_fields:
+        return jsonify({
+            'error': 'Отсутствуют обязательные поля',
+            'missing_fields': missing_fields
+        }), 400
+    
+    # Валидация email
+    if not validate_email(data['email']):
+        return jsonify({'error': 'Неверный формат email'}), 400
+    
+    # Валидация типа пользователя
+    if data['user_type'] not in ['candidate', 'employer']:
+        return jsonify({'error': 'Неверный тип пользователя'}), 400
+    
+    # Валидация телефона если указан
+    if data.get('phone') and not validate_phone(data['phone']):
+        return jsonify({'error': 'Неверный формат номера телефона'}), 400
+    
+    # Валидация пароля
+    if len(data['password']) < 6:
+        return jsonify({'error': 'Пароль должен содержать минимум 6 символов'}), 400
+    
+    # Проверка уникальности email
+    existing_user = User.query.filter_by(email=data['email'].lower()).first()
+    if existing_user:
+        return jsonify({'error': 'Пользователь с таким email уже существует'}), 400
+    
+    try:
+        # Создаем пользователя
+        user = User(
+            email=data['email'].lower(),
+            name=data['name'],
+            phone=data.get('phone'),
+            city=data.get('city'),
+            user_type=data['user_type']
+        )
+        user.set_password(data['password'])
+        
+        # Дополнительные поля для соискателя
+        if data['user_type'] == 'candidate':
+            user.education_level = data.get('education_level')
+            user.experience_years = data.get('experience_years')
+            user.telegram_username = data.get('telegram_username')
+            
+            if data.get('skills'):
+                user.set_skills_list(data['skills'])
+        
+        # Дополнительные поля для работодателя
+        elif data['user_type'] == 'employer':
+            user.position = data.get('position')
+            
+            # Если указана компания
+            if data.get('company_name'):
+                company = Company(
+                    name=data['company_name'],
+                    description=data.get('company_description'),
+                    industry=data.get('company_industry'),
+                    size=data.get('company_size'),
+                    website=data.get('company_website'),
+                    city=data.get('city')
+                )
+                db.session.add(company)
+                db.session.flush()  # Получаем ID
+                user.company_id = company.id
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Создаем токены
+        access_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(hours=24),
+            additional_claims={
+                'user_type': user.user_type,
+                'email': user.email,
+                'name': user.name
+            }
+        )
+        
+        refresh_token = create_refresh_token(identity=str(user.id))
+        
+        return jsonify({
+            'message': 'Регистрация успешна',
+            'user': user.to_dict(),
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка регистрации: {e}")
+        return jsonify({'error': 'Ошибка при создании аккаунта'}), 500
+
+@auth_bp.route('/login', methods=['POST'])
 def login():
-    """Страница входа"""
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+    """Вход пользователя"""
+    data = request.get_json()
     
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        user_type = request.form.get('user_type', 'user')  # user или employer
-        
-        if not email or not password:
-            flash('Заполните все поля', 'error')
-            return render_template('login.html')
-        
-        user = None
-        
-        if user_type == 'employer':
-            user = Employer.query.filter_by(email=email).first()
-        elif user_type == 'admin':
-            user = Admin.query.filter_by(email=email).first()
-        else:
-            user = User.query.filter_by(email=email).first()
-        
-        if user and user.check_password(password):
-            if not user.is_active:
-                flash('Ваш аккаунт деактивирован. Обратитесь в поддержку.', 'error')
-                return render_template('login.html')
-            
-            login_user(user, remember=True)
-            
-            # Обновляем время последней активности
-            user.last_activity = datetime.now()
-            db.session.commit()
-            
-            # Редирект на нужную страницу
-            next_page = request.args.get('next')
-            if next_page:
-                return redirect(next_page)
-            
-            return redirect(url_for('index'))
-        else:
-            flash('Неверный email или пароль', 'error')
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Email и пароль обязательны'}), 400
     
-    return render_template('login.html')
+    user = User.query.filter_by(email=data['email'].lower(), is_active=True).first()
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({'error': 'Неверные учетные данные'}), 401
+    
+    # Обновляем время последнего входа
+    from datetime import datetime
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    
+    # Создаем токены
+    access_token = create_access_token(
+        identity=str(user.id),
+        expires_delta=timedelta(hours=24),
+        additional_claims={
+            'user_type': user.user_type,
+            'email': user.email,
+            'name': user.name
+        }
+    )
+    
+    refresh_token = create_refresh_token(identity=str(user.id))
+    
+    return jsonify({
+        'message': 'Вход выполнен успешно',
+        'user': user.to_dict(include_sensitive=True),
+        'access_token': access_token,
+        'refresh_token': refresh_token
+    })
 
-@auth_bp.route('/register/user', methods=['GET', 'POST'])
-def register_user():
-    """Регистрация соискателя"""
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """Обновление токена"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        user = User.query.get(current_user_id)
+        
+        if not user or not user.is_active:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        new_access_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(hours=24),
+            additional_claims={
+                'user_type': user.user_type,
+                'email': user.email,
+                'name': user.name
+            }
+        )
+        
+        return jsonify({
+            'access_token': new_access_token,
+            'message': 'Токен обновлен'
+        })
     
-    if request.method == 'POST':
-        try:
-            # Получение данных из формы
-            email = request.form.get('email', '').strip().lower()
-            password = request.form.get('password', '')
-            confirm_password = request.form.get('confirm_password', '')
-            full_name = request.form.get('full_name', '').strip()
-            phone = request.form.get('phone', '').strip()
-            city = request.form.get('city', '').strip()
-            
-            # Валидация
-            if not all([email, password, full_name, phone, city]):
-                flash('Заполните все обязательные поля', 'error')
-                return render_template('register_user.html')
-            
-            if password != confirm_password:
-                flash('Пароли не совпадают', 'error')
-                return render_template('register_user.html')
-            
-            if len(password) < 6:
-                flash('Пароль должен содержать минимум 6 символов', 'error')
-                return render_template('register_user.html')
-            
-            if not validate_email(email):
-                flash('Некорректный email адрес', 'error')
-                return render_template('register_user.html')
-            
-            phone = validate_phone(phone)
-            if not phone:
-                flash('Некорректный номер телефона', 'error')
-                return render_template('register_user.html')
-            
-            # Проверка уникальности
-            if User.query.filter_by(email=email).first():
-                flash('Пользователь с таким email уже существует', 'error')
-                return render_template('register_user.html')
-            
-            if User.query.filter_by(phone=phone).first():
-                flash('Пользователь с таким телефоном уже существует', 'error')
-                return render_template('register_user.html')
-            
-            # Обработка аватара
-            avatar_path = None
-            if 'avatar' in request.files:
-                file = request.files['avatar']
-                if file and file.filename and allowed_file(file.filename, ['png', 'jpg', 'jpeg', 'gif']):
-                    avatar_path = save_uploaded_file(file, 'avatar')
-            
-            # Создание пользователя
-            user = User(
-                email=email,
-                phone=phone,
-                full_name=full_name,
-                city=city,
-                avatar_path=avatar_path,
-                is_active=True
-            )
-            user.set_password(password)
-            
-            db.session.add(user)
-            db.session.commit()
-            
-            # Автоматический вход
-            login_user(user, remember=True)
-            
-            flash('Регистрация успешно завершена!', 'success')
-            return redirect(url_for('user.dashboard'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash('Произошла ошибка при регистрации. Попробуйте еще раз.', 'error')
-            return render_template('register_user.html')
-    
-    return render_template('register_user.html')
+    except Exception as e:
+        print(f"Ошибка обновления токена: {e}")
+        return jsonify({'error': 'Ошибка обновления токена'}), 500
 
-@auth_bp.route('/register/employer', methods=['GET', 'POST'])
-def register_employer():
-    """Регистрация работодателя"""
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    """Получить данные текущего пользователя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_active:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        return jsonify({
+            'user': user.to_dict(include_sensitive=True)
+        })
     
-    if request.method == 'POST':
-        try:
-            # Получение данных
-            email = request.form.get('email', '').strip().lower()
-            password = request.form.get('password', '')
-            confirm_password = request.form.get('confirm_password', '')
+    except Exception as e:
+        print(f"Ошибка получения пользователя: {e}")
+        return jsonify({'error': 'Ошибка получения данных пользователя'}), 500
+
+@auth_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    """Обновление профиля пользователя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_active:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Данные не предоставлены'}), 400
+        
+        # Обновляем основные поля
+        if 'name' in data:
+            user.name = data['name']
+        
+        if 'phone' in data:
+            if data['phone'] and not validate_phone(data['phone']):
+                return jsonify({'error': 'Неверный формат номера телефона'}), 400
+            user.phone = data['phone']
+        
+        if 'city' in data:
+            user.city = data['city']
+        
+        # Поля для соискателя
+        if user.user_type == 'candidate':
+            if 'birth_date' in data:
+                if data['birth_date']:
+                    from datetime import datetime
+                    user.birth_date = datetime.strptime(data['birth_date'], '%Y-%m-%d').date()
+                else:
+                    user.birth_date = None
             
-            company_name = request.form.get('company_name', '').strip()
-            contact_person = request.form.get('contact_person', '').strip()
-            phone = request.form.get('phone', '').strip()
-            city = request.form.get('city', '').strip()
+            if 'gender' in data:
+                user.gender = data['gender']
             
-            company_size = request.form.get('company_size', '')
-            industry = request.form.get('industry', '')
+            if 'education_level' in data:
+                user.education_level = data['education_level']
             
-            # Валидация
-            if not all([email, password, company_name, contact_person, phone, city]):
-                flash('Заполните все обязательные поля', 'error')
-                return render_template('register_employer.html')
+            if 'experience_years' in data:
+                user.experience_years = data['experience_years']
             
-            if password != confirm_password:
-                flash('Пароли не совпадают', 'error')
-                return render_template('register_employer.html')
+            if 'skills' in data:
+                user.set_skills_list(data['skills'])
             
-            if len(password) < 6:
-                flash('Пароль должен содержать минимум 6 символов', 'error')
-                return render_template('register_employer.html')
+            if 'resume_url' in data:
+                user.resume_url = data['resume_url']
             
-            if not validate_email(email):
-                flash('Некорректный email адрес', 'error')
-                return render_template('register_employer.html')
+            if 'portfolio_url' in data:
+                user.portfolio_url = data['portfolio_url']
             
-            phone = validate_phone(phone)
-            if not phone:
-                flash('Некорректный номер телефона', 'error')
-                return render_template('register_employer.html')
-            
-            # Проверка уникальности
-            if Employer.query.filter_by(email=email).first():
-                flash('Работодатель с таким email уже существует', 'error')
-                return render_template('register_employer.html')
-            
-            # Создание работодателя
-            from db_models import SubscriptionTier
-            
-            employer = Employer(
-                email=email,
-                phone=phone,
-                company_name=company_name,
-                contact_person=contact_person,
-                city=city,
-                company_size=company_size,
-                industry=industry,
-                subscription_tier=SubscriptionTier.FREE,
-                vacancies_limit=1,
-                is_active=True
-            )
-            employer.set_password(password)
-            
-            db.session.add(employer)
-            db.session.commit()
-            
-            # Автоматический вход
-            login_user(employer, remember=True)
-            
-            flash('Регистрация успешно завершена! Добро пожаловать в WorkPlus.kz!', 'success')
-            return redirect(url_for('employer.dashboard'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash('Произошла ошибка при регистрации. Попробуйте еще раз.', 'error')
-            return render_template('register_employer.html')
+            if 'telegram_username' in data:
+                user.telegram_username = data['telegram_username']
+        
+        # Поля для работодателя
+        elif user.user_type == 'employer':
+            if 'position' in data:
+                user.position = data['position']
+        
+        # Настройки уведомлений
+        if 'email_notifications' in data:
+            user.email_notifications = bool(data['email_notifications'])
+        
+        if 'sms_notifications' in data:
+            user.sms_notifications = bool(data['sms_notifications'])
+        
+        user.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Профиль обновлен',
+            'user': user.to_dict(include_sensitive=True)
+        })
     
-    from config import Constants
-    return render_template('register_employer.html',
-                         company_sizes=Constants.COMPANY_SIZES,
-                         industries=Constants.INDUSTRIES)
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка обновления профиля: {e}")
+        return jsonify({'error': 'Ошибка при обновлении профиля'}), 500
 
-@auth_bp.route('/logout')
-@login_required
-def logout():
-    """Выход из системы"""
-    logout_user()
-    flash('Вы успешно вышли из системы', 'info')
-    return redirect(url_for('auth.login'))
+@auth_bp.route('/change-password', methods=['POST'])
+@jwt_required()
+def change_password():
+    """Смена пароля"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_active:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        data = request.get_json()
+        if not data or not data.get('current_password') or not data.get('new_password'):
+            return jsonify({'error': 'Необходимы текущий и новый пароль'}), 400
+        
+        # Проверяем текущий пароль
+        if not user.check_password(data['current_password']):
+            return jsonify({'error': 'Неверный текущий пароль'}), 400
+        
+        # Валидация нового пароля
+        if len(data['new_password']) < 6:
+            return jsonify({'error': 'Новый пароль должен содержать минимум 6 символов'}), 400
+        
+        user.set_password(data['new_password'])
+        db.session.commit()
+        
+        return jsonify({'message': 'Пароль успешно изменен'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка смены пароля: {e}")
+        return jsonify({'error': 'Ошибка при смене пароля'}), 500
 
-@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
     """Восстановление пароля"""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        
-        if not validate_email(email):
-            flash('Некорректный email адрес', 'error')
-            return render_template('forgot_password.html')
-        
-        # Ищем пользователя в любой из таблиц
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = Employer.query.filter_by(email=email).first()
-        
-        if user:
-            # TODO: Отправить email с инструкциями по восстановлению
-            # Пока что просто показываем сообщение
-            flash('Инструкции по восстановлению пароля отправлены на ваш email', 'info')
-        else:
-            # Не показываем, что пользователь не найден (безопасность)
-            flash('Инструкции по восстановлению пароля отправлены на ваш email', 'info')
-        
-        return redirect(url_for('auth.login'))
+    data = request.get_json()
     
-    return render_template('forgot_password.html')
+    if not data or not data.get('email'):
+        return jsonify({'error': 'Email обязателен'}), 400
+    
+    user = User.query.filter_by(email=data['email'].lower(), is_active=True).first()
+    
+    if not user:
+        # Не сообщаем о том, что пользователь не найден (безопасность)
+        return jsonify({'message': 'Если пользователь с таким email существует, инструкции отправлены на почту'})
+    
+    try:
+        # Генерируем токен сброса
+        import secrets
+        reset_token = secrets.token_urlsafe(32)
+        user.reset_token = reset_token
+        user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+        
+        db.session.commit()
+        
+        # Здесь должна быть отправка email с токеном сброса
+        # TODO: Реализовать отправку email
+        
+        return jsonify({'message': 'Инструкции отправлены на почту'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка восстановления пароля: {e}")
+        return jsonify({'error': 'Ошибка при отправке инструкций'}), 500
 
-@auth_bp.route('/verify-email/<token>')
-def verify_email(token):
-    """Подтверждение email (заглушка)"""
-    # TODO: Реализовать верификацию email
-    flash('Email подтвержден!', 'success')
-    return redirect(url_for('auth.login'))
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Сброс пароля по токену"""
+    data = request.get_json()
+    
+    if not data or not data.get('token') or not data.get('password'):
+        return jsonify({'error': 'Токен и новый пароль обязательны'}), 400
+    
+    user = User.query.filter_by(reset_token=data['token']).first()
+    
+    if not user or not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        return jsonify({'error': 'Недействительный или истекший токен'}), 400
+    
+    # Валидация нового пароля
+    if len(data['password']) < 6:
+        return jsonify({'error': 'Пароль должен содержать минимум 6 символов'}), 400
+    
+    try:
+        user.set_password(data['password'])
+        user.reset_token = None
+        user.reset_token_expires = None
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Пароль успешно изменен'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка сброса пароля: {e}")
+        return jsonify({'error': 'Ошибка при смене пароля'}), 500
+
+@auth_bp.route('/verify-email', methods=['POST'])
+def verify_email():
+    """Верификация email"""
+    data = request.get_json()
+    
+    if not data or not data.get('token'):
+        return jsonify({'error': 'Токен верификации обязателен'}), 400
+    
+    user = User.query.filter_by(verification_token=data['token']).first()
+    
+    if not user:
+        return jsonify({'error': 'Недействительный токен верификации'}), 400
+    
+    try:
+        user.is_verified = True
+        user.verification_token = None
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Email успешно подтвержден'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка верификации email: {e}")
+        return jsonify({'error': 'Ошибка при подтверждении email'}), 500
+
+@auth_bp.route('/deactivate', methods=['POST'])
+@jwt_required()
+def deactivate_account():
+    """Деактивация аккаунта"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        data = request.get_json()
+        if not data or not data.get('password'):
+            return jsonify({'error': 'Подтверждение паролем обязательно'}), 400
+        
+        if not user.check_password(data['password']):
+            return jsonify({'error': 'Неверный пароль'}), 400
+        
+        user.is_active = False
+        db.session.commit()
+        
+        return jsonify({'message': 'Аккаунт деактивирован'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка деактивации аккаунта: {e}")
+        return jsonify({'error': 'Ошибка при деактивации аккаунта'}), 500
