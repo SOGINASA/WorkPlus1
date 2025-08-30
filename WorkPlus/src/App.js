@@ -24,7 +24,20 @@ import CreateJob from './pages/CreateJobPage'
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
 import Analytics from '../src/pages/admin/dashboard/Analytics';
 import Reports from '../src/pages/admin/dashboard/Reports';
-
+import Leads from '../src/pages/admin/crm/LeadsList';
+import Customers from '../src/pages/admin/crm/SalesPipeline';
+import Deals from '../src/pages/admin/crm/ClientManagement';
+import Conversions from '../src/pages/admin/analytics/ConversionFunnels';
+import CohortAnalysis from '../src/pages/admin/analytics/CohortAnalysis';
+import GeoAnalysis from '../src/pages/admin/analytics/GeoAnalytics';
+import FinanceialReports from '../src/pages/admin/finances/FinancialReports';
+import Payments from '../src/pages/admin/finances/Payments';
+import Revenue from '../src/pages/admin/finances/Revenue';
+import Subs from '../src/pages/admin/finances/Subscriptions';
+import GeneralSettings from '../src/pages/admin/settings/GeneralSettings';
+import IntegrationSettings from '../src/pages/admin/settings/IntegrationSettings';
+import PricingSettings from '../src/pages/admin/settings/PricingSettings';
+import UserPermissions from '../src/pages/admin/settings/UserPermissions';
 
 
 
@@ -86,6 +99,20 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<Analytics />} />
           <Route path="/admin/reports" element={<Reports />} />
+          <Route path="/admin/leads" element={<Leads />} />
+          <Route path="/admin/customers" element={<Customers />} />
+          <Route path="/admin/deals" element={<Deals />} />
+          <Route path="/admin/conversions" element={<Conversions />} />
+          <Route path="/admin/cohort-analysis" element={<CohortAnalysis />} />
+          <Route path="/admin/geo-analysis" element={<GeoAnalysis />} />
+          <Route path="/admin/financial-reports" element={<FinanceialReports />} />
+          <Route path="/admin/payments" element={<Payments />} />
+          <Route path="/admin/revenue" element={<Revenue />} />
+          <Route path="/admin/subscriptions" element={<Subs />} />
+          <Route path="/admin/general-settings" element={<GeneralSettings />} />
+          <Route path="/admin/integration-settings" element={<IntegrationSettings />} />
+          <Route path="/admin/pricing-settings" element={<PricingSettings />} />
+          <Route path="/admin/user-permissions" element={<UserPermissions />} />
           
           {/* 404 страница */}
           <Route path="*" element={<NotFoundPage />} /> 
