@@ -24,7 +24,21 @@ import CreateJob from './pages/CreateJobPage'
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
 import Analytics from '../src/pages/admin/dashboard/Analytics';
 import Reports from '../src/pages/admin/dashboard/Reports';
-
+import UserList from '../src/pages/admin/users/UserList';
+import EmployerList from '../src/pages/admin/users/EmployerList';
+import CandidateList from '../src/pages/admin/users/CandidateList';
+import UserProfile from '../src/pages/admin/users/UserProfile';
+import SocialManager from '../src/pages/admin/social/SocialManager';
+import PostScheduler from '../src/pages/admin/social/PostScheduler';
+import SocialAnalytics from '../src/pages/admin/social/SocialAnalytics';
+import ContentCalendar from '../src/pages/admin/social/ContentCalendar';
+import ReviewQueue from '../src/pages/admin/moderation/ReviewQueue';
+import ReportsManagement from '../src/pages/admin/moderation/ReportsManagement';
+import ContentModeration from '../src/pages/admin/moderation/ContentModeration';
+import JobList from '../src/pages/admin/jobs/JobList';
+import JobModeration from '../src/pages/admin/jobs/JobModeration';
+import JobAnalytics from '../src/pages/admin/jobs/JobAnalytics';
+import JobTemplates from '../src/pages/admin/jobs/JobTemplates';
 
 
 
@@ -86,7 +100,21 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<Analytics />} />
           <Route path="/admin/reports" element={<Reports />} />
-          
+            <Route path="users/list" element={<UserList />} />
+            <Route path="users/employers" element={<EmployerList />} />
+            <Route path="users/candidates" element={<CandidateList />} />
+            <Route path="users/profile/:userId" element={<UserProfile />} />
+            <Route path="social/manager" element={<SocialManager />} />
+            <Route path="social/scheduler" element={<PostScheduler />} />
+            <Route path="social/analytics" element={<SocialAnalytics />} />
+            <Route path="social/calendar" element={<ContentCalendar />} />
+            <Route path="moderation/queue" element={<ReviewQueue />} />
+            <Route path="moderation/reports" element={<ReportsManagement />} />
+            <Route path="moderation/content" element={<ContentModeration />} />
+            <Route path="jobs/list" element={<JobList />} />
+            <Route path="jobs/moderation" element={<JobModeration />} />
+            <Route path="jobs/analytics" element={<JobAnalytics />} />
+            <Route path="jobs/templates" element={<JobTemplates />} />
           {/* 404 страница */}
           <Route path="*" element={<NotFoundPage />} /> 
         </Routes>
