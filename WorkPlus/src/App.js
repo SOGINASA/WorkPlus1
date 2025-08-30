@@ -17,7 +17,17 @@ import RegisterForm from '../src/components/auth/RegisterForm'
 import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
-import ResetPasswordPage from '../src/components/auth/Resetpassword';
+// import ResetPasswordPage from '../src/components/auth/Resetpassword';
+
+
+// Admin
+import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
+import Analytics from '../src/pages/admin/dashboard/Analytics';
+import Reports from '../src/pages/admin/dashboard/Reports';
+
+
+
+
 // import JobDetailPage from './pages/JobDetail';
 // import ResumesPage from './pages/Resumes';
 // import CreateResumePage from './pages/CreateResume';
@@ -69,7 +79,13 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/jobdetail" element={<JobDetail/>} />
           <Route path="/create-job" element={<CreateJob/>} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
+
+
+          {/* Админка */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<Analytics />} />
+          <Route path="/admin/reports" element={<Reports />} />
           
           {/* 404 страница */}
           <Route path="*" element={<NotFoundPage />} /> 
