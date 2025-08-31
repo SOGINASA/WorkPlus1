@@ -16,15 +16,15 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, origins=['http://localhost:3000'], 
+    CORS(app, origins=['http://localhost:3000','https://workplus-one.vercel.app'],
         allow_headers=['Content-Type', 'Authorization'],
         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
-    
+
     # Инициализация расширений
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    
+
     # Регистрация blueprints
     from routes.auth import auth_bp
     # from routes.admin_auth import admin_auth_bp
@@ -33,7 +33,7 @@ def create_app():
     # from routes.applications import applications_bp
     # from routes.users import users_bp
     # from routes.analytics import analytics_bp
-    
+
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     # app.register_blueprint(admin_auth_bp, url_prefix='/api/admin/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
@@ -41,7 +41,7 @@ def create_app():
     # app.register_blueprint(applications_bp, url_prefix='/api/applications')
     # app.register_blueprint(users_bp, url_prefix='/api/users')
     # app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
-    
+
     # Главная страница API
     @app.route('/api')
     def api_info():
@@ -73,7 +73,7 @@ def seed_admins():
     """Создание тестовых администраторов"""
     if Admin.query.count() > 0:
         return
-    
+
     # Супер администратор
     super_admin = Admin(
         name='Администратор WorkPlus',
@@ -82,7 +82,7 @@ def seed_admins():
     )
     super_admin.set_password('workplus2025')
     db.session.add(super_admin)
-    
+
     # Обычный администратор
     admin = Admin(
         name='HR Менеджер',
@@ -91,7 +91,7 @@ def seed_admins():
     )
     admin.set_password('hrmanager123')
     db.session.add(admin)
-    
+
     try:
         db.session.commit()
         print("Тестовые администраторы созданы:")
@@ -108,7 +108,7 @@ def seed_test_data():
         if Company.query.count() > 0:
             print("Тестовые данные уже существуют")
             return
-        
+
         # Создаем тестовую компанию
         company = Company(
             name='ТОО "Казахстан Девелопмент"',
@@ -123,7 +123,7 @@ def seed_test_data():
         )
         db.session.add(company)
         db.session.flush()  # Получаем ID компании
-        
+
         # Создаем тестового пользователя-работодателя
         employer = User(
             email='employer@kz-dev.kz',
@@ -135,7 +135,7 @@ def seed_test_data():
         )
         employer.set_password('employer123')
         db.session.add(employer)
-        
+
         # Создаем тестового пользователя-соискателя
         candidate = User(
             email='candidate@gmail.com',
@@ -148,7 +148,7 @@ def seed_test_data():
         candidate.set_password('candidate123')
         db.session.add(candidate)
         db.session.flush()
-        
+
         # Создаем тестовые вакансии
         jobs_data = [
             {
@@ -224,7 +224,7 @@ def seed_test_data():
                 'skills': 'Клиентский сервис,Работа в команде'
             }
         ]
-        
+
         for job_data in jobs_data:
             job = Job(
                 company_id=company.id,
@@ -232,11 +232,11 @@ def seed_test_data():
                 **job_data
             )
             db.session.add(job)
-        
+
         # Создаем тестовый отклик
         db.session.flush()
         first_job = Job.query.first()
-        
+
         application = JobApplication(
             job_id=first_job.id,
             candidate_id=candidate.id,
@@ -244,7 +244,7 @@ def seed_test_data():
             status='pending'
         )
         db.session.add(application)
-        
+
         db.session.commit()
         print("✅ Тестовые данные созданы:")
         print("- Компания: ТОО Казахстан Девелопмент")
@@ -252,7 +252,7 @@ def seed_test_data():
         print("- Соискатель: candidate@gmail.com / candidate123")
         print("- 3 тестовые вакансии")
         print("- 1 тестовый отклик")
-        
+
     except Exception as e:
         db.session.rollback()
         print(f"Ошибка при создании тестовых данных: {e}")
@@ -301,17 +301,17 @@ def create_admin():
     password = input("Пароль: ")
     name = input("Имя: ")
     role = input("Роль (admin/super_admin): ") or 'admin'
-    
+
     if Admin.query.filter_by(email=email).first():
         print("❌ Администратор с таким email уже существует")
         return
-    
+
     admin = Admin(name=name, email=email, role=role)
     admin.set_password(password)
-    
+
     db.session.add(admin)
     db.session.commit()
-    
+
     print(f"✅ Администратор {email} создан")
 
 @app.cli.command()
@@ -322,7 +322,7 @@ def make_super_admin(email):
     if not admin:
         print(f"❌ Администратор {email} не найден")
         return
-    
+
     admin.role = 'super_admin'
     db.session.commit()
     print(f"✅ {email} теперь супер администратор")
