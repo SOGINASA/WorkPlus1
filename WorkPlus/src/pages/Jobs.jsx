@@ -18,10 +18,11 @@ const JobsPage = () => {
   const [sortOrder, setSortOrder] = useState('desc');
 
 const [jobCategories, setJobCategories] = useState([]);
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 useEffect(() => {
   async function fetchJobCategories() {
-    const res = await fetch("http://localhost:5000/api/jobs/categories");
+    const res = await fetch(`${API_BASE_URL}/api/jobs/categories`);
     const data = await res.json();
 
     const categoriesArr = ["Все категории", ...data.categories.map(cat => cat.name)];
@@ -98,7 +99,7 @@ useEffect(() => {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:5000/api/jobs/?${queryParams}`);
+      const response = await fetch(`${API_BASE_URL}/api/jobs/?${queryParams}`);
       
       if (!response.ok) {
         throw new Error('Ошибка при загрузке вакансий');
@@ -177,7 +178,7 @@ useEffect(() => {
         return;
       }
 
-      const response = await fetch(`http://127.0.0.1:5000/jobs/${jobId}/apply`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/apply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
