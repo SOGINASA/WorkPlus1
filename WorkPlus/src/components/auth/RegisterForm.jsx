@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { User, Building, Mail, Phone, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Building, Mail, Phone, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle, Calendar, Users, GraduationCap, MessageSquare, FileText, Link } from 'lucide-react';
+import { useAuth } from '../api/AuthUtils';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterForm = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [userType, setUserType] = useState('candidate'); // 'candidate' or 'employer'
   const [formData, setFormData] = useState({
     firstName: '',
@@ -15,16 +19,52 @@ const RegisterForm = () => {
     position: '',
     companySize: '',
     industry: '',
+    birth_date: '',
+    gender: '',
+    education_level: '',
+    experience_years: '',
+    skills: '', //через запятую
+    resume_url: '',
+    portfolio_url: '',
+    telegram_username: '',
     agreeTerms: false,
     agreeMarketing: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Функция для получения пользователя из localStorage
+  const getUserFromStorage = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('Ошибка при чтении пользователя из localStorage:', error);
+      return null;
+    }
+  };
+
+  // Функция для сохранения пользователя в localStorage
+  const saveUserToStorage = (user) => {
+    try {
+      localStorage.setItem('user', JSON.stringify(user));
+    } catch (error) {
+      console.error('Ошибка при сохранении пользователя в localStorage:', error);
+    }
+  };
 
   const cities = [
-    'Петропавловск', 'Костанай', 'Актау', 'Павлодар', 'Кокшетау', 
-    'Атырау', 'Усть-Каменогорск', 'Семей', 'Актобе', 'Алматы', 'Нур-Султан'
+    'Астана',
+    'Алматы',
+    'Петропавловск',
+    'Костанай',
+    'Актау',
+    'Павлодар',
+    'Кокшетау',
+    'Рудный',
+    'Атырау'
   ];
 
   const industries = [
@@ -36,6 +76,21 @@ const RegisterForm = () => {
   const companySizes = [
     '1-10 сотрудников', '11-50 сотрудников', '51-200 сотрудников', 
     '201-500 сотрудников', '500+ сотрудников'
+  ];
+
+  const educationLevels = [
+    'Среднее образование',
+    'Среднее специальное',
+    'Высшее (бакалавр)',
+    'Высшее (магистр)',
+    'Кандидат наук',
+    'Доктор наук'
+  ];
+
+  const genderOptions = [
+    'Мужской',
+    'Женский',
+    'Не указывать'
   ];
 
   const handleInputChange = (e) => {
@@ -80,17 +135,46 @@ const RegisterForm = () => {
       if (!formData.companyName) newErrors.companyName = 'Название компании обязательно';
       if (!formData.industry) newErrors.industry = 'Выберите сферу деятельности';
       if (!formData.companySize) newErrors.companySize = 'Выберите размер компании';
+      if (!formData.firstName) newErrors.firstName = 'Имя контактного лица обязательно';
+      if (!formData.lastName) newErrors.lastName = 'Фамилия контактного лица обязательна';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Registration data:', { userType, ...formData });
-      // Here you would typically send the data to your backend
+    if (!validateForm() || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const registrationData = { userType, ...formData };
+      const response = await register(registrationData);
+      
+      console.log('Регистрация успешна:', response);
+      
+      // Перенаправление в зависимости от типа пользователя
+      if (userType === 'employer') {
+        navigate('/create-job');
+      } else {
+        navigate('/profile');
+      }
+      
+    } catch (error) {
+      console.error('Ошибка регистрации:', error);
+      
+      // Более детальная обработка ошибок
+      if (error.message.includes('Failed to fetch')) {
+        alert('Не удается подключиться к серверу. Проверьте, что сервер запущен.');
+      } else if (error.message.includes('Unexpected token')) {
+        alert('Сервер вернул неожиданный ответ. Возможно, неверный URL API.');
+      } else {
+        alert(error.message || 'Произошла ошибка при регистрации');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -122,11 +206,11 @@ const RegisterForm = () => {
   ];
 
   return (
-    <div className="min-h-screen py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 md:py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
             Присоединяйтесь к 
             <span className="text-yellow-400"> WorkPlus.kz</span>
           </h1>
@@ -169,50 +253,9 @@ const RegisterForm = () => {
               </div>
             </div>
 
-            <div className="space-y-4 md:space-y-6">
-              {/* Personal/Company Info */}
-              {userType === 'candidate' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Имя *</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Введите имя"
-                    />
-                    {errors.firstName && (
-                      <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {errors.firstName}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Фамилия *</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.lastName ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Введите фамилию"
-                    />
-                    {errors.lastName && (
-                      <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {errors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+              {/* Company Info for Employers */}
+              {userType === 'employer' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Название компании *</label>
                   <input
@@ -233,6 +276,52 @@ const RegisterForm = () => {
                   )}
                 </div>
               )}
+
+              {/* Personal/Contact Person Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    {userType === 'candidate' ? 'Имя *' : 'Имя контактного лица *'}
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                      errors.firstName ? 'border-red-500' : 'border-gray-700'
+                    }`}
+                    placeholder="Введите имя"
+                  />
+                  {errors.firstName && (
+                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.firstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    {userType === 'candidate' ? 'Фамилия *' : 'Фамилия контактного лица *'}
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                      errors.lastName ? 'border-red-500' : 'border-gray-700'
+                    }`}
+                    placeholder="Введите фамилию"
+                  />
+                  {errors.lastName && (
+                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.lastName}
+                    </p>
+                  )}
+                </div>
+              </div>
 
               {/* Contact Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -282,7 +371,7 @@ const RegisterForm = () => {
                 </div>
               </div>
 
-              {/* Location and Additional Info */}
+              {/* Location and Position/Industry */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Город</label>
@@ -318,6 +407,26 @@ const RegisterForm = () => {
                   </div>
                 ) : (
                   <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Должность в компании</label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        name="position"
+                        value={formData.position}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                        placeholder="Например: HR-менеджер"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Industry and Company Size for Employers */}
+              {userType === 'employer' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Сфера деятельности *</label>
                     <select
                       name="industry"
@@ -339,34 +448,164 @@ const RegisterForm = () => {
                       </p>
                     )}
                   </div>
-                )}
-              </div>
-
-              {/* Company Size for Employers */}
-              {userType === 'employer' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Размер компании *</label>
-                  <select
-                    name="companySize"
-                    value={formData.companySize}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                      errors.companySize ? 'border-red-500' : 'border-gray-700'
-                    }`}
-                  >
-                    <option value="">Выберите размер</option>
-                    {companySizes.map(size => (
-                      <option key={size} value={size}>{size}</option>
-                    ))}
-                  </select>
-                  {errors.companySize && (
-                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {errors.companySize}
-                    </p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Размер компании *</label>
+                    <select
+                      name="companySize"
+                      value={formData.companySize}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                        errors.companySize ? 'border-red-500' : 'border-gray-700'
+                      }`}
+                    >
+                      <option value="">Выберите размер</option>
+                      {companySizes.map(size => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                    {errors.companySize && (
+                      <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.companySize}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
+
+              {/* Candidate-specific fields */}
+              {userType === 'candidate' && (
+                <>
+                  {/* Birth date and Gender */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Дата рождения</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <input
+                          type="date"
+                          name="birth_date"
+                          value={formData.birth_date}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Пол</label>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                        >
+                          <option value="">Выберите пол</option>
+                          {genderOptions.map(gender => (
+                            <option key={gender} value={gender}>{gender}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Education and Experience */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Уровень образования</label>
+                      <div className="relative">
+                        <GraduationCap className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <select
+                          name="education_level"
+                          value={formData.education_level}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                        >
+                          <option value="">Выберите образование</option>
+                          {educationLevels.map(level => (
+                            <option key={level} value={level}>{level}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Опыт работы (лет)</label>
+                      <input
+                        type="number"
+                        name="experience_years"
+                        value={formData.experience_years}
+                        onChange={handleInputChange}
+                        min="0"
+                        max="60"
+                        className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Навыки</label>
+                    <textarea
+                      name="skills"
+                      value={formData.skills}
+                      onChange={handleInputChange}
+                      rows="3"
+                      className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base resize-none"
+                      placeholder="Укажите ваши навыки через запятую (например: продажи, работа с клиентами, Microsoft Office)"
+                    />
+                  </div>
+
+                  {/* URLs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Ссылка на резюме</label>
+                      <div className="relative">
+                        <FileText className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <input
+                          type="url"
+                          name="resume_url"
+                          value={formData.resume_url}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                          placeholder="https://drive.google.com/..."
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Ссылка на портфолио</label>
+                      <div className="relative">
+                        <Link className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <input
+                          type="url"
+                          name="portfolio_url"
+                          value={formData.portfolio_url}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Telegram username (for both types) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Telegram (необязательно)</label>
+                <div className="relative">
+                  <MessageSquare className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="telegram_username"
+                    value={formData.telegram_username}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                    placeholder="@username"
+                  />
+                </div>
+              </div>
 
               {/* Password Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -464,25 +703,32 @@ const RegisterForm = () => {
                     className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
                   />
                   <label className="ml-3 text-sm text-gray-300">
-                    Я хочу получать информацию о новых вакансиях и полезные советы по карьере
+                    {userType === 'candidate' 
+                      ? 'Я хочу получать информацию о новых вакансиях и полезные советы по карьере'
+                      : 'Я хочу получать информацию о новых кандидатах и советы по найму персонала'
+                    }
                   </label>
                 </div>
               </div>
 
               {/* Submit Button */}
               <button
-                type="button"
-                onClick={handleSubmit}
-                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-3 md:py-4 px-6 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm md:text-base"
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full py-3 md:py-4 px-6 rounded-lg font-medium transition-all text-sm md:text-base ${
+                  isSubmitting 
+                    ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700'
+                }`}
               >
-                Создать аккаунт
+                {isSubmitting ? 'Создание аккаунта...' : 'Создать аккаунт'}
               </button>
 
               <div className="text-center text-sm text-gray-400">
                 Уже есть аккаунт?{' '}
                 <a href="#" className="text-yellow-400 hover:underline">Войти</a>
               </div>
-            </div>
+            </form>
           </div>
 
           {/* Benefits Section */}

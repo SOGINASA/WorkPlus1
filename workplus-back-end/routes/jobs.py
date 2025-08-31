@@ -129,7 +129,7 @@ def get_jobs():
             },
             'filters': {
                 'categories': stats['categories'],
-                'cities': stats['cities'],
+                '': stats['cities'],
                 'employment_types': stats['employment_types'],
                 'experience_levels': stats['experience_levels']
             },

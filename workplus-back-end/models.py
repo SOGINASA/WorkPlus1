@@ -59,17 +59,37 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
     
     def get_skills_list(self):
-        """Получить список навыков"""
+        """Получить список навыков из JSON строки"""
         if self.skills:
             try:
-                return self.skills
-            except:
+                import json
+                # Если skills уже список строк (старые данные), возвращаем как есть
+                if isinstance(self.skills, list):
+                    return self.skills
+                # Если skills - JSON строка, парсим её
+                return json.loads(self.skills)
+            except (json.JSONDecodeError, TypeError):
+                # Если не удалось распарсить как JSON, возвращаем как простую строку разделенную запятыми
+                if isinstance(self.skills, str):
+                    return [skill.strip() for skill in self.skills.split(',') if skill.strip()]
                 return []
         return []
-    
+
     def set_skills_list(self, skills_list):
-        """Установить список навыков"""
-        self.skills = skills_list
+        """Установить список навыков как JSON строку"""
+        if skills_list:
+            import json
+            if isinstance(skills_list, list):
+                # Если передан список, сохраняем как JSON
+                self.skills = json.dumps(skills_list, ensure_ascii=False)
+            elif isinstance(skills_list, str):
+                # Если передана строка, разбиваем по запятым и сохраняем как JSON
+                skills_array = [skill.strip() for skill in skills_list.split(',') if skill.strip()]
+                self.skills = json.dumps(skills_array, ensure_ascii=False)
+            else:
+                self.skills = None
+        else:
+            self.skills = None
     
     def to_dict(self, include_sensitive=False):
         data = {

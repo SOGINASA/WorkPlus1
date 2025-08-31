@@ -16,7 +16,9 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}}) #! поменять при деплое              п.с. кому не похуй
+    CORS(app, origins=['http://localhost:3000'], 
+        allow_headers=['Content-Type', 'Authorization'],
+        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
     # Инициализация расширений
     db.init_app(app)

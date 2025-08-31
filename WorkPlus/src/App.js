@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from '../src/components/components1/Layout';
+import { AuthProvider, ProtectedRoute } from '../src/components/api/AuthUtils';
 
 // Import pages
 import HomePage from './pages/Home';
@@ -90,65 +91,212 @@ import NotFoundPage from './pages/NotFound';
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          {/* Главные страницы */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/jobs" element={<JobsPage />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/resume-dashboard" element={<ResumeDashboard />} />
-          <Route path="/create-resume" element={<CreateResume />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/jobdetail" element={<JobDetail/>} />
-          <Route path="/create-job" element={<CreateJob/>} />
-          {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
+    <AuthProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            {/* Публичные страницы */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/jobdetail" element={<JobDetail/>} />
+            {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
 
+            {/* Защищенные страницы для пользователей */}
+            <Route path="/resume-dashboard" element={
+              <ProtectedRoute>
+                <ResumeDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/create-resume" element={
+              <ProtectedRoute>
+                <CreateResume />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/create-job" element={
+              <ProtectedRoute>
+                <CreateJob />
+              </ProtectedRoute>
+            } />
 
-          {/* Админка */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/analytics" element={<Analytics />} />
-          <Route path="/admin/reports" element={<Reports />} />
-          <Route path="/admin/leads" element={<Leads />} />
-          <Route path="/admin/customers" element={<Customers />} />
-          <Route path="/admin/deals" element={<Deals />} />
-          <Route path="/admin/conversions" element={<Conversions />} />
-          <Route path="/admin/cohort-analysis" element={<CohortAnalysis />} />
-          <Route path="/admin/geo-analysis" element={<GeoAnalysis />} />
-          <Route path="/admin/financial-reports" element={<FinanceialReports />} />
-          <Route path="/admin/payments" element={<Payments />} />
-          <Route path="/admin/revenue" element={<Revenue />} />
-          <Route path="/admin/subscriptions" element={<Subs />} />
-          <Route path="/admin/general-settings" element={<GeneralSettings />} />
-          <Route path="/admin/integration-settings" element={<IntegrationSettings />} />
-          <Route path="/admin/pricing-settings" element={<PricingSettings />} />
-          <Route path="/admin/user-permissions" element={<UserPermissions />} />
-          <Route path="users/list" element={<UserList />} />
-            <Route path="users/employers" element={<EmployerList />} />
-            <Route path="users/candidates" element={<CandidateList />} />
-            <Route path="users/profile/:userId" element={<UserProfile />} />
-            <Route path="social/manager" element={<SocialManager />} />
-            <Route path="social/scheduler" element={<PostScheduler />} />
-            <Route path="social/analytics" element={<SocialAnalytics />} />
-            <Route path="social/calendar" element={<ContentCalendar />} />
-            <Route path="moderation/queue" element={<ReviewQueue />} />
-            <Route path="moderation/reports" element={<ReportsManagement />} />
-            <Route path="moderation/content" element={<ContentModeration />} />
-            <Route path="jobs/list" element={<JobList />} />
-            <Route path="jobs/moderation" element={<JobModeration />} />
-            <Route path="jobs/analytics" element={<JobAnalytics />} />
-            <Route path="jobs/templates" element={<JobTemplates />} />
+            {/* Защищенные админские страницы */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/leads" element={
+              <ProtectedRoute>
+                <Leads />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/customers" element={
+              <ProtectedRoute>
+                <Customers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/deals" element={
+              <ProtectedRoute>
+                <Deals />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/conversions" element={
+              <ProtectedRoute>
+                <Conversions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/cohort-analysis" element={
+              <ProtectedRoute>
+                <CohortAnalysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/geo-analysis" element={
+              <ProtectedRoute>
+                <GeoAnalysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/financial-reports" element={
+              <ProtectedRoute>
+                <FinanceialReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payments" element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/revenue" element={
+              <ProtectedRoute>
+                <Revenue />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/subscriptions" element={
+              <ProtectedRoute>
+                <Subs />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/general-settings" element={
+              <ProtectedRoute>
+                <GeneralSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/integration-settings" element={
+              <ProtectedRoute>
+                <IntegrationSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/pricing-settings" element={
+              <ProtectedRoute>
+                <PricingSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/user-permissions" element={
+              <ProtectedRoute>
+                <UserPermissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users/list" element={
+              <ProtectedRoute>
+                <UserList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users/employers" element={
+              <ProtectedRoute>
+                <EmployerList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users/candidates" element={
+              <ProtectedRoute>
+                <CandidateList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users/profile/:userId" element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/social/manager" element={
+              <ProtectedRoute>
+                <SocialManager />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/social/scheduler" element={
+              <ProtectedRoute>
+                <PostScheduler />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/social/analytics" element={
+              <ProtectedRoute>
+                <SocialAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/social/calendar" element={
+              <ProtectedRoute>
+                <ContentCalendar />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/moderation/queue" element={
+              <ProtectedRoute>
+                <ReviewQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/moderation/reports" element={
+              <ProtectedRoute>
+                <ReportsManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/moderation/content" element={
+              <ProtectedRoute>
+                <ContentModeration />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/jobs/list" element={
+              <ProtectedRoute>
+                <JobList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/jobs/moderation" element={
+              <ProtectedRoute>
+                <JobModeration />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/jobs/analytics" element={
+              <ProtectedRoute>
+                <JobAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/jobs/templates" element={
+              <ProtectedRoute>
+                <JobTemplates />
+              </ProtectedRoute>
+            } />
           
-          {/* 404 страница */}
-          <Route path="*" element={<NotFoundPage />} /> 
-        </Routes>
-      </Layout>
-    </Router>
+            {/* 404 страница */}
+            <Route path="*" element={<NotFoundPage />} /> 
+          </Routes>
+        </Layout>
+      </Router>
+    </AuthProvider>
   );
 }
 

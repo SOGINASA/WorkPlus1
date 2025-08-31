@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from models import db, User, Company
-from datetime import timedelta
+from datetime import datetime, timedelta
 import re
 
 auth_bp = Blueprint('auth', __name__)
@@ -33,7 +33,7 @@ def register():
         return jsonify({'error': 'Данные не предоставлены'}), 400
     
     # Валидация обязательных полей
-    required_fields = ['email', 'password', 'name', 'user_type']
+    required_fields = ['email', 'password', 'userType']
     missing_fields = [field for field in required_fields if not data.get(field)]
     
     if missing_fields:
@@ -42,12 +42,31 @@ def register():
             'missing_fields': missing_fields
         }), 400
     
+    # Дополнительная валидация в зависимости от типа пользователя
+    user_type = data.get('userType')
+    if user_type == 'candidate':
+        candidate_required = ['firstName', 'lastName']
+        missing_candidate = [field for field in candidate_required if not data.get(field)]
+        if missing_candidate:
+            return jsonify({
+                'error': 'Для соискателей обязательны имя и фамилия',
+                'missing_fields': missing_candidate
+            }), 400
+    elif user_type == 'employer':
+        employer_required = ['firstName', 'lastName', 'companyName', 'industry', 'companySize']
+        missing_employer = [field for field in employer_required if not data.get(field)]
+        if missing_employer:
+            return jsonify({
+                'error': 'Для работодателей обязательны имя, фамилия, название компании, сфера деятельности и размер компании',
+                'missing_fields': missing_employer
+            }), 400
+    
     # Валидация email
     if not validate_email(data['email']):
         return jsonify({'error': 'Неверный формат email'}), 400
     
     # Валидация типа пользователя
-    if data['user_type'] not in ['candidate', 'employer']:
+    if user_type not in ['candidate', 'employer']:
         return jsonify({'error': 'Неверный тип пользователя'}), 400
     
     # Валидация телефона если указан
@@ -58,6 +77,41 @@ def register():
     if len(data['password']) < 6:
         return jsonify({'error': 'Пароль должен содержать минимум 6 символов'}), 400
     
+    # Проверка совпадения паролей (если confirmPassword передается)
+    if data.get('confirmPassword') and data['password'] != data['confirmPassword']:
+        return jsonify({'error': 'Пароли не совпадают'}), 400
+    
+    # Валидация согласия с условиями
+    if not data.get('agreeTerms'):
+        return jsonify({'error': 'Необходимо согласиться с условиями использования'}), 400
+    
+    # Валидация даты рождения (если указана)
+    birth_date = None
+    if data.get('birth_date'):
+        try:
+            from datetime import datetime
+            birth_date = datetime.strptime(data['birth_date'], '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Неверный формат даты рождения'}), 400
+    
+    # Валидация опыта работы (если указан)
+    experience_years = None
+    if data.get('experience_years'):
+        try:
+            experience_years = int(data['experience_years'])
+            if experience_years < 0 or experience_years > 60:
+                return jsonify({'error': 'Опыт работы должен быть от 0 до 60 лет'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Неверное значение опыта работы'}), 400
+    
+    # Валидация URL-ов (если указаны)
+    from urllib.parse import urlparse
+    for url_field in ['resume_url', 'portfolio_url']:
+        if data.get(url_field):
+            parsed = urlparse(data[url_field])
+            if not parsed.scheme or not parsed.netloc:
+                return jsonify({'error': f'Неверный формат ссылки для поля {url_field}'}), 400
+    
     # Проверка уникальности email
     existing_user = User.query.filter_by(email=data['email'].lower()).first()
     if existing_user:
@@ -65,41 +119,54 @@ def register():
     
     try:
         # Создаем пользователя
+        full_name = f"{data.get('firstName', '')} {data.get('lastName', '')}".strip()
+        
         user = User(
             email=data['email'].lower(),
-            name=data['name'],
+            name=full_name,
             phone=data.get('phone'),
-            city=data.get('city'),
-            user_type=data['user_type']
+            city=data.get('city', 'Петропавловск'),
+            user_type=user_type,
+            telegram_username=data.get('telegram_username'),
+            birth_date=birth_date,
+            gender=data.get('gender'),
+            education_level=data.get('education_level'),
+            experience_years=experience_years,
+            resume_url=data.get('resume_url'),
+            portfolio_url=data.get('portfolio_url')
         )
         user.set_password(data['password'])
         
-        # Дополнительные поля для соискателя
-        if data['user_type'] == 'candidate':
-            user.education_level = data.get('education_level')
-            user.experience_years = data.get('experience_years')
-            user.telegram_username = data.get('telegram_username')
-            
-            if data.get('skills'):
-                user.set_skills_list(data['skills'])
+        # Обработка навыков для соискателя
+        if user_type == 'candidate' and data.get('skills'):
+            # Используем метод модели для правильного сохранения навыков
+            user.set_skills_list(data['skills'])
         
         # Дополнительные поля для работодателя
-        elif data['user_type'] == 'employer':
+        if user_type == 'employer':
             user.position = data.get('position')
             
-            # Если указана компания
-            if data.get('company_name'):
-                company = Company(
-                    name=data['company_name'],
-                    description=data.get('company_description'),
-                    industry=data.get('company_industry'),
-                    size=data.get('company_size'),
-                    website=data.get('company_website'),
-                    city=data.get('city')
-                )
-                db.session.add(company)
-                db.session.flush()  # Получаем ID
-                user.company_id = company.id
+            # Создаем компанию если указана
+            if data.get('companyName'):
+                # Проверяем, существует ли уже такая компания
+                existing_company = Company.query.filter_by(
+                    name=data['companyName'].strip()
+                ).first()
+                
+                if existing_company:
+                    # Используем существующую компанию
+                    user.company_id = existing_company.id
+                else:
+                    # Создаем новую компанию
+                    company = Company(
+                        name=data['companyName'].strip(),
+                        industry=data.get('industry'),
+                        size=data.get('companySize'),
+                        city=data.get('city', 'Петропавловск')
+                    )
+                    db.session.add(company)
+                    db.session.flush()  # Получаем ID компании
+                    user.company_id = company.id
         
         db.session.add(user)
         db.session.commit()
@@ -117,9 +184,18 @@ def register():
         
         refresh_token = create_refresh_token(identity=str(user.id))
         
+        # Формируем ответ с информацией о пользователе
+        user_data = user.to_dict()
+        
+        # Добавляем информацию о компании для работодателя
+        if user_type == 'employer' and user.company_id:
+            company = Company.query.get(user.company_id)
+            if company:
+                user_data['company'] = company.to_dict()
+        
         return jsonify({
             'message': 'Регистрация успешна',
-            'user': user.to_dict(),
+            'user': user_data,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 201
