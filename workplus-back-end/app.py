@@ -32,7 +32,6 @@ def create_app():
     # from routes.companies import companies_bp
     # from routes.applications import applications_bp
     # from routes.users import users_bp
-    from routes.admin import admin_bp
     # from routes.analytics import analytics_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -41,7 +40,6 @@ def create_app():
     # app.register_blueprint(companies_bp, url_prefix='/api/companies')
     # app.register_blueprint(applications_bp, url_prefix='/api/applications')
     # app.register_blueprint(users_bp, url_prefix='/api/users')
-    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     # app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     
     # Главная страница API
