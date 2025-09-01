@@ -20,6 +20,8 @@ import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
 import Notifications from './pages/Notifications'
 import NotFoundPage from './pages/NotFound';
+import EmployerProfile from './pages/EmployerProfile';
+import CandidateProfile from './pages/CandidateProfile';
 
 // Admin pages imports
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
@@ -102,6 +104,16 @@ const PublicRoutes = () => {
         <Route path="/create-job" element={
           <ProtectedRoute>
             <CreateJob />
+          </ProtectedRoute>
+        } />
+        <Route path="/employer-profile" element={
+          <ProtectedRoute>
+            <EmployerProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/candidate-profile" element={ 
+          <ProtectedRoute>
+            <CandidateProfile />
           </ProtectedRoute>
         } />
 
