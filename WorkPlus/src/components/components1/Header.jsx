@@ -40,15 +40,16 @@ const Header = () => {
           <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             <a href="/" className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm xl:text-base">Главная</a>
             <a href="/jobs" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Вакансии</a>
+            <a href="/notifications" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Уведомления</a>
             
             {/* Показываем резюме только для соискателей */}
             {(isCandidate || isAdmin || !isAuthenticated()) && (
               <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
             )}
 
-            {isCandidate && (
+            {/* {isCandidate && (
               <a href="/notifications" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Уведомления</a>
-            )}
+            )} */}
             
             {/* Показываем размещение вакансий только для работодателей */}
             {isEmployer && (
