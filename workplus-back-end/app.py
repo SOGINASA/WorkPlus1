@@ -25,20 +25,10 @@ def create_app():
 
     # Регистрация blueprints
     from routes.auth import auth_bp
-    # from routes.admin_auth import admin_auth_bp
     from routes.jobs import jobs_bp
-    # from routes.companies import companies_bp
-    # from routes.applications import applications_bp
-    # from routes.users import users_bp
-    # from routes.analytics import analytics_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    # app.register_blueprint(admin_auth_bp, url_prefix='/api/admin/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
-    # app.register_blueprint(companies_bp, url_prefix='/api/companies')
-    # app.register_blueprint(applications_bp, url_prefix='/api/applications')
-    # app.register_blueprint(users_bp, url_prefix='/api/users')
-    # app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
 
     # Главная страница API
     @app.route('/api')
@@ -50,10 +40,6 @@ def create_app():
             'endpoints': {
                 'auth': '/api/auth',
                 'jobs': '/api/jobs',
-                'companies': '/api/companies',
-                'applications': '/api/applications',
-                'users': '/api/users',
-                'admin': '/api/admin'
             },
             'features': [
                 'Размещение вакансий',
