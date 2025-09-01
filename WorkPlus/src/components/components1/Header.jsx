@@ -45,6 +45,10 @@ const Header = () => {
             {(isCandidate || isAdmin || !isAuthenticated()) && (
               <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
             )}
+
+            {isCandidate && (
+              <a href="/notifications" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Уведомления</a>
+            )}
             
             {/* Показываем размещение вакансий только для работодателей */}
             {isEmployer && (

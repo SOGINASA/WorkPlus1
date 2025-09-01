@@ -18,6 +18,7 @@ import RegisterForm from '../src/components/auth/RegisterForm'
 import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
+import Notifications from './pages/Notifications'
 // import ResetPasswordPage from '../src/components/auth/Resetpassword';
 
 
@@ -105,6 +106,7 @@ function App() {
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/jobdetail" element={<JobDetail/>} />
+            <Route path="/notifications" element={<Notifications/>} />
             {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
 
             {/* Защищенные страницы для пользователей */}
