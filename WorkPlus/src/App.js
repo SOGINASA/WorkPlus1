@@ -16,7 +16,6 @@ import ResumeDashboard from './pages/ResumeDashboard';
 import CreateResume from './pages/CreateResume';
 import LoginForm from '../src/components/auth/LoginForm'
 import RegisterForm from '../src/components/auth/RegisterForm'
-import Profile from '../src/components/auth/ProfileForm'
 import JobDetail from './pages/JobDetail'
 import CreateJob from './pages/CreateJobPage'
 import Notifications from './pages/Notifications'
@@ -98,11 +97,6 @@ const PublicRoutes = () => {
         <Route path="/create-resume" element={
           <ProtectedRoute>
             <CreateResume />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
           </ProtectedRoute>
         } />
         <Route path="/create-job" element={
