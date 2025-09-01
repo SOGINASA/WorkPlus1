@@ -16,16 +16,15 @@ const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Функция навигации
   const handleNavigation = (path) => {
     navigate(path);
-    setIsMobileMenuOpen(false); // Закрываем мобильное меню при навигации
+    setIsMobileMenuOpen(false);
   };
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-gray-900 overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block flex-shrink-0">
         <AdminSidebar 
           isCollapsed={isSidebarCollapsed}
           currentPath={location.pathname}
@@ -42,16 +41,18 @@ const AdminLayout = ({ children }) => {
               isCollapsed={false}
               currentPath={location.pathname}
               onNavigate={handleNavigation}
+              isMobile={true}
+              onClose={() => setIsMobileMenuOpen(false)}
             />
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content Area - занимает оставшееся пространство */}
+      <div className="flex-1 flex flex-col min-w-0 bg-gray-900">
         {/* Top Bar */}
-        <div className="bg-gray-800/50 backdrop-blur-sm border-b border-yellow-400/20 px-4 py-3 flex items-center justify-between">
-          {/* Left Side - Mobile Menu Button + Collapse Button */}
+        <div className="bg-gray-800/50 backdrop-blur-sm border-b border-yellow-400/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
+          {/* Left Side */}
           <div className="flex items-center space-x-2">
             {/* Mobile Menu Button */}
             <button
@@ -77,7 +78,7 @@ const AdminLayout = ({ children }) => {
             </div>
           </div>
 
-          {/* Right Side - Search, Notifications, Profile */}
+          {/* Right Side */}
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative hidden sm:block">
@@ -107,7 +108,7 @@ const AdminLayout = ({ children }) => {
               </button>
 
               {/* Dropdown Menu */}
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                 <div className="p-3 border-b border-gray-700">
                   <p className="text-sm font-medium text-white">Алексей Иванов</p>
                   <p className="text-xs text-gray-400">admin@workplus.kz</p>
@@ -130,7 +131,6 @@ const AdminLayout = ({ children }) => {
                   <hr className="my-1 border-gray-700" />
                   <button
                     onClick={() => {
-                      // Здесь логика выхода
                       console.log('Выход из системы');
                       navigate('/login');
                     }}
@@ -145,9 +145,11 @@ const AdminLayout = ({ children }) => {
           </div>
         </div>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        {/* Page Content - заполняет оставшееся пространство */}
+        <main className="flex-1 overflow-y-auto bg-gray-900">
+          <div className="h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>
