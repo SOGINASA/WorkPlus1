@@ -1,9 +1,8 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Job, Company, User, JobApplication, Analytics
-from sqlalchemy import or_, and_, func, desc
+from sqlalchemy import or_, func, desc
 from datetime import datetime, timedelta
-import json
 
 jobs_bp = Blueprint('jobs', __name__)
 

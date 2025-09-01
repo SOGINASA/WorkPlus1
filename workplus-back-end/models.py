@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 db = SQLAlchemy()
@@ -17,7 +17,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20))
     city = db.Column(db.String(50))
-    user_type = db.Column(db.String(20), nullable=False)  # candidate, employer
+    user_type = db.Column(db.String(20), nullable=False)  # candidate, employer, admin
     
     # Профиль соискателя
     birth_date = db.Column(db.Date)
@@ -414,44 +414,6 @@ class JobApplication(db.Model):
         
         return data
 
-class Admin(db.Model):
-    """Модель администратора"""
-    __tablename__ = 'admins'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='admin')  # super_admin, admin, moderator
-    
-    # Статус
-    is_active = db.Column(db.Boolean, default=True)
-    
-    # Служебная информация
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
-    created_by = db.Column(db.Integer, db.ForeignKey('admins.id'))
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def update_last_login(self):
-        self.last_login = datetime.utcnow()
-        db.session.commit()
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'name': self.name,
-            'role': self.role,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'last_login': self.last_login.isoformat() if self.last_login else None
-        }
 
 class Settings(db.Model):
     """Модель настроек системы"""

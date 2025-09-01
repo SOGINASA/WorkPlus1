@@ -17,6 +17,7 @@ const Header = () => {
   // Проверяем тип пользователя
   const isEmployer = user && user.user_type === 'employer';
   const isCandidate = user && user.user_type === 'candidate';
+  const isAdmin = user && user.user_type === 'admin';
 
   return (
     <header className="bg-black/50 backdrop-blur-sm border-b border-yellow-400/20 sticky top-0 z-50">
@@ -41,7 +42,7 @@ const Header = () => {
             <a href="/jobs" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Вакансии</a>
             
             {/* Показываем резюме только для соискателей */}
-            {(isCandidate || !isAuthenticated()) && (
+            {(isCandidate || isAdmin || !isAuthenticated()) && (
               <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
             )}
             
@@ -49,6 +50,12 @@ const Header = () => {
             {isEmployer && (
               <a href="/create-job" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Разместить вакансию</a>
             )}
+
+            {/* ссылка на аддминпанель */}
+            {isAdmin && (
+              <a href="/admin/dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Панель администратора</a>
+            )}
+
           </nav>
 
           {/* Desktop Actions */}
@@ -107,7 +114,9 @@ const Header = () => {
                         <p className="text-sm text-yellow-400 font-medium">{user.name}</p>
                         <p className="text-xs text-gray-400">{user.email}</p>
                         <p className="text-xs text-gray-500 capitalize">
-                          {user.user_type === 'candidate' ? 'Соискатель' : 'Работодатель'}
+                          {user.user_type === 'candidate' ? 'Соискатель' : ''}
+                          {user.user_type === 'employer' ? 'Работодатель' : ''}
+                          {user.user_type === 'admin' ? 'Администратор' : ''}
                         </p>
                       </div>
                       

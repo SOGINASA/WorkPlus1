@@ -1,7 +1,5 @@
-
 import re
 from datetime import datetime, date
-
 
 
 def validate_email(email):

@@ -219,7 +219,6 @@ def login():
         return jsonify({'error': 'Неверные учетные данные'}), 401
     
     # Обновляем время последнего входа
-    from datetime import datetime
     user.last_login = datetime.utcnow()
     db.session.commit()
     

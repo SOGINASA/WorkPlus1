@@ -1,7 +1,8 @@
+from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import current_app, render_template_string
+from flask import current_app
 
 def send_email(to_email, subject, html_content, text_content=None):
     """Отправка email"""

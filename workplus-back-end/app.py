@@ -1,13 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from config import Config
-from models import db, Admin, User, Job, Company, JobApplication
+from models import db, User, Job, Company, JobApplication
 from flask_jwt_extended.exceptions import JWTExtendedException
 from werkzeug.exceptions import HTTPException
-import click
 
 # Инициализация расширений
 migrate = Migrate()
@@ -71,32 +69,25 @@ def create_app():
 
 def seed_admins():
     """Создание тестовых администраторов"""
-    if Admin.query.count() > 0:
+    if User.query.filter_by(user_type='admin').first():
+        # print(User.query.filter_by(user_type='admin'))
+        print("Тестовые администраторы уже существуют")
         return
 
-    # Супер администратор
-    super_admin = Admin(
-        name='Администратор WorkPlus',
-        email='admin@workplus.kz',
-        role='super_admin'
-    )
-    super_admin.set_password('workplus2025')
-    db.session.add(super_admin)
 
     # Обычный администратор
-    admin = Admin(
-        name='HR Менеджер',
+    admin = User(
+        name='Администратор Аддминистратович',
         email='hr@workplus.kz',
-        role='admin'
+        user_type='admin'
     )
-    admin.set_password('hrmanager123')
+    admin.set_password('admin123')
     db.session.add(admin)
 
     try:
         db.session.commit()
         print("Тестовые администраторы созданы:")
-        print("- admin@workplus.kz / workplus2025 (супер админ)")
-        print("- hr@workplus.kz / hrmanager123 (админ)")
+        print("- hr@workplus.kz / admin123 (админ)")
     except Exception as e:
         db.session.rollback()
         print(f"Ошибка при создании админов: {e}")
@@ -300,32 +291,19 @@ def create_admin():
     email = input("Email администратора: ")
     password = input("Пароль: ")
     name = input("Имя: ")
-    role = input("Роль (admin/super_admin): ") or 'admin'
 
-    if Admin.query.filter_by(email=email).first():
-        print("❌ Администратор с таким email уже существует")
+
+    if User.query.filter_by(email=email).first():
+        print("❌ Пользователь с таким email уже существует")
         return
 
-    admin = Admin(name=name, email=email, role=role)
+    admin = User(name=name, email=email, user_type='admin')
     admin.set_password(password)
 
     db.session.add(admin)
     db.session.commit()
 
     print(f"✅ Администратор {email} создан")
-
-@app.cli.command()
-@click.argument('email')
-def make_super_admin(email):
-    """Сделать пользователя супер администратором"""
-    admin = Admin.query.filter_by(email=email).first()
-    if not admin:
-        print(f"❌ Администратор {email} не найден")
-        return
-
-    admin.role = 'super_admin'
-    db.session.commit()
-    print(f"✅ {email} теперь супер администратор")
 
 if __name__ == '__main__':
     with app.app_context():
