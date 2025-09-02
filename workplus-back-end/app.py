@@ -26,9 +26,13 @@ def create_app():
     # Регистрация blueprints
     from routes.auth import auth_bp
     from routes.jobs import jobs_bp
+    from routes.employer import employer_bp
+    from routes.companies import companies_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
+    app.register_blueprint(employer_bp, url_prefix='/api/employer')
+    app.register_blueprint(companies_bp, url_prefix='/api/companies')
 
     # Главная страница API
     @app.route('/api')

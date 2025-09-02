@@ -263,8 +263,17 @@ class Job(db.Model):
         return []
     
     def set_skills_list(self, skills_list):
-        """Установить список навыков"""
-        self.skills = skills_list
+        if skills_list:
+            import json
+            if isinstance(skills_list, list):
+                self.skills = json.dumps(skills_list, ensure_ascii=False)
+            elif isinstance(skills_list, str):
+                skills_array = [skill.strip() for skill in skills_list.split(',') if skill.strip()]
+                self.skills = json.dumps(skills_array, ensure_ascii=False)
+            else:
+                self.skills = None
+        else:
+            self.skills = None
     
     def get_languages_list(self):
         """Получить список языков"""
