@@ -1,12 +1,26 @@
 // src/components/Header.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building, Menu, X, User, LogOut, Settings } from 'lucide-react';
-import { useAuth } from '../api/AuthUtils';
+import { useAuth } from '../../api/AuthUtils';
 
 const Header = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState('');
+
+  // Отслеживаем текущий путь
+  useEffect(() => {
+    setCurrentPath(window.location.pathname);
+    
+    // Слушаем изменения URL для SPA
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -19,6 +33,35 @@ const Header = () => {
   const isCandidate = user && user.user_type === 'candidate';
   const isAdmin = user && user.user_type === 'admin';
 
+  // Функция для определения активной ссылки
+  const isActiveLink = (path) => {
+    if (path === '/' && currentPath === '/') {
+      return true;
+    }
+    if (path !== '/' && currentPath.startsWith(path)) {
+      return true;
+    }
+    return false;
+  };
+
+  // Функция для получения классов ссылки
+  const getLinkClasses = (path, baseClasses = "transition-colors text-sm xl:text-base") => {
+    const isActive = isActiveLink(path);
+    return `${baseClasses} ${isActive 
+      ? 'text-yellow-400' 
+      : 'text-gray-300 hover:text-yellow-400'
+    }`;
+  };
+
+  // Функция для мобильных ссылок
+  const getMobileLinkClasses = (path) => {
+    const isActive = isActiveLink(path);
+    return `transition-colors px-2 py-1 ${isActive 
+      ? 'text-yellow-400' 
+      : 'text-gray-300 hover:text-yellow-400'
+    }`;
+  };
+
   return (
     <header className="bg-black/50 backdrop-blur-sm border-b border-yellow-400/20 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,7 +72,7 @@ const Header = () => {
               <Building className="w-5 h-5 md:w-6 md:h-6 text-black" />
             </div>
             <div>
-              <a href="/" className="block">
+              <a href="/" className="block" onClick={() => setCurrentPath('/')}>
                 <h1 className="text-lg md:text-xl font-bold text-yellow-400">WorkPlus.kz</h1>
                 <p className="text-xs text-gray-400 hidden sm:block">HR-экосистема Казахстана</p>
               </a>
@@ -38,24 +81,60 @@ const Header = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            <a href="/" className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm xl:text-base">Главная</a>
-            <a href="/jobs" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Вакансии</a>
+            <a 
+              href="/" 
+              className={getLinkClasses('/')}
+              onClick={() => setCurrentPath('/')}
+            >
+              Главная
+            </a>
+            <a 
+              href="/jobs" 
+              className={getLinkClasses('/jobs')}
+              onClick={() => setCurrentPath('/jobs')}
+            >
+              Вакансии
+            </a>
+            <a 
+              href="/notifications" 
+              className={getLinkClasses('/notifications')}
+              onClick={() => setCurrentPath('/notifications')}
+            >
+              Уведомления
+            </a>
             
             {/* Показываем резюме только для соискателей */}
             {(isCandidate || isAdmin || !isAuthenticated()) && (
-              <a href="/resume-dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Резюме</a>
+              <a 
+                href="/resume-dashboard" 
+                className={getLinkClasses('/resume-dashboard')}
+                onClick={() => setCurrentPath('/resume-dashboard')}
+              >
+                Резюме
+              </a>
             )}
             
             {/* Показываем размещение вакансий только для работодателей */}
             {isEmployer && (
-              <a href="/create-job" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Разместить вакансию</a>
+              <a 
+                href="/create-job" 
+                className={getLinkClasses('/create-job')}
+                onClick={() => setCurrentPath('/create-job')}
+              >
+                Разместить вакансию
+              </a>
             )}
 
             {/* ссылка на аддминпанель */}
             {isAdmin && (
-              <a href="/admin/dashboard" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base">Панель администратора</a>
+              <a 
+                href="/admin/dashboard" 
+                className={getLinkClasses('/admin')}
+                onClick={() => setCurrentPath('/admin/dashboard')}
+              >
+                Панель администратора
+              </a>
             )}
-
           </nav>
 
           {/* Desktop Actions */}
@@ -65,19 +144,24 @@ const Header = () => {
               <>
                 <a 
                   href="/login" 
-                  className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base"
+                  className={getLinkClasses('/login')}
+                  onClick={() => setCurrentPath('/login')}
                 >
                   Войти
                 </a>
                 <a 
                   href="/register" 
-                  className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base border border-gray-600 px-3 py-2 rounded-lg hover:border-yellow-400"
+                  className={`${getLinkClasses('/register')} border border-gray-600 px-3 py-2 rounded-lg ${
+                    isActiveLink('/register') ? 'border-yellow-400' : 'hover:border-yellow-400'
+                  }`}
+                  onClick={() => setCurrentPath('/register')}
                 >
                   Регистрация
                 </a>
                 <a 
                   href="/register" 
                   className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
+                  onClick={() => setCurrentPath('/register')}
                 >
                   Разместить вакансию
                 </a>
@@ -90,6 +174,7 @@ const Header = () => {
                   <a 
                     href="/create-job" 
                     className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
+                    onClick={() => setCurrentPath('/create-job')}
                   >
                     Разместить вакансию
                   </a>
@@ -122,8 +207,15 @@ const Header = () => {
                       
                       <a
                         href="/profile"
-                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors"
-                        onClick={() => setUserMenuOpen(false)}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          isActiveLink('/profile') 
+                            ? 'bg-gray-700 text-yellow-400' 
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+                        }`}
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setCurrentPath('/profile');
+                        }}
                       >
                         <Settings className="w-4 h-4 inline mr-2" />
                         Профиль
@@ -132,8 +224,15 @@ const Header = () => {
                       {isEmployer && (
                         <a
                           href="/admin/dashboard"
-                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            isActiveLink('/admin') 
+                              ? 'bg-gray-700 text-yellow-400' 
+                              : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+                          }`}
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setCurrentPath('/admin/dashboard');
+                          }}
                         >
                           Панель управления
                         </a>
@@ -172,25 +271,44 @@ const Header = () => {
             <div className="flex flex-col space-y-4">
               <a 
                 href="/" 
-                className="text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses('/')}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/');
+                }}
               >
                 Главная
               </a>
               <a 
                 href="/jobs" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses('/jobs')}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/jobs');
+                }}
               >
                 Вакансии
+              </a>
+              <a 
+                href="/notifications" 
+                className={getMobileLinkClasses('/notifications')}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/notifications');
+                }}
+              >
+                Уведомления
               </a>
               
               {/* Показываем резюме только для соискателей или неавторизованных */}
               {(isCandidate || !isAuthenticated()) && (
                 <a 
                   href="/resume-dashboard" 
-                  className="text-gray-300 hover:text-yellow-400 transition-colors px-2 py-1"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={getMobileLinkClasses('/resume-dashboard')}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setCurrentPath('/resume-dashboard');
+                  }}
                 >
                   Резюме
                 </a>
@@ -200,8 +318,11 @@ const Header = () => {
               {isEmployer && (
                 <a 
                   href="/create-job" 
-                  className="text-gray-300 hover:text-yellow-400 transition-colors px-2 py-1"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={getMobileLinkClasses('/create-job')}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setCurrentPath('/create-job');
+                  }}
                 >
                   Разместить вакансию
                 </a>
@@ -209,15 +330,21 @@ const Header = () => {
               
               <a 
                 href="/about" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses('/about')}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/about');
+                }}
               >
                 О нас
               </a>
               <a 
                 href="/contact" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses('/contact')}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/contact');
+                }}
               >
                 Контакты
               </a>
@@ -228,22 +355,31 @@ const Header = () => {
                   <>
                     <a
                       href="/login"
-                      className="text-gray-300 hover:text-yellow-400 transition-colors text-left px-2 py-1"
-                      onClick={() => setMobileMenuOpen(false)}
+                      className={getMobileLinkClasses('/login')}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setCurrentPath('/login');
+                      }}
                     >
                       Войти
                     </a>
                     <a
                       href="/register"
-                      className="text-gray-300 hover:text-yellow-400 transition-colors text-left px-2 py-1"
-                      onClick={() => setMobileMenuOpen(false)}
+                      className={getMobileLinkClasses('/register')}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setCurrentPath('/register');
+                      }}
                     >
                       Регистрация
                     </a>
                     <a 
                       href="/register" 
                       className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setCurrentPath('/register');
+                      }}
                     >
                       Разместить вакансию
                     </a>
@@ -261,8 +397,11 @@ const Header = () => {
 
                     <a
                       href="/profile"
-                      className="text-gray-300 hover:text-yellow-400 transition-colors text-left px-2 py-1"
-                      onClick={() => setMobileMenuOpen(false)}
+                      className={getMobileLinkClasses('/profile')}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setCurrentPath('/profile');
+                      }}
                     >
                       <Settings className="w-4 h-4 inline mr-2" />
                       Профиль
@@ -272,15 +411,21 @@ const Header = () => {
                       <>
                         <a
                           href="/admin/dashboard"
-                          className="text-gray-300 hover:text-yellow-400 transition-colors text-left px-2 py-1"
-                          onClick={() => setMobileMenuOpen(false)}
+                          className={getMobileLinkClasses('/admin')}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setCurrentPath('/admin/dashboard');
+                          }}
                         >
                           Панель управления
                         </a>
                         <a 
                           href="/create-job" 
                           className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center"
-                          onClick={() => setMobileMenuOpen(false)}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setCurrentPath('/create-job');
+                          }}
                         >
                           Разместить вакансию
                         </a>

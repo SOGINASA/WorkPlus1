@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Clock, Building, ChevronRight, Filter, Star, Briefcase, DollarSign, Calendar, Users, Loader } from 'lucide-react';
 
 const JobsPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -168,10 +170,17 @@ useEffect(() => {
     }
   };
 
+  // Функция для перехода на страницу деталей вакансии
+  const handleJobClick = (jobId) => {
+    navigate(`/jobdetail?id=${jobId}`);
+  };
+
   // Функция для подачи заявки на вакансию
-  const handleApplyJob = async (jobId) => {
+  const handleApplyJob = async (e, jobId) => {
+    e.stopPropagation(); // Предотвращаем всплытие события клика
+    
     try {
-      const token = localStorage.getItem('access_token'); // Предполагаем, что токен хранится в localStorage
+      const token = localStorage.getItem('access_token');
       
       if (!token) {
         alert('Для подачи заявки необходимо войти в систему');
@@ -390,7 +399,11 @@ useEffect(() => {
           {/* Jobs Grid */}
           <div className="space-y-6">
             {jobs.map((job) => (
-              <div key={job.id} className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-4 md:p-6 hover:border-yellow-400/30 transition-all group cursor-pointer">
+              <div 
+                key={job.id} 
+                className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-4 md:p-6 hover:border-yellow-400/30 transition-all group cursor-pointer"
+                onClick={() => handleJobClick(job.id)}
+              >
                 <div className="flex flex-col md:flex-row md:items-start gap-4">
                   {/* Company Logo */}
                   <div className="flex-shrink-0">
@@ -400,7 +413,7 @@ useEffect(() => {
                   </div>
 
                   {/* Job Info */}
-                  <a className="flex-grow min-w-0" href='#adout_job'>
+                  <div className="flex-grow min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-2">
@@ -489,14 +502,14 @@ useEffect(() => {
                         </div>
 
                         <button 
-                          onClick={() => handleApplyJob(job.id)}
+                          onClick={(e) => handleApplyJob(e, job.id)}
                           className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
                         >
                           Откликнуться
                         </button>
                       </div>
                     </div>
-                  </a>
+                  </div>
 
                   {/* Arrow */}
                   <div className="flex-shrink-0 hidden md:block">

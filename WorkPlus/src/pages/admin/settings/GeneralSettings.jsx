@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
-  Settings,
+  Shield,
   Globe,
   Clock,
   Bell,
-  Shield,
   Eye,
   Mail,
   Phone,
@@ -105,7 +104,6 @@ const SelectField = ({ label, value, onChange, options, required = false, descri
 
 const SocialMediaCard = ({ platform, username, connected, onConnect, onDisconnect, onEdit }) => {
   const getPlatformIcon = (platform) => {
-    // In a real app, you'd use actual social media icons
     return <Globe className="w-5 h-5" />;
   };
 
@@ -169,33 +167,24 @@ const SocialMediaCard = ({ platform, username, connected, onConnect, onDisconnec
 
 const GeneralSettings = () => {
   const [settings, setSettings] = useState({
-    // Company Information
     companyName: 'WorkPlus Kazakhstan',
     companyDescription: 'HR-экосистема с мультиканальной дистрибуцией для быстрого и эффективного подбора персонала',
     website: 'https://workplus.kz',
     email: 'info@workplus.kz',
     phone: '+7 777 123 4567',
     address: 'г. Петропавловск, ул. Конституции Казахстана, 25',
-    
-    // Platform Settings
     timezone: 'Asia/Almaty',
     language: 'ru',
     currency: 'KZT',
     dateFormat: 'DD.MM.YYYY',
-    
-    // Notifications
     emailNotifications: true,
     smsNotifications: false,
     pushNotifications: true,
     marketingEmails: false,
-    
-    // Privacy & Security
     profileVisibility: 'public',
     dataRetention: '24',
     twoFactorAuth: true,
     sessionTimeout: '120',
-    
-    // Social Media
     autoPosting: true,
     crossPosting: true,
     socialAnalytics: true
@@ -218,7 +207,6 @@ const GeneralSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       setSaveStatus('success');
       setTimeout(() => setSaveStatus(null), 3000);
@@ -250,7 +238,7 @@ const GeneralSettings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="bg-gray-900 min-h-screen">
       {/* Header */}
       <div className="bg-gray-800/50 backdrop-blur-sm border-b border-yellow-400/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
