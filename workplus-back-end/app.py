@@ -14,7 +14,7 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, origins=['http://localhost:3000','https://workplus-one.vercel.app'],
+    CORS(app, origins=['http://localhost:3000','https://workplus-fork.vercel.app/'],
         allow_headers=['Content-Type', 'Authorization'],
         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
