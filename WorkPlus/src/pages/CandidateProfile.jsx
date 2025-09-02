@@ -11,6 +11,7 @@ const CandidateProfile = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [responsesFilter, setResponsesFilter] = useState('all');
+  const [originalData, setOriginalData] = useState(null);
   
   const [profileData, setProfileData] = useState({
     // Personal Info
@@ -64,7 +65,7 @@ const CandidateProfile = () => {
   });
 
   // Мои отклики на вакансии
-  const [myApplications] = useState([
+  const [myApplications, setMyApplications] = useState([
     {
       id: 1,
       companyName: 'ТОО "Техномир"',
@@ -120,7 +121,7 @@ const CandidateProfile = () => {
   ]);
 
   // Кто откликнулся на мое резюме
-  const [resumeResponses] = useState([
+  const [resumeResponses, setResumeResponses] = useState([
     {
       id: 1,
       companyName: 'ТОО "Евразия Трейд"',
@@ -165,6 +166,7 @@ const CandidateProfile = () => {
     }
   ]);
 
+  // Функции управления профилем
   const handleInputChange = (field, value) => {
     setProfileData(prev => ({
       ...prev,
@@ -172,15 +174,200 @@ const CandidateProfile = () => {
     }));
   };
 
+  const startEditing = () => {
+    setOriginalData({...profileData});
+    setIsEditing(true);
+  };
+
   const handleSave = () => {
     setIsEditing(false);
+    setOriginalData(null);
+    alert('Профиль успешно сохранен!');
     console.log('Saving profile:', profileData);
   };
 
   const handleCancel = () => {
+    if (originalData) {
+      setProfileData(originalData);
+    }
     setIsEditing(false);
+    setOriginalData(null);
   };
 
+  const uploadPhoto = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5000000) {
+        alert('Размер файла не должен превышать 5 МБ');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfileData(prev => ({
+          ...prev,
+          avatar: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const shareProfile = () => {
+    const profileUrl = `${window.location.origin}/profile/${profileData.firstName}-${profileData.lastName}`;
+    navigator.clipboard.writeText(profileUrl).then(() => {
+      alert('Ссылка на профиль скопирована в буфер обмена');
+    }).catch(() => {
+      prompt('Скопируйте ссылку на профиль:', profileUrl);
+    });
+  };
+
+  const downloadResume = () => {
+    const resumeData = {
+      name: `${profileData.firstName} ${profileData.lastName}`,
+      position: profileData.desiredPosition,
+      contact: {
+        email: profileData.email,
+        phone: profileData.phone,
+        city: profileData.city
+      },
+      about: profileData.about,
+      skills: profileData.skills,
+      experience: profileData.workExperience,
+      education: profileData.education
+    };
+    
+    const dataStr = JSON.stringify(resumeData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `resume-${profileData.firstName}-${profileData.lastName}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  // Функции управления навыками
+  const addSkill = () => {
+    const newSkill = prompt('Введите новый навык:');
+    if (newSkill && newSkill.trim()) {
+      const trimmedSkill = newSkill.trim();
+      if (!profileData.skills.includes(trimmedSkill)) {
+        setProfileData(prev => ({
+          ...prev,
+          skills: [...prev.skills, trimmedSkill]
+        }));
+      } else {
+        alert('Этот навык уже добавлен');
+      }
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    if (confirm(`Удалить навык "${skillToRemove}"?`)) {
+      setProfileData(prev => ({
+        ...prev,
+        skills: prev.skills.filter(skill => skill !== skillToRemove)
+      }));
+    }
+  };
+
+  // Функции управления образованием
+  const addEducation = () => {
+    const newEducation = {
+      id: Date.now(),
+      institution: 'Новое учебное заведение',
+      specialty: '',
+      period: '',
+      type: 'Среднее специальное'
+    };
+    setProfileData(prev => ({
+      ...prev,
+      education: [...prev.education, newEducation]
+    }));
+  };
+
+  const removeEducation = (id) => {
+    if (confirm('Удалить запись об образовании?')) {
+      setProfileData(prev => ({
+        ...prev,
+        education: prev.education.filter(edu => edu.id !== id)
+      }));
+    }
+  };
+
+  const updateEducation = (id, field, value) => {
+    setProfileData(prev => ({
+      ...prev,
+      education: prev.education.map(edu => 
+        edu.id === id ? { ...edu, [field]: value } : edu
+      )
+    }));
+  };
+
+  // Функции управления опытом работы
+  const addWorkExperience = () => {
+    const newWork = {
+      id: Date.now(),
+      company: 'Новая компания',
+      position: '',
+      period: '',
+      description: ''
+    };
+    setProfileData(prev => ({
+      ...prev,
+      workExperience: [...prev.workExperience, newWork]
+    }));
+  };
+
+  const removeWorkExperience = (id) => {
+    if (confirm('Удалить запись об опыте работы?')) {
+      setProfileData(prev => ({
+        ...prev,
+        workExperience: prev.workExperience.filter(work => work.id !== id)
+      }));
+    }
+  };
+
+  const updateWorkExperience = (id, field, value) => {
+    setProfileData(prev => ({
+      ...prev,
+      workExperience: prev.workExperience.map(work => 
+        work.id === id ? { ...work, [field]: value } : work
+      )
+    }));
+  };
+
+  // Функции для работы с откликами на резюме
+  const handleResponseAction = (responseId, action) => {
+    const response = resumeResponses.find(r => r.id === responseId);
+    if (!response) return;
+
+    const actionText = action === 'accept' ? 'принять' : 'отклонить';
+    const confirmMessage = `Вы действительно хотите ${actionText} предложение от "${response.companyName}"?`;
+    
+    if (confirm(confirmMessage)) {
+      const newStatus = action === 'accept' ? 'accepted' : 'declined';
+      
+      setResumeResponses(prev => prev.map(r => 
+        r.id === responseId ? { ...r, status: newStatus } : r
+      ));
+      
+      alert(`Предложение ${action === 'accept' ? 'принято' : 'отклонено'}!`);
+    }
+  };
+
+  const withdrawApplication = (applicationId) => {
+    const application = myApplications.find(app => app.id === applicationId);
+    if (!application) return;
+
+    if (confirm(`Отозвать заявку на вакансию "${application.vacancyTitle}" в компании "${application.companyName}"?`)) {
+      setMyApplications(prev => prev.filter(app => app.id !== applicationId));
+      alert('Заявка отозвана');
+    }
+  };
+
+  // Вспомогательные функции
   const getApplicationStatusColor = (status) => {
     switch (status) {
       case 'new': return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
@@ -235,8 +422,8 @@ const CandidateProfile = () => {
 
   const profileStats = [
     { label: 'Просмотры резюме', value: '234', trend: '+12%' },
-    { label: 'Мои отклики', value: '8', trend: '+3' },
-    { label: 'Отклики на резюме', value: '5', trend: '+2' },
+    { label: 'Мои отклики', value: myApplications.length.toString(), trend: `+${myApplications.filter(app => app.status === 'new').length}` },
+    { label: 'Отклики на резюме', value: resumeResponses.length.toString(), trend: `+${resumeResponses.filter(r => r.status === 'new').length}` },
     { label: 'Рейтинг', value: '4.8', trend: <Star className="w-4 h-4 text-yellow-400 fill-current" /> }
   ];
 
@@ -249,13 +436,29 @@ const CandidateProfile = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 md:mb-8">
           <div className="flex items-center mb-4 lg:mb-0">
             <div className="relative">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-xl md:text-2xl">
-                {profileData.firstName[0]}{profileData.lastName[0]}
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-xl md:text-2xl overflow-hidden">
+                {profileData.avatar ? (
+                  <img src={profileData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  `${profileData.firstName[0]}${profileData.lastName[0]}`
+                )}
               </div>
               {isEditing && (
-                <button className="absolute -bottom-1 -right-1 w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center hover:bg-yellow-300 transition-colors">
-                  <Camera className="w-3 h-3 md:w-4 md:h-4 text-black" />
-                </button>
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={uploadPhoto}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute -bottom-1 -right-1 w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center hover:bg-yellow-300 transition-colors cursor-pointer"
+                  >
+                    <Camera className="w-3 h-3 md:w-4 md:h-4 text-black" />
+                  </label>
+                </>
               )}
             </div>
             <div className="ml-4">
@@ -272,13 +475,29 @@ const CandidateProfile = () => {
 
           <div className="flex flex-wrap gap-2">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-300 transition-colors flex items-center"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Редактировать
-              </button>
+              <>
+                <button
+                  onClick={startEditing}
+                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-300 transition-colors flex items-center"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Редактировать
+                </button>
+                <button
+                  onClick={shareProfile}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-500 transition-colors flex items-center"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Поделиться
+                </button>
+                <button
+                  onClick={downloadResume}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-500 transition-colors flex items-center"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Скачать резюме
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -427,29 +646,6 @@ const CandidateProfile = () => {
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Professional Information */}
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                  <Briefcase className="w-5 h-5 mr-2 text-yellow-400" />
-                  Профессиональная информация
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Текущая должность</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={profileData.currentPosition}
-                        onChange={(e) => handleInputChange('currentPosition', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      />
-                    ) : (
-                      <p className="text-white">{profileData.currentPosition}</p>
-                    )}
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Желаемая должность</label>
                     {isEditing ? (
@@ -498,6 +694,215 @@ const CandidateProfile = () => {
                 </div>
               </div>
 
+              {/* Skills */}
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Award className="w-5 h-5 mr-2 text-yellow-400" />
+                    Навыки
+                  </h3>
+                  {isEditing && (
+                    <button
+                      onClick={addSkill}
+                      className="px-3 py-1 bg-yellow-400 text-black rounded-lg text-sm hover:bg-yellow-300 transition-colors flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Добавить
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {profileData.skills.map((skill, index) => (
+                    <div key={index} className="bg-yellow-400/10 border border-yellow-400/30 rounded-lg px-3 py-1 flex items-center">
+                      <span className="text-yellow-400 text-sm">{skill}</span>
+                      {isEditing && (
+                        <button
+                          onClick={() => removeSkill(skill)}
+                          className="ml-2 text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {profileData.skills.length === 0 && (
+                    <p className="text-gray-400 text-sm">Навыки не добавлены</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Education */}
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <BookOpen className="w-5 h-5 mr-2 text-yellow-400" />
+                    Образование
+                  </h3>
+                  {isEditing && (
+                    <button
+                      onClick={addEducation}
+                      className="px-3 py-1 bg-yellow-400 text-black rounded-lg text-sm hover:bg-yellow-300 transition-colors flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Добавить
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  {profileData.education.map((edu) => (
+                    <div key={edu.id} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          {isEditing ? (
+                            <div className="space-y-3">
+                              <input
+                                type="text"
+                                value={edu.institution}
+                                onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
+                                placeholder="Учебное заведение"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                              <input
+                                type="text"
+                                value={edu.specialty}
+                                onChange={(e) => updateEducation(edu.id, 'specialty', e.target.value)}
+                                placeholder="Специальность"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                              <div className="grid grid-cols-2 gap-3">
+                                <input
+                                  type="text"
+                                  value={edu.period}
+                                  onChange={(e) => updateEducation(edu.id, 'period', e.target.value)}
+                                  placeholder="Период обучения"
+                                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                />
+                                <select
+                                  value={edu.type}
+                                  onChange={(e) => updateEducation(edu.id, 'type', e.target.value)}
+                                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                >
+                                  <option value="Среднее">Среднее</option>
+                                  <option value="Среднее специальное">Среднее специальное</option>
+                                  <option value="Высшее">Высшее</option>
+                                  <option value="Магистратура">Магистратура</option>
+                                  <option value="Аспирантура">Аспирантура</option>
+                                </select>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <h4 className="text-lg font-semibold text-white">{edu.institution}</h4>
+                              <p className="text-gray-300">{edu.specialty}</p>
+                              <div className="flex items-center text-sm text-gray-400 mt-2">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                {edu.period} • {edu.type}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {isEditing && (
+                          <button
+                            onClick={() => removeEducation(edu.id)}
+                            className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {profileData.education.length === 0 && (
+                    <p className="text-gray-400 text-sm">Образование не добавлено</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Work Experience */}
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Briefcase className="w-5 h-5 mr-2 text-yellow-400" />
+                    Опыт работы
+                  </h3>
+                  {isEditing && (
+                    <button
+                      onClick={addWorkExperience}
+                      className="px-3 py-1 bg-yellow-400 text-black rounded-lg text-sm hover:bg-yellow-300 transition-colors flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Добавить
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  {profileData.workExperience.map((work) => (
+                    <div key={work.id} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          {isEditing ? (
+                            <div className="space-y-3">
+                              <input
+                                type="text"
+                                value={work.company}
+                                onChange={(e) => updateWorkExperience(work.id, 'company', e.target.value)}
+                                placeholder="Компания"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                              <input
+                                type="text"
+                                value={work.position}
+                                onChange={(e) => updateWorkExperience(work.id, 'position', e.target.value)}
+                                placeholder="Должность"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                              <input
+                                type="text"
+                                value={work.period}
+                                onChange={(e) => updateWorkExperience(work.id, 'period', e.target.value)}
+                                placeholder="Период работы"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                              <textarea
+                                value={work.description}
+                                onChange={(e) => updateWorkExperience(work.id, 'description', e.target.value)}
+                                placeholder="Описание обязанностей"
+                                rows={3}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <h4 className="text-lg font-semibold text-white">{work.position}</h4>
+                              <p className="text-gray-300 flex items-center">
+                                <Building className="w-4 h-4 mr-2 text-gray-400" />
+                                {work.company}
+                              </p>
+                              <div className="flex items-center text-sm text-gray-400 mt-2 mb-3">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                {work.period}
+                              </div>
+                              <p className="text-gray-300 text-sm">{work.description}</p>
+                            </>
+                          )}
+                        </div>
+                        {isEditing && (
+                          <button
+                            onClick={() => removeWorkExperience(work.id)}
+                            className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {profileData.workExperience.length === 0 && (
+                    <p className="text-gray-400 text-sm">Опыт работы не добавлен</p>
+                  )}
+                </div>
+              </div>
+
               {/* About */}
               <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-white mb-4">О себе</h3>
@@ -506,10 +911,11 @@ const CandidateProfile = () => {
                     value={profileData.about}
                     onChange={(e) => handleInputChange('about', e.target.value)}
                     rows={4}
+                    placeholder="Расскажите о себе, своих достижениях и целях"
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   />
                 ) : (
-                  <p className="text-gray-300">{profileData.about}</p>
+                  <p className="text-gray-300">{profileData.about || 'Информация не заполнена'}</p>
                 )}
               </div>
             </>
@@ -518,7 +924,7 @@ const CandidateProfile = () => {
           {activeTab === 'applications' && (
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-white mb-4 sm:mb-0">Мои отклики</h3>
+                <h3 className="text-xl font-semibold text-white mb-4 sm:mb-0">Мои отклики ({myApplications.length})</h3>
                 <div className="flex items-center">
                   <Filter className="w-4 h-4 mr-2 text-gray-400" />
                   <select
@@ -536,126 +942,165 @@ const CandidateProfile = () => {
               </div>
 
               <div className="space-y-4">
-                {filteredApplications.map((application) => (
-                  <div key={application.id} className="bg-gray-700/30 border border-gray-600 rounded-xl p-4 hover:bg-gray-700/50 transition-colors">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="text-lg font-semibold text-white mb-1">{application.vacancyTitle}</h4>
-                            <p className="text-gray-300 flex items-center">
-                              <Building className="w-4 h-4 mr-2 text-gray-400" />
-                              {application.companyName}
-                            </p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getApplicationStatusColor(application.status)}`}>
-                            {getApplicationStatusText(application.status)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-3">
-                          <span className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            {application.salary} ₸
-                          </span>
-                          <span className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {application.location}
-                          </span>
-                          <span className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            Подано: {new Date(application.appliedDate).toLocaleDateString('ru-RU')}
-                          </span>
-                        </div>
-
-                        {application.response && (
-                          <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-3 mb-3">
-                            <div className="flex items-center mb-2">
-                              <MessageSquare className="w-4 h-4 mr-2 text-yellow-400" />
-                              <span className="text-sm text-gray-300">
-                                Ответ от {new Date(application.responseDate).toLocaleDateString('ru-RU')}
-                              </span>
+                {filteredApplications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400">
+                      {responsesFilter === 'all' 
+                        ? 'У вас пока нет откликов на вакансии' 
+                        : `Нет откликов с статусом "${getApplicationStatusText(responsesFilter)}"`
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  filteredApplications.map((application) => (
+                    <div key={application.id} className="bg-gray-700/30 border border-gray-600 rounded-xl p-4 hover:bg-gray-700/50 transition-colors">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="text-lg font-semibold text-white mb-1">{application.vacancyTitle}</h4>
+                              <p className="text-gray-300 flex items-center">
+                                <Building className="w-4 h-4 mr-2 text-gray-400" />
+                                {application.companyName}
+                              </p>
                             </div>
-                            <p className="text-white text-sm">{application.response}</p>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getApplicationStatusColor(application.status)}`}>
+                                {getApplicationStatusText(application.status)}
+                              </span>
+                              {application.status === 'new' && (
+                                <button
+                                  onClick={() => withdrawApplication(application.id)}
+                                  className="text-red-400 hover:text-red-300 transition-colors"
+                                  title="Отозвать заявку"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        )}
+                          
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-3">
+                            <span className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              {application.salary} ₸
+                            </span>
+                            <span className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              {application.location}
+                            </span>
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              Подано: {new Date(application.appliedDate).toLocaleDateString('ru-RU')}
+                            </span>
+                          </div>
+
+                          {application.response && (
+                            <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-3 mb-3">
+                              <div className="flex items-center mb-2">
+                                <MessageSquare className="w-4 h-4 mr-2 text-yellow-400" />
+                                <span className="text-sm text-gray-300">
+                                  Ответ от {new Date(application.responseDate).toLocaleDateString('ru-RU')}
+                                </span>
+                              </div>
+                              <p className="text-white text-sm">{application.response}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
 
           {activeTab === 'responses' && (
             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-6">Отклики на мое резюме</h3>
+              <h3 className="text-xl font-semibold text-white mb-6">Отклики на мое резюме ({resumeResponses.length})</h3>
               
               <div className="space-y-4">
-                {resumeResponses.map((response) => (
-                  <div key={response.id} className="bg-gray-700/30 border border-gray-600 rounded-xl p-4 hover:bg-gray-700/50 transition-colors">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start">
-                            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mr-3">
-                              <Building className="w-6 h-6 text-yellow-400" />
-                            </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-white mb-1">{response.position}</h4>
-                              <p className="text-gray-300 mb-1">{response.companyName}</p>
-                              <div className="flex items-center">
-                                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                                <span className="text-sm text-gray-400">{response.companyRating}</span>
+                {resumeResponses.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Heart className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400">Пока нет откликов на ваше резюме</p>
+                    <p className="text-gray-500 text-sm mt-2">Убедитесь, что ваш профиль публичный и заполнен полностью</p>
+                  </div>
+                ) : (
+                  resumeResponses.map((response) => (
+                    <div key={response.id} className="bg-gray-700/30 border border-gray-600 rounded-xl p-4 hover:bg-gray-700/50 transition-colors">
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start">
+                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mr-3">
+                                <Building className="w-6 h-6 text-yellow-400" />
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-semibold text-white mb-1">{response.position}</h4>
+                                <p className="text-gray-300 mb-1">{response.companyName}</p>
+                                <div className="flex items-center">
+                                  <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+                                  <span className="text-sm text-gray-400">{response.companyRating}</span>
+                                </div>
                               </div>
                             </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getResponseStatusColor(response.status)}`}>
+                              {getResponseStatusText(response.status)}
+                            </span>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getResponseStatusColor(response.status)}`}>
-                            {getResponseStatusText(response.status)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-3">
-                          <span className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            {response.salary} ₸
-                          </span>
-                          <span className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {response.location}
-                          </span>
-                          <span className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(response.contactDate).toLocaleDateString('ru-RU')}
-                          </span>
-                        </div>
+                          
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-3">
+                            <span className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              {response.salary} ₸
+                            </span>
+                            <span className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              {response.location}
+                            </span>
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              {new Date(response.contactDate).toLocaleDateString('ru-RU')}
+                            </span>
+                          </div>
 
-                        <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-3 mb-3">
-                          <p className="text-white text-sm mb-2">{response.message}</p>
-                          <div className="flex items-center text-sm text-gray-400">
-                            <User className="w-4 h-4 mr-2" />
-                            {response.contactPerson}
-                            <Phone className="w-4 h-4 ml-4 mr-1" />
-                            {response.phone}
+                          <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-3 mb-3">
+                            <p className="text-white text-sm mb-2">{response.message}</p>
+                            <div className="flex items-center text-sm text-gray-400">
+                              <User className="w-4 h-4 mr-2" />
+                              {response.contactPerson}
+                              <Phone className="w-4 h-4 ml-4 mr-1" />
+                              <a href={`tel:${response.phone}`} className="text-yellow-400 hover:text-yellow-300">
+                                {response.phone}
+                              </a>
+                            </div>
                           </div>
-                        </div>
 
-                        {response.status === 'new' && (
-                          <div className="flex flex-wrap gap-2">
-                            <button className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-400 transition-colors flex items-center">
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Принять
-                            </button>
-                            <button className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-400 transition-colors flex items-center">
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Отклонить
-                            </button>
-                          </div>
-                        )}
+                          {response.status === 'new' && (
+                            <div className="flex flex-wrap gap-2">
+                              <button 
+                                onClick={() => handleResponseAction(response.id, 'accept')}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-400 transition-colors flex items-center"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Принять
+                              </button>
+                              <button 
+                                onClick={() => handleResponseAction(response.id, 'decline')}
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-400 transition-colors flex items-center"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Отклонить
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -668,7 +1113,7 @@ const CandidateProfile = () => {
                 <div>
                   <h4 className="text-lg font-medium text-white mb-4">Приватность</h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-4 bg-gray-700/30 border border-gray-600 rounded-lg">
                       <div>
                         <p className="text-white font-medium">Публичный профиль</p>
                         <p className="text-gray-400 text-sm">Разрешить работодателям находить мое резюме</p>
@@ -692,7 +1137,7 @@ const CandidateProfile = () => {
                 <div>
                   <h4 className="text-lg font-medium text-white mb-4">Уведомления</h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-4 bg-gray-700/30 border border-gray-600 rounded-lg">
                       <div>
                         <p className="text-white font-medium">Email уведомления</p>
                         <p className="text-gray-400 text-sm">Получать уведомления на email</p>
@@ -711,7 +1156,7 @@ const CandidateProfile = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-4 bg-gray-700/30 border border-gray-600 rounded-lg">
                       <div>
                         <p className="text-white font-medium">SMS уведомления</p>
                         <p className="text-gray-400 text-sm">Получать уведомления по SMS</p>
@@ -730,7 +1175,7 @@ const CandidateProfile = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-4 bg-gray-700/30 border border-gray-600 rounded-lg">
                       <div>
                         <p className="text-white font-medium">Уведомления о вакансиях</p>
                         <p className="text-gray-400 text-sm">Получать подходящие вакансии</p>
@@ -748,6 +1193,23 @@ const CandidateProfile = () => {
                         />
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-700 pt-6">
+                  <h4 className="text-lg font-medium text-white mb-4">Действия с аккаунтом</h4>
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => {
+                        if (confirm('Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.')) {
+                          alert('Функция удаления аккаунта будет реализована в следующих версиях');
+                        }
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors flex items-center"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Удалить аккаунт
+                    </button>
                   </div>
                 </div>
               </div>

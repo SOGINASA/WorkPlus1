@@ -9,15 +9,9 @@ const Header = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
 
-  // Отслеживаем текущий путь
   useEffect(() => {
     setCurrentPath(window.location.pathname);
-    
-    // Слушаем изменения URL для SPA
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    
+    const handlePopState = () => setCurrentPath(window.location.pathname);
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -33,18 +27,24 @@ const Header = () => {
   const isCandidate = user && user.user_type === 'candidate';
   const isAdmin = user && user.user_type === 'admin';
 
-  // Функция для определения активной ссылки
+  // 🔹 Роуты профиля можно централизованно хранить тут
+  const profileRoutes = {
+    candidate: '/candidate-profile',
+    employer: '/employer-profile',
+  };
+
+  const getProfilePath = () => {
+    if (!user) return '/login';
+    return profileRoutes[user.user_type] || '/profile';
+  };
+
+  // Проверка активной ссылки
   const isActiveLink = (path) => {
-    if (path === '/' && currentPath === '/') {
-      return true;
-    }
-    if (path !== '/' && currentPath.startsWith(path)) {
-      return true;
-    }
+    if (path === '/' && currentPath === '/') return true;
+    if (path !== '/' && currentPath.startsWith(path)) return true;
     return false;
   };
 
-  // Функция для получения классов ссылки
   const getLinkClasses = (path, baseClasses = "transition-colors text-sm xl:text-base") => {
     const isActive = isActiveLink(path);
     return `${baseClasses} ${isActive 
@@ -53,7 +53,6 @@ const Header = () => {
     }`;
   };
 
-  // Функция для мобильных ссылок
   const getMobileLinkClasses = (path) => {
     const isActive = isActiveLink(path);
     return `transition-colors px-2 py-1 ${isActive 
@@ -194,59 +193,59 @@ const Header = () => {
 
                   {/* Выпадающее меню пользователя */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
-                      <div className="px-4 py-2 border-b border-gray-700">
-                        <p className="text-sm text-yellow-400 font-medium">{user.name}</p>
-                        <p className="text-xs text-gray-400">{user.email}</p>
-                        <p className="text-xs text-gray-500 capitalize">
-                          {user.user_type === 'candidate' ? 'Соискатель' : ''}
-                          {user.user_type === 'employer' ? 'Работодатель' : ''}
-                          {user.user_type === 'admin' ? 'Администратор' : ''}
-                        </p>
-                      </div>
-                      
-                      <a
-                        href="/profile"
-                        className={`block px-4 py-2 text-sm transition-colors ${
-                          isActiveLink('/profile') 
-                            ? 'bg-gray-700 text-yellow-400' 
-                            : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
-                        }`}
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          setCurrentPath('/profile');
-                        }}
-                      >
-                        <Settings className="w-4 h-4 inline mr-2" />
-                        Профиль
-                      </a>
+        <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
+          <div className="px-4 py-2 border-b border-gray-700">
+            <p className="text-sm text-yellow-400 font-medium">{user.name}</p>
+            <p className="text-xs text-gray-400">{user.email}</p>
+            <p className="text-xs text-gray-500 capitalize">
+              {user.user_type === 'candidate' && 'Соискатель'}
+              {user.user_type === 'employer' && 'Работодатель'}
+              {user.user_type === 'admin' && 'Администратор'}
+            </p>
+          </div>
+          
+          <a
+            href={getProfilePath()}
+            className={`block px-4 py-2 text-sm transition-colors ${
+              isActiveLink(getProfilePath()) 
+                ? 'bg-gray-700 text-yellow-400' 
+                : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+            }`}
+            onClick={() => {
+              setUserMenuOpen(false);
+              setCurrentPath(getProfilePath());
+            }}
+          >
+            <Settings className="w-4 h-4 inline mr-2" />
+            Профиль
+          </a>
 
-                      {isEmployer && (
-                        <a
-                          href="/admin/dashboard"
-                          className={`block px-4 py-2 text-sm transition-colors ${
-                            isActiveLink('/admin') 
-                              ? 'bg-gray-700 text-yellow-400' 
-                              : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
-                          }`}
-                          onClick={() => {
-                            setUserMenuOpen(false);
-                            setCurrentPath('/admin/dashboard');
-                          }}
-                        >
-                          Панель управления
-                        </a>
-                      )}
+          {isEmployer && (
+            <a
+              href="/employer/dashboard"
+              className={`block px-4 py-2 text-sm transition-colors ${
+                isActiveLink('/employer/dashboard') 
+                  ? 'bg-gray-700 text-yellow-400' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+              }`}
+              onClick={() => {
+                setUserMenuOpen(false);
+                setCurrentPath('/employer/dashboard');
+              }}
+            >
+              Панель управления
+            </a>
+          )}
 
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4 inline mr-2" />
-                        Выйти
-                      </button>
-                    </div>
-                  )}
+          <button
+            onClick={handleLogout}
+            className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
+          >
+            <LogOut className="w-4 h-4 inline mr-2" />
+            Выйти
+          </button>
+        </div>
+      )}
                 </div>
               </>
             )}
@@ -396,16 +395,17 @@ const Header = () => {
                     </div>
 
                     <a
-                      href="/profile"
-                      className={getMobileLinkClasses('/profile')}
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setCurrentPath('/profile');
+                     href={getProfilePath()}
+                     className={getMobileLinkClasses(getProfilePath())}
+                     onClick={() => {
+                     setMobileMenuOpen(false);
+                     setCurrentPath(getProfilePath());
                       }}
                     >
                       <Settings className="w-4 h-4 inline mr-2" />
-                      Профиль
+                     Профиль
                     </a>
+
 
                     {isEmployer && (
                       <>

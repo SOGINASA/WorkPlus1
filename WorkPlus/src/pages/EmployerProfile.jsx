@@ -4,13 +4,17 @@ import {
   Edit3, Save, X, Plus, Trash2, Users, Briefcase, Calendar, 
   Star, ChevronDown, FileText, Eye, Download, Filter,
   CheckCircle, XCircle, Clock, User, MessageSquare, Search,
-  TrendingUp, Award, Target
+  TrendingUp, Award, Target, Play, Pause, MoreVertical,
+  Send, Bell, Shield, Settings
 } from 'lucide-react';
 
 const EmployerProfile = () => {
   const [activeTab, setActiveTab] = useState('company');
   const [isEditing, setIsEditing] = useState(false);
   const [applicantsFilter, setApplicantsFilter] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('');
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
   
   const [profileData, setProfileData] = useState({
     // Company Info
@@ -38,7 +42,7 @@ const EmployerProfile = () => {
     autoReply: true
   });
 
-  const [vacancies] = useState([
+  const [vacancies, setVacancies] = useState([
     {
       id: 1,
       title: 'Продавец-консультант',
@@ -74,7 +78,7 @@ const EmployerProfile = () => {
     }
   ]);
 
-  const [applicants] = useState([
+  const [applicants, setApplicants] = useState([
     {
       id: 1,
       name: 'Алексей Иванов',
@@ -154,11 +158,104 @@ const EmployerProfile = () => {
 
   const handleSave = () => {
     setIsEditing(false);
-    console.log('Saving profile:', profileData);
+    setShowModal(true);
+    setModalType('success');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+  };
+
+  const handleCreateVacancy = () => {
+    setShowModal(true);
+    setModalType('createVacancy');
+  };
+
+  const handleSearchCandidates = () => {
+    setShowModal(true);
+    setModalType('searchCandidates');
+  };
+
+  const handleShowAnalytics = () => {
+    setShowModal(true);
+    setModalType('analytics');
+  };
+
+  const handleEditVacancy = (vacancyId) => {
+    setShowModal(true);
+    setModalType('editVacancy');
+  };
+
+  const handleViewVacancy = (vacancyId) => {
+    setShowModal(true);
+    setModalType('viewVacancy');
+  };
+
+  const toggleVacancyStatus = (vacancyId) => {
+    setVacancies(prev => prev.map(vacancy => 
+      vacancy.id === vacancyId 
+        ? { ...vacancy, status: vacancy.status === 'active' ? 'paused' : 'active' }
+        : vacancy
+    ));
+    setShowModal(true);
+    setModalType('toggleStatus');
+  };
+
+  const handleApplicantAction = (applicant, action) => {
+    setSelectedApplicant(applicant);
+    setShowModal(true);
+    setModalType(action);
+    
+    if (action === 'approve' || action === 'reject') {
+      setApplicants(prev => prev.map(app => 
+        app.id === applicant.id 
+          ? { ...app, status: action === 'approve' ? 'approved' : 'rejected' }
+          : app
+      ));
+    }
+  };
+
+  const handleExportData = () => {
+    const data = {
+      profile: profileData,
+      vacancies: vacancies,
+      applicants: applicants
+    };
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'employer-data.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportVacancies = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.csv';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        setShowModal(true);
+        setModalType('importSuccess');
+      }
+    };
+    input.click();
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm('Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.')) {
+      setShowModal(true);
+      setModalType('deleteAccount');
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType('');
+    setSelectedApplicant(null);
   };
 
   const getStatusColor = (status) => {
@@ -167,6 +264,8 @@ const EmployerProfile = () => {
       case 'interview': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
       case 'approved': return 'bg-green-500/10 text-green-400 border-green-500/30';
       case 'rejected': return 'bg-red-500/10 text-red-400 border-red-500/30';
+      case 'active': return 'bg-green-500/10 text-green-400 border-green-500/30';
+      case 'paused': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
       default: return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
     }
   };
@@ -177,6 +276,8 @@ const EmployerProfile = () => {
       case 'interview': return 'Собеседование';
       case 'approved': return 'Одобрен';
       case 'rejected': return 'Отклонен';
+      case 'active': return 'Активна';
+      case 'paused': return 'На паузе';
       default: return 'Неизвестно';
     }
   };
@@ -190,7 +291,7 @@ const EmployerProfile = () => {
     { id: 'company', name: 'Компания', icon: <Building className="w-4 h-4" /> },
     { id: 'vacancies', name: 'Вакансии', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'applicants', name: 'Отклики', icon: <Users className="w-4 h-4" /> },
-    { id: 'settings', name: 'Настройки', icon: <FileText className="w-4 h-4" /> }
+    { id: 'settings', name: 'Настройки', icon: <Settings className="w-4 h-4" /> }
   ];
 
   const companyStats = [
@@ -240,7 +341,10 @@ const EmployerProfile = () => {
                   <Edit3 className="w-4 h-4 mr-2" />
                   Редактировать
                 </button>
-                <button className="flex items-center justify-center px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all text-sm md:text-base">
+                <button
+                  onClick={handleCreateVacancy}
+                  className="flex items-center justify-center px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all text-sm md:text-base"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Добавить вакансию
                 </button>
@@ -290,15 +394,24 @@ const EmployerProfile = () => {
             <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-4 md:p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Быстрые действия</h3>
               <div className="space-y-3">
-                <button className="w-full flex items-center px-3 py-2 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-yellow-400 hover:bg-yellow-400/20 transition-all text-sm">
+                <button 
+                  onClick={handleCreateVacancy}
+                  className="w-full flex items-center px-3 py-2 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-yellow-400 hover:bg-yellow-400/20 transition-all text-sm"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Создать вакансию
                 </button>
-                <button className="w-full flex items-center px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 hover:bg-blue-500/20 transition-all text-sm">
+                <button 
+                  onClick={handleSearchCandidates}
+                  className="w-full flex items-center px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 hover:bg-blue-500/20 transition-all text-sm"
+                >
                   <Search className="w-4 h-4 mr-2" />
                   Поиск кандидатов
                 </button>
-                <button className="w-full flex items-center px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all text-sm">
+                <button 
+                  onClick={handleShowAnalytics}
+                  className="w-full flex items-center px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all text-sm"
+                >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Аналитика
                 </button>
@@ -513,66 +626,88 @@ const EmployerProfile = () => {
               {/* Vacancies Tab */}
               {activeTab === 'vacancies' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl md:text-2xl font-semibold text-white">Мои вакансии</h2>
-                    <button className="flex items-center px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-all font-medium text-sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Добавить вакансию
-                    </button>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <h2 className="text-xl md:text-2xl font-semibold text-white mb-4 sm:mb-0">Мои вакансии</h2>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleImportVacancies}
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Импорт
+                      </button>
+                      <button
+                        onClick={handleCreateVacancy}
+                        className="flex items-center px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-all text-sm font-medium"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Добавить вакансию
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
                     {vacancies.map((vacancy) => (
-                      <div key={vacancy.id} className="bg-white/5 border border-gray-700 rounded-lg p-4 md:p-6">
+                      <div key={vacancy.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 md:p-6">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                          <div className="flex-1 mb-4 lg:mb-0">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="text-lg font-semibold text-white">{vacancy.title}</h3>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                vacancy.status === 'active' 
-                                  ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
-                                  : 'bg-gray-500/10 text-gray-400 border border-gray-500/30'
-                              }`}>
-                                {vacancy.status === 'active' ? 'Активна' : 'Приостановлена'}
-                              </span>
+                          <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+                              <h3 className="text-lg font-semibold text-white mb-2 sm:mb-0">{vacancy.title}</h3>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 text-xs font-medium border rounded-full ${getStatusColor(vacancy.status)}`}>
+                                  {getStatusText(vacancy.status)}
+                                </span>
+                                <button
+                                  onClick={() => toggleVacancyStatus(vacancy.id)}
+                                  className="p-1 text-gray-400 hover:text-white transition-colors"
+                                >
+                                  {vacancy.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                </button>
+                              </div>
                             </div>
-                            <p className="text-gray-300 text-sm mb-2">{vacancy.department}</p>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                              <span className="flex items-center">
-                                <Calendar className="w-3 h-3 mr-1" />
-                                {vacancy.postedDate}
-                              </span>
-                              <span className="flex items-center">
-                                <Users className="w-3 h-3 mr-1" />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300 mb-4">
+                              <div>
+                                <span className="text-gray-400">Отдел:</span> {vacancy.department}
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Зарплата:</span> {vacancy.salary} ₸
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Опубликовано:</span> {new Date(vacancy.postedDate).toLocaleDateString('ru-RU')}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                              <div className="flex items-center">
+                                <Users className="w-4 h-4 mr-1" />
                                 {vacancy.applicantsCount} откликов
-                              </span>
-                              <span className="flex items-center">
-                                <Eye className="w-3 h-3 mr-1" />
+                              </div>
+                              <div className="flex items-center">
+                                <Eye className="w-4 h-4 mr-1" />
                                 {vacancy.viewsCount} просмотров
-                              </span>
-                              <span>Зарплата: {vacancy.salary} ₸</span>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <button className="flex items-center justify-center px-3 py-2 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 rounded hover:bg-yellow-400/20 transition-all text-sm">
-                              <Edit3 className="w-4 h-4 mr-1" />
-                              Редактировать
-                            </button>
-                            <button className="flex items-center justify-center px-3 py-2 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded hover:bg-blue-500/20 transition-all text-sm">
+
+                          <div className="flex gap-2 mt-4 lg:mt-0 lg:ml-6">
+                            <button
+                              onClick={() => handleViewVacancy(vacancy.id)}
+                              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
+                            >
                               <Eye className="w-4 h-4 mr-1" />
-                              Просмотреть
+                              Просмотр
                             </button>
-                            {vacancy.status === 'active' ? (
-                              <button className="flex items-center justify-center px-3 py-2 bg-gray-500/10 border border-gray-500/30 text-gray-400 rounded hover:bg-gray-500/20 transition-all text-sm">
-                                <X className="w-4 h-4 mr-1" />
-                                Приостановить
-                              </button>
-                            ) : (
-                              <button className="flex items-center justify-center px-3 py-2 bg-green-500/10 border border-green-500/30 text-green-400 rounded hover:bg-green-500/20 transition-all text-sm">
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Активировать
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleEditVacancy(vacancy.id)}
+                              className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all text-sm"
+                            >
+                              <Edit3 className="w-4 h-4 mr-1" />
+                              Изменить
+                            </button>
+                            <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -584,106 +719,113 @@ const EmployerProfile = () => {
               {/* Applicants Tab */}
               {activeTab === 'applicants' && (
                 <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <h2 className="text-xl md:text-2xl font-semibold text-white">Отклики на вакансии</h2>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <select
-                          value={applicantsFilter}
-                          onChange={(e) => setApplicantsFilter(e.target.value)}
-                          className="pl-10 pr-8 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        >
-                          <option value="all">Все отклики</option>
-                          <option value="new">Новые</option>
-                          <option value="interview">На собеседовании</option>
-                          <option value="approved">Одобренные</option>
-                          <option value="rejected">Отклоненные</option>
-                        </select>
-                      </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <h2 className="text-xl md:text-2xl font-semibold text-white mb-4 sm:mb-0">Отклики кандидатов</h2>
+                    <div className="flex gap-3">
+                      <select
+                        value={applicantsFilter}
+                        onChange={(e) => setApplicantsFilter(e.target.value)}
+                        className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      >
+                        <option value="all">Все отклики</option>
+                        <option value="new">Новые</option>
+                        <option value="interview">На собеседовании</option>
+                        <option value="approved">Одобренные</option>
+                        <option value="rejected">Отклоненные</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div className="grid gap-4">
+                  <div className="space-y-4">
                     {filteredApplicants.map((applicant) => (
-                      <div key={applicant.id} className="bg-white/5 border border-gray-700 rounded-lg p-4 md:p-6">
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                          {/* Avatar and Basic Info */}
-                          <div className="flex items-center gap-4 flex-1">
-                            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold">
-                              {applicant.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-lg font-semibold text-white">{applicant.name}</h3>
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(applicant.status)}`}>
-                                  {getStatusText(applicant.status)}
-                                </span>
+                      <div key={applicant.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 md:p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center">
+                                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-semibold mr-4">
+                                  {applicant.name.charAt(0)}
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white">{applicant.name}</h3>
+                                  <p className="text-gray-300 text-sm">{applicant.vacancyTitle}</p>
+                                </div>
                               </div>
-                              <p className="text-gray-300 text-sm mb-2">{applicant.vacancyTitle}</p>
-                              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
-                                <span>Опыт: {applicant.experience}</span>
-                                <span>Зарплата: {applicant.salary} ₸</span>
-                                <span className="flex items-center">
-                                  <Star className="w-3 h-3 mr-1 text-yellow-400 fill-current" />
-                                  {applicant.rating}
-                                </span>
-                                <span>Подал: {applicant.appliedDate}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Contact Info */}
-                          <div className="flex flex-col sm:flex-row lg:flex-col gap-2 text-sm">
-                            <div className="flex items-center text-gray-300">
-                              <Phone className="w-3 h-3 mr-1" />
-                              {applicant.phone}
-                            </div>
-                            <div className="flex items-center text-gray-300">
-                              <Mail className="w-3 h-3 mr-1" />
-                              {applicant.email}
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                            <button className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all text-sm font-medium">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Одобрить
-                            </button>
-                            <button className="flex items-center justify-center px-3 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition-all text-sm font-medium">
-                              <MessageSquare className="w-4 h-4 mr-1" />
-                              Написать
-                            </button>
-                            <button className="flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-all text-sm font-medium">
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Отклонить
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Skills */}
-                        <div className="mt-4 pt-4 border-t border-gray-700">
-                          <p className="text-gray-300 text-sm mb-2">Навыки:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {applicant.skills.map((skill, index) => (
-                              <span key={index} className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded text-yellow-400 text-xs">
-                                {skill}
+                              <span className={`px-3 py-1 text-xs font-medium border rounded-full ${getStatusColor(applicant.status)}`}>
+                                {getStatusText(applicant.status)}
                               </span>
-                            ))}
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300 mb-4">
+                              <div>
+                                <span className="text-gray-400">Опыт:</span> {applicant.experience}
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Желаемая зарплата:</span> {applicant.salary} ₸
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Подал заявку:</span> {new Date(applicant.appliedDate).toLocaleDateString('ru-RU')}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {applicant.skills.map((skill, index) => (
+                                <span key={index} className="px-2 py-1 bg-yellow-400/10 text-yellow-400 rounded text-xs">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                              <div className="flex items-center">
+                                <Star className="w-4 h-4 mr-1 text-yellow-400" />
+                                {applicant.rating}
+                              </div>
+                              <div className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                {applicant.lastActivity}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 mt-4 lg:mt-0 lg:ml-6">
+                            {applicant.status === 'new' && (
+                              <>
+                                <button
+                                  onClick={() => handleApplicantAction(applicant, 'approve')}
+                                  className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Одобрить
+                                </button>
+                                <button
+                                  onClick={() => handleApplicantAction(applicant, 'reject')}
+                                  className="flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm"
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Отклонить
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handleApplicantAction(applicant, 'message')}
+                              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
+                            >
+                              <MessageSquare className="w-4 h-4 mr-1" />
+                              Сообщение
+                            </button>
+                            <button
+                              onClick={() => handleApplicantAction(applicant, 'view')}
+                              className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all text-sm"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Профиль
+                            </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {filteredApplicants.length === 0 && (
-                    <div className="text-center py-12">
-                      <Users className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">Нет откликов для отображения</p>
-                      <p className="text-gray-500 text-sm">Попробуйте изменить фильтр или создать новую вакансию</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -693,13 +835,16 @@ const EmployerProfile = () => {
                   <h2 className="text-xl md:text-2xl font-semibold text-white mb-6">Настройки аккаунта</h2>
                   
                   {/* Privacy Settings */}
-                  <div className="bg-white/5 border border-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Видимость компании</h3>
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <Shield className="w-5 h-5 mr-2" />
+                      Приватность
+                    </h3>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-white font-medium">Публичный профиль</p>
-                          <p className="text-gray-400 text-sm">Ваша компания будет видна соискателям</p>
+                          <p className="text-gray-400 text-sm">Разрешить кандидатам видеть информацию о компании</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -708,20 +853,23 @@ const EmployerProfile = () => {
                             onChange={(e) => handleInputChange('isPublic', e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
                         </label>
                       </div>
                     </div>
                   </div>
 
                   {/* Notification Settings */}
-                  <div className="bg-white/5 border border-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Уведомления</h3>
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <Bell className="w-5 h-5 mr-2" />
+                      Уведомления
+                    </h3>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-white font-medium">Email уведомления</p>
-                          <p className="text-gray-400 text-sm">Получать уведомления о новых откликах</p>
+                          <p className="text-gray-400 text-sm">Получать уведомления на email о новых откликах</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -730,14 +878,14 @@ const EmployerProfile = () => {
                             onChange={(e) => handleInputChange('emailNotifications', e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-white font-medium">SMS уведомления</p>
-                          <p className="text-gray-400 text-sm">Получать SMS о срочных откликах</p>
+                          <p className="text-gray-400 text-sm">Получать SMS о важных событиях</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -746,14 +894,14 @@ const EmployerProfile = () => {
                             onChange={(e) => handleInputChange('smsNotifications', e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
                         </label>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-white font-medium">Автоответ</p>
-                          <p className="text-gray-400 text-sm">Автоматически отвечать кандидатам</p>
+                          <p className="text-white font-medium">Автоответы</p>
+                          <p className="text-gray-400 text-sm">Автоматически отвечать кандидатам при получении отклика</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -762,52 +910,52 @@ const EmployerProfile = () => {
                             onChange={(e) => handleInputChange('autoReply', e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-400/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
                         </label>
                       </div>
                     </div>
                   </div>
 
-                  {/* Account Actions */}
-                  <div className="bg-white/5 border border-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Действия с аккаунтом</h3>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button className="flex items-center justify-center px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-all font-medium">
+                  {/* Data Management */}
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="w-5 h-5 mr-2" />
+                      Управление данными
+                    </h3>
+                    <div className="space-y-4">
+                      <button
+                        onClick={handleExportData}
+                        className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                      >
                         <Download className="w-4 h-4 mr-2" />
                         Экспорт данных
                       </button>
-                      <button className="flex items-center justify-center px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all">
+                      <button
+                        onClick={handleImportVacancies}
+                        className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+                      >
                         <Upload className="w-4 h-4 mr-2" />
                         Импорт вакансий
-                      </button>
-                      <button className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Удалить аккаунт
                       </button>
                     </div>
                   </div>
 
-                  {/* Account Info */}
-                  <div className="bg-white/5 border border-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Информация об аккаунте</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Дата регистрации:</span>
-                        <span className="text-white">1 февраля 2023</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Последнее обновление:</span>
-                        <span className="text-white">3 дня назад</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">План подписки:</span>
-                        <span className="text-white">Growth Plan</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">ID компании:</span>
-                        <span className="text-white">#WP2023EMP456</span>
-                      </div>
-                    </div>
+                  {/* Danger Zone */}
+                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-red-400 mb-4 flex items-center">
+                      <Trash2 className="w-5 h-5 mr-2" />
+                      Опасная зона
+                    </h3>
+                    <p className="text-gray-300 text-sm mb-4">
+                      Удаление аккаунта приведет к безвозвратной потере всех данных, включая вакансии, отклики и настройки.
+                    </p>
+                    <button
+                      onClick={handleDeleteAccount}
+                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Удалить аккаунт
+                    </button>
                   </div>
                 </div>
               )}
@@ -815,6 +963,86 @@ const EmployerProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <div className="text-center">
+              {modalType === 'success' && (
+                <>
+                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Успешно сохранено</h3>
+                  <p className="text-gray-300 mb-4">Изменения в профиле компании сохранены</p>
+                </>
+              )}
+              
+              {modalType === 'createVacancy' && (
+                <>
+                  <Plus className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Создать вакансию</h3>
+                  <p className="text-gray-300 mb-4">Перенаправление на страницу создания вакансии...</p>
+                </>
+              )}
+
+              {modalType === 'searchCandidates' && (
+                <>
+                  <Search className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Поиск кандидатов</h3>
+                  <p className="text-gray-300 mb-4">Открываем базу кандидатов...</p>
+                </>
+              )}
+
+              {modalType === 'analytics' && (
+                <>
+                  <TrendingUp className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Аналитика</h3>
+                  <p className="text-gray-300 mb-4">Загружаем отчеты и статистику...</p>
+                </>
+              )}
+
+              {modalType === 'approve' && (
+                <>
+                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Кандидат одобрен</h3>
+                  <p className="text-gray-300 mb-4">Уведомление отправлено кандидату</p>
+                </>
+              )}
+
+              {modalType === 'reject' && (
+                <>
+                  <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Кандидат отклонен</h3>
+                  <p className="text-gray-300 mb-4">Уведомление отправлено кандидату</p>
+                </>
+              )}
+
+              {modalType === 'message' && (
+                <>
+                  <MessageSquare className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Отправить сообщение</h3>
+                  <p className="text-gray-300 mb-4">Открываем чат с кандидатом...</p>
+                </>
+              )}
+
+              {modalType === 'deleteAccount' && (
+                <>
+                  <Trash2 className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Аккаунт удален</h3>
+                  <p className="text-gray-300 mb-4">Ваш аккаунт был успешно удален</p>
+                </>
+              )}
+
+              <button
+                onClick={closeModal}
+                className="w-full px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-all font-medium"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
