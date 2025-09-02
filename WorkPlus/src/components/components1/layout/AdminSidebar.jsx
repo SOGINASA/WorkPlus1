@@ -165,10 +165,10 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
   };
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-800/50 backdrop-blur-sm border-r border-yellow-400/20 flex flex-col transition-all duration-300 ${isMobile ? 'h-full' : ''}`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-800/50 backdrop-blur-sm border-r border-yellow-400/20 flex flex-col transition-all duration-300 ${isMobile ? 'h-full' : 'h-screen'}`}>
       {/* Mobile Header */}
       {isMobile && (
-        <div className="flex items-center justify-between p-4 border-b border-gray-700/50">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700/50 flex-shrink-0">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mr-3">
               <Briefcase className="w-5 h-5 text-black" />
@@ -186,7 +186,7 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
 
       {/* Desktop Logo */}
       {!isMobile && (
-        <div className="flex items-center justify-center p-4 border-b border-gray-700/50">
+        <div className="flex items-center justify-center p-4 border-b border-gray-700/50 flex-shrink-0">
           {!isCollapsed ? (
             <div className="flex items-center">
               <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mr-3">
@@ -205,100 +205,102 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <nav className="space-y-1">
-          {navigationConfig.map((item) => {
-            const isActive = isItemActive(item);
-            const isExpanded = expandedItems[item.id];
-            const hasSubItems = item.subItems && item.subItems.length > 0;
+      {/* Navigation - теперь с фиксированной высотой и скроллом */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto p-4">
+          <nav className="space-y-1">
+            {navigationConfig.map((item) => {
+              const isActive = isItemActive(item);
+              const isExpanded = expandedItems[item.id];
+              const hasSubItems = item.subItems && item.subItems.length > 0;
 
-            return (
-              <div key={item.id} className="mb-1">
-                {/* Main Item */}
-                <button
-                  onClick={() => {
-                    if (hasSubItems) {
-                      toggleExpanded(item.id);
-                    } else {
-                      handleNavigation(item.path);
-                    }
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
-                    isActive 
-                      ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30' 
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
-                  title={isCollapsed ? item.name : ''}
-                >
-                  <div className="flex items-center min-w-0">
-                    <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-yellow-400' : ''}`} />
-                    {!isCollapsed && (
-                      <>
-                        <span className="ml-3 text-sm font-medium truncate">{item.name}</span>
-                        {item.badge && (
-                          <span className="ml-2 px-2 py-0.5 bg-red-500/20 border border-red-400/30 text-red-400 text-xs rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  
-                  {!isCollapsed && hasSubItems && (
-                    <div className="flex-shrink-0 ml-2">
-                      {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 transition-transform duration-200" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 transition-transform duration-200" />
+              return (
+                <div key={item.id} className="mb-1">
+                  {/* Main Item */}
+                  <button
+                    onClick={() => {
+                      if (hasSubItems) {
+                        toggleExpanded(item.id);
+                      } else {
+                        handleNavigation(item.path);
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                      isActive 
+                        ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30' 
+                        : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                    }`}
+                    title={isCollapsed ? item.name : ''}
+                  >
+                    <div className="flex items-center min-w-0">
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-yellow-400' : ''}`} />
+                      {!isCollapsed && (
+                        <>
+                          <span className="ml-3 text-sm font-medium truncate">{item.name}</span>
+                          {item.badge && (
+                            <span className="ml-2 px-2 py-0.5 bg-red-500/20 border border-red-400/30 text-red-400 text-xs rounded-full">
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
-                  )}
-                </button>
+                    
+                    {!isCollapsed && hasSubItems && (
+                      <div className="flex-shrink-0 ml-2">
+                        {isExpanded ? (
+                          <ChevronDown className="w-4 h-4 transition-transform duration-200" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 transition-transform duration-200" />
+                        )}
+                      </div>
+                    )}
+                  </button>
 
-                {/* Sub Items */}
-                {!isCollapsed && hasSubItems && isExpanded && (
-                  <div className="ml-8 mt-1 space-y-1 border-l border-gray-700/50 pl-4">
-                    {item.subItems.map((subItem, index) => {
-                      const isSubActive = isSubItemActive(subItem);
-                      
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleNavigation(subItem.path)}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all duration-200 group ${
-                            isSubActive
-                              ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20'
-                              : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700/30'
-                          }`}
-                        >
-                          <div className="flex items-center min-w-0">
-                            <subItem.icon className={`w-4 h-4 flex-shrink-0 mr-3 ${isSubActive ? 'text-yellow-400' : ''}`} />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center">
-                                <span className="text-sm font-medium truncate">{subItem.name}</span>
-                                {subItem.badge && (
-                                  <span className="ml-2 px-1.5 py-0.5 bg-red-500/20 border border-red-400/30 text-red-400 text-xs rounded-full">
-                                    {subItem.badge}
-                                  </span>
-                                )}
+                  {/* Sub Items */}
+                  {!isCollapsed && hasSubItems && isExpanded && (
+                    <div className="ml-8 mt-1 space-y-1 border-l border-gray-700/50 pl-4">
+                      {item.subItems.map((subItem, index) => {
+                        const isSubActive = isSubItemActive(subItem);
+                        
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleNavigation(subItem.path)}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all duration-200 group ${
+                              isSubActive
+                                ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700/30'
+                            }`}
+                          >
+                            <div className="flex items-center min-w-0">
+                              <subItem.icon className={`w-4 h-4 flex-shrink-0 mr-3 ${isSubActive ? 'text-yellow-400' : ''}`} />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium truncate">{subItem.name}</span>
+                                  {subItem.badge && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-red-500/20 border border-red-400/30 text-red-400 text-xs rounded-full">
+                                      {subItem.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500 truncate">{subItem.description}</p>
                               </div>
-                              <p className="text-xs text-gray-500 truncate">{subItem.description}</p>
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats - фиксированная позиция внизу */}
         {!isCollapsed && (
-          <div className="mt-6 pt-6 border-t border-gray-700/50">
+          <div className="p-4 border-t border-gray-700/50 flex-shrink-0">
             <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
               Быстрая статистика
             </h4>
@@ -320,9 +322,9 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
         )}
       </div>
 
-      {/* User Profile */}
+      {/* User Profile - фиксированная позиция внизу */}
       {!isCollapsed && (
-        <div className="p-4 border-t border-gray-700/50">
+        <div className="p-4 border-t border-gray-700/50 flex-shrink-0">
           <div className="flex items-center p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors group">
             <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
               <User className="w-5 h-5 text-black" />
@@ -343,7 +345,7 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
 
       {/* Collapsed User Profile */}
       {isCollapsed && (
-        <div className="p-4 border-t border-gray-700/50 flex justify-center">
+        <div className="p-4 border-t border-gray-700/50 flex justify-center flex-shrink-0">
           <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
             <User className="w-5 h-5 text-black" />
           </div>
