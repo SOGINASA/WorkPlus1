@@ -59,14 +59,10 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
     
     def get_skills_list(self):
-        """Получить список навыков из JSON строки"""
         if self.skills:
             try:
-                import json
-                # Если skills уже список строк (старые данные), возвращаем как есть
                 if isinstance(self.skills, list):
                     return self.skills
-                # Если skills - JSON строка, парсим её
                 return json.loads(self.skills)
             except (json.JSONDecodeError, TypeError):
                 # Если не удалось распарсить как JSON, возвращаем как простую строку разделенную запятыми
@@ -686,3 +682,307 @@ class Analytics(db.Model):
             'meta_data': json.loads(self.meta_data) if self.meta_data else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class CandidateProfile(db.Model):
+    """Расширенный профиль кандидата"""
+    __tablename__ = 'candidate_profiles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    
+    # Личная информация
+    birth_date = db.Column(db.Date)
+    current_position = db.Column(db.String(200))
+    desired_position = db.Column(db.String(200))
+    
+    # Зарплатные ожидания
+    salary_from = db.Column(db.Integer)
+    salary_to = db.Column(db.Integer)
+    salary_currency = db.Column(db.String(3), default='KZT')
+    
+    # Опыт работы
+    experience_years = db.Column(db.Integer, default=0)
+    work_schedule = db.Column(db.String(50), default='full_time')  # full_time, part_time, remote, hybrid
+    
+    # Описание
+    about = db.Column(db.Text)
+    
+    # Настройки приватности
+    is_public = db.Column(db.Boolean, default=True)
+    show_contacts = db.Column(db.Boolean, default=True)
+    
+    # Настройки уведомлений
+    email_notifications = db.Column(db.Boolean, default=True)
+    sms_notifications = db.Column(db.Boolean, default=False)
+    job_alerts = db.Column(db.Boolean, default=True)
+    
+    # Файлы
+    resume_file = db.Column(db.String(255))
+    
+    # Метаданные
+    profile_views = db.Column(db.Integer, default=0)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Связи
+    user = db.relationship('User', backref=db.backref('candidate_profile', uselist=False))
+    skills = db.relationship('Skill', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
+    education = db.relationship('Education', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
+    work_experience = db.relationship('WorkExperience', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'birth_date': self.birth_date.isoformat() if self.birth_date else None,
+            'current_position': self.current_position,
+            'desired_position': self.desired_position,
+            'salary_from': self.salary_from,
+            'salary_to': self.salary_to,
+            'salary_currency': self.salary_currency,
+            'experience_years': self.experience_years,
+            'work_schedule': self.work_schedule,
+            'about': self.about,
+            'is_public': self.is_public,
+            'show_contacts': self.show_contacts,
+            'email_notifications': self.email_notifications,
+            'sms_notifications': self.sms_notifications,
+            'job_alerts': self.job_alerts,
+            'resume_file': self.resume_file,
+            'profile_views': self.profile_views,
+            'last_updated': self.last_updated.isoformat(),
+            'created_at': self.created_at.isoformat()
+        }
+
+class Skill(db.Model):
+    """Навыки кандидата"""
+    __tablename__ = 'candidate_skills'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_profile_id = db.Column(db.Integer, db.ForeignKey('candidate_profiles.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    level = db.Column(db.String(50))  # beginner, intermediate, advanced, expert
+    years_experience = db.Column(db.Integer)
+    is_verified = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'level': self.level,
+            'years_experience': self.years_experience,
+            'is_verified': self.is_verified
+        }
+
+class Education(db.Model):
+    """Образование кандидата"""
+    __tablename__ = 'candidate_education'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_profile_id = db.Column(db.Integer, db.ForeignKey('candidate_profiles.id'), nullable=False)
+    
+    institution = db.Column(db.String(200), nullable=False)
+    specialty = db.Column(db.String(200))
+    degree = db.Column(db.String(100))  # Среднее, Среднее специальное, Высшее, Магистратура, Аспирантура
+    
+    start_year = db.Column(db.Integer)
+    end_year = db.Column(db.Integer)
+    is_current = db.Column(db.Boolean, default=False)
+    
+    gpa = db.Column(db.Float)
+    description = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'institution': self.institution,
+            'specialty': self.specialty,
+            'degree': self.degree,
+            'start_year': self.start_year,
+            'end_year': self.end_year,
+            'is_current': self.is_current,
+            'gpa': self.gpa,
+            'description': self.description,
+            'period': f"{self.start_year or ''}-{self.end_year or 'по н.в.' if self.is_current else ''}"
+        }
+
+class WorkExperience(db.Model):
+    """Опыт работы кандидата"""
+    __tablename__ = 'candidate_work_experience'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_profile_id = db.Column(db.Integer, db.ForeignKey('candidate_profiles.id'), nullable=False)
+    
+    company_name = db.Column(db.String(200), nullable=False)
+    position = db.Column(db.String(200), nullable=False)
+    
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    is_current = db.Column(db.Boolean, default=False)
+    
+    description = db.Column(db.Text)
+    achievements = db.Column(db.Text)
+    
+    # Дополнительная информация
+    industry = db.Column(db.String(100))
+    company_size = db.Column(db.String(50))
+    employment_type = db.Column(db.String(50))  # full_time, part_time, contract, internship
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_name': self.company_name,
+            'position': self.position,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'is_current': self.is_current,
+            'description': self.description,
+            'achievements': self.achievements,
+            'industry': self.industry,
+            'company_size': self.company_size,
+            'employment_type': self.employment_type,
+            'period': f"{self.start_date.strftime('%m.%Y') if self.start_date else ''}-{self.end_date.strftime('%m.%Y') if self.end_date else 'по н.в.' if self.is_current else ''}"
+        }
+
+class ResumeResponse(db.Model):
+    """Отклики работодателей на резюме кандидатов"""
+    __tablename__ = 'resume_responses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    employer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('jobs.id'))  # Может быть null если общий отклик
+    
+    position_offered = db.Column(db.String(200), nullable=False)
+    salary_from = db.Column(db.Integer)
+    salary_to = db.Column(db.Integer)
+    salary_currency = db.Column(db.String(3), default='KZT')
+    
+    message = db.Column(db.Text, nullable=False)
+    contact_person = db.Column(db.String(200))
+    contact_phone = db.Column(db.String(20))
+    contact_email = db.Column(db.String(120))
+    
+    status = db.Column(db.String(50), default='new')  # new, viewed, accepted, declined, interview
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    viewed_at = db.Column(db.DateTime)
+    responded_at = db.Column(db.DateTime)
+    
+    # Связи
+    candidate = db.relationship('User', foreign_keys=[candidate_id], backref='resume_responses_received')
+    employer = db.relationship('User', foreign_keys=[employer_id], backref='resume_responses_sent')
+    company = db.relationship('Company', backref='resume_responses')
+    job = db.relationship('Job', backref='resume_responses')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_name': self.company.name if self.company else None,
+            'company_id': self.company_id,
+            'position': self.position_offered,
+            'salary': f"{self.salary_from}-{self.salary_to}" if self.salary_from else None,
+            'location': self.company.city if self.company else None,
+            'message': self.message,
+            'contact_person': self.contact_person,
+            'phone': self.contact_phone,
+            'email': self.contact_email,
+            'status': self.status,
+            'contact_date': self.created_at.isoformat(),
+            'company_rating': self.company.rating if self.company else None
+        }
+
+class ProfileView(db.Model):
+    """Просмотры профилей кандидатов"""
+    __tablename__ = 'profile_views'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    viewer_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Может быть null для анонимных просмотров
+    viewer_company_id = db.Column(db.Integer, db.ForeignKey('companies.id'))
+    
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(500))
+    referrer = db.Column(db.String(500))
+    
+    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    session_duration = db.Column(db.Integer)  # в секундах
+    
+    # Связи
+    candidate = db.relationship('User', foreign_keys=[candidate_id], backref='profile_views')
+    viewer = db.relationship('User', foreign_keys=[viewer_id], backref='viewed_profiles')
+    company = db.relationship('Company', backref='profile_views')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'viewer_company': self.company.name if self.company else 'Анонимный просмотр',
+            'viewed_at': self.viewed_at.isoformat(),
+            'session_duration': self.session_duration
+        }
+
+class SavedCandidate(db.Model):
+    """Сохраненные кандидаты работодателями"""
+    __tablename__ = 'saved_candidates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    employer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    notes = db.Column(db.Text)
+    rating = db.Column(db.Integer)  # 1-5 звезд
+    tags = db.Column(db.String(500))  # Теги через запятую
+    
+    saved_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_contacted = db.Column(db.DateTime)
+    
+    # Связи
+    employer = db.relationship('User', foreign_keys=[employer_id], backref='saved_candidates')
+    candidate = db.relationship('User', foreign_keys=[candidate_id], backref='saved_by_employers')
+    
+    # Уникальность
+    __table_args__ = (db.UniqueConstraint('employer_id', 'candidate_id', name='unique_saved_candidate'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'candidate_id': self.candidate_id,
+            'candidate_name': f"{self.candidate.first_name} {self.candidate.last_name}",
+            'notes': self.notes,
+            'rating': self.rating,
+            'tags': self.tags.split(',') if self.tags else [],
+            'saved_at': self.saved_at.isoformat(),
+            'last_contacted': self.last_contacted.isoformat() if self.last_contacted else None
+        }
+
+# Добавляем новые поля в существующую модель User, если их нет
+def extend_user_model():
+    """Расширяем модель User дополнительными полями"""
+    # Эти поля должны быть добавлены в основную модель User через миграции
+    pass
+
+# Дополнительные методы для User модели (можно добавить через monkey patching или наследование)
+def get_candidate_profile_dict(user):
+    """Получить полный словарь профиля кандидата"""
+    if user.user_type != 'candidate':
+        return None
+    
+    profile = user.candidate_profile
+    if not profile:
+        return None
+    
+    return {
+        'profile': profile.to_dict(),
+        'skills': [skill.to_dict() for skill in profile.skills],
+        'education': [edu.to_dict() for edu in profile.education.order_by(Education.end_year.desc())],
+        'work_experience': [exp.to_dict() for exp in profile.work_experience.order_by(WorkExperience.end_date.desc())],
+        'recent_views': [view.to_dict() for view in user.profile_views.order_by(ProfileView.viewed_at.desc()).limit(10)],
+        'applications_count': user.job_applications.count(),
+        'responses_count': user.resume_responses_received.count()
+    }

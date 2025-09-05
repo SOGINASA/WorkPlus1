@@ -16,7 +16,9 @@ def create_app():
     app.config.from_object(Config)
     CORS(app, origins=['http://localhost:3000','https://workplus-fork.vercel.app/'],
         allow_headers=['Content-Type', 'Authorization'],
-        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+        supports_credentials=True
+        )
 
     # Инициализация расширений
     db.init_app(app)
@@ -28,11 +30,13 @@ def create_app():
     from routes.jobs import jobs_bp
     from routes.employer import employer_bp
     from routes.companies import companies_bp
+    from routes.profile import profile_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
     app.register_blueprint(employer_bp, url_prefix='/api/employer')
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
+    app.register_blueprint(profile_bp, url_prefix='/api/profile')
 
     # Главная страница API
     @app.route('/api')

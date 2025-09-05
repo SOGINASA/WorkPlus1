@@ -29,21 +29,8 @@ class UserApiService {
   }
 
   static async uploadAvatar(file) {
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    const response = await apiRequest('/api/profile/avatar', {
-      method: 'POST',
-      body: formData,
-      headers: {} // Убираем Content-Type для FormData
-    });
-
-    if (!response || !response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка загрузки аватара');
-    }
-
-    return await response.json();
+    // Функция отключена - используем инициалы
+    throw new Error('Загрузка аватаров отключена. Используются инициалы.');
   }
 
   static async uploadResume(file) {
@@ -59,6 +46,84 @@ class UserApiService {
     if (!response || !response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Ошибка загрузки резюме');
+    }
+
+    return await response.json();
+  }
+
+  // === ЗАЯВКИ НА ВАКАНСИИ ===
+  
+  static async getMyApplications(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    const response = await apiRequest(`/api/profile/applications?${queryParams}`);
+
+    if (!response || !response.ok) {
+      throw new Error('Ошибка загрузки заявок');
+    }
+
+    return await response.json();
+  }
+
+  static async withdrawApplication(applicationId) {
+    const response = await apiRequest(`/api/profile/applications/${applicationId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка отзыва заявки');
+    }
+
+    return await response.json();
+  }
+
+  // === ОТКЛИКИ НА РЕЗЮМЕ ===
+  
+  static async getResumeResponses(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    const response = await apiRequest(`/api/profile/resume-responses?${queryParams}`);
+
+    if (!response || !response.ok) {
+      throw new Error('Ошибка загрузки откликов на резюме');
+    }
+
+    return await response.json();
+  }
+
+  static async updateResumeResponseStatus(responseId, status) {
+    const response = await apiRequest(`/api/profile/resume-responses/${responseId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка обновления статуса отклика');
+    }
+
+    return await response.json();
+  }
+
+  // === СТАТИСТИКА ПРОФИЛЯ ===
+  
+  static async getProfileStatistics() {
+    const response = await apiRequest('/api/profile/statistics');
+
+    if (!response || !response.ok) {
+      throw new Error('Ошибка загрузки статистики');
+    }
+
+    return await response.json();
+  }
+
+  // === СКАЧИВАНИЕ РЕЗЮМЕ ===
+  
+  static async downloadResume() {
+    const response = await apiRequest('/api/profile/download-resume');
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка скачивания резюме');
     }
 
     return await response.json();
@@ -84,78 +149,7 @@ class UserApiService {
 
     if (!response || !response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Ошибка обновления настроек');
-    }
-
-    return await response.json();
-  }
-
-  // === СМЕНА ПАРОЛЯ ===
-  
-  static async changePassword(passwordData) {
-    const response = await apiRequest('/api/profile/change-password', {
-      method: 'POST',
-      body: JSON.stringify(passwordData)
-    });
-
-    if (!response || !response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка смены пароля');
-    }
-
-    return await response.json();
-  }
-
-  // === ВЕРИФИКАЦИЯ ===
-  
-  static async verifyEmail(token) {
-    const response = await apiRequest('/api/auth/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ token })
-    });
-
-    if (!response || !response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка верификации email');
-    }
-
-    return await response.json();
-  }
-
-  static async resendVerificationEmail() {
-    const response = await apiRequest('/api/auth/resend-verification', {
-      method: 'POST'
-    });
-
-    if (!response || !response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка отправки письма верификации');
-    }
-
-    return await response.json();
-  }
-
-  static async verifyPhone(phoneData) {
-    const response = await apiRequest('/api/profile/verify-phone', {
-      method: 'POST',
-      body: JSON.stringify(phoneData)
-    });
-
-    if (!response || !response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка верификации телефона');
-    }
-
-    return await response.json();
-  }
-
-  // === СТАТИСТИКА ПРОФИЛЯ ===
-  
-  static async getProfileStats() {
-    const response = await apiRequest('/api/profile/stats');
-
-    if (!response || !response.ok) {
-      throw new Error('Ошибка загрузки статистики');
+      throw new Error(error.error || 'Ошибка обновления настроек уведомлений');
     }
 
     return await response.json();
@@ -244,7 +238,7 @@ class UserApiService {
   }
 
   static async saveJob(jobId) {
-    const response = await apiRequest(`/api/profile/save-job/${jobId}`, {
+    const response = await apiRequest(`/api/profile/saved-jobs/${jobId}`, {
       method: 'POST'
     });
 
@@ -257,66 +251,168 @@ class UserApiService {
   }
 
   static async unsaveJob(jobId) {
-    const response = await apiRequest(`/api/profile/unsave-job/${jobId}`, {
+    const response = await apiRequest(`/api/profile/saved-jobs/${jobId}`, {
       method: 'DELETE'
     });
 
     if (!response || !response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Ошибка удаления из сохраненных');
+      throw new Error(error.error || 'Ошибка удаления вакансии из сохраненных');
     }
 
     return await response.json();
   }
 
-  // === ПОДПИСКИ НА УВЕДОМЛЕНИЯ О ВАКАНСИЯХ ===
+  // === ПРОСМОТРЫ ПРОФИЛЯ ===
   
-  static async getJobAlerts() {
-    const response = await apiRequest('/api/profile/job-alerts');
+  static async getProfileViews(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    const response = await apiRequest(`/api/profile/views?${queryParams}`);
 
     if (!response || !response.ok) {
-      throw new Error('Ошибка загрузки подписок на вакансии');
+      throw new Error('Ошибка загрузки просмотров профиля');
     }
 
     return await response.json();
   }
 
-  static async createJobAlert(alertData) {
-    const response = await apiRequest('/api/profile/job-alerts', {
+  // === РЕКОМЕНДАЦИИ ВАКАНСИЙ ===
+  
+  static async getJobRecommendations(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    const response = await apiRequest(`/api/profile/job-recommendations?${queryParams}`);
+
+    if (!response || !response.ok) {
+      throw new Error('Ошибка загрузки рекомендаций вакансий');
+    }
+
+    return await response.json();
+  }
+
+  // === НАВЫКИ ===
+  
+  static async addSkill(skillData) {
+    const response = await apiRequest('/api/profile/skills', {
       method: 'POST',
-      body: JSON.stringify(alertData)
+      body: JSON.stringify(skillData)
     });
 
     if (!response || !response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Ошибка создания подписки');
+      throw new Error(error.error || 'Ошибка добавления навыка');
     }
 
     return await response.json();
   }
 
-  static async updateJobAlert(alertId, alertData) {
-    const response = await apiRequest(`/api/profile/job-alerts/${alertId}`, {
+  static async updateSkill(skillId, skillData) {
+    const response = await apiRequest(`/api/profile/skills/${skillId}`, {
       method: 'PUT',
-      body: JSON.stringify(alertData)
+      body: JSON.stringify(skillData)
     });
 
     if (!response || !response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Ошибка обновления подписки');
+      throw new Error(error.error || 'Ошибка обновления навыка');
     }
 
     return await response.json();
   }
 
-  static async deleteJobAlert(alertId) {
-    const response = await apiRequest(`/api/profile/job-alerts/${alertId}`, {
+  static async deleteSkill(skillId) {
+    const response = await apiRequest(`/api/profile/skills/${skillId}`, {
       method: 'DELETE'
     });
 
     if (!response || !response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Ошибка удаления подписки');
+      throw new Error(error.error || 'Ошибка удаления навыка');
+    }
+
+    return await response.json();
+  }
+
+  // === ОБРАЗОВАНИЕ ===
+  
+  static async addEducation(educationData) {
+    const response = await apiRequest('/api/profile/education', {
+      method: 'POST',
+      body: JSON.stringify(educationData)
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка добавления образования');
+    }
+
+    return await response.json();
+  }
+
+  static async updateEducation(educationId, educationData) {
+    const response = await apiRequest(`/api/profile/education/${educationId}`, {
+      method: 'PUT',
+      body: JSON.stringify(educationData)
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка обновления образования');
+    }
+
+    return await response.json();
+  }
+
+  static async deleteEducation(educationId) {
+    const response = await apiRequest(`/api/profile/education/${educationId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка удаления образования');
+    }
+
+    return await response.json();
+  }
+
+  // === ОПЫТ РАБОТЫ ===
+  
+  static async addWorkExperience(workData) {
+    const response = await apiRequest('/api/profile/work-experience', {
+      method: 'POST',
+      body: JSON.stringify(workData)
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка добавления опыта работы');
+    }
+
+    return await response.json();
+  }
+
+  static async updateWorkExperience(workId, workData) {
+    const response = await apiRequest(`/api/profile/work-experience/${workId}`, {
+      method: 'PUT',
+      body: JSON.stringify(workData)
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка обновления опыта работы');
+    }
+
+    return await response.json();
+  }
+
+  static async deleteWorkExperience(workId) {
+    const response = await apiRequest(`/api/profile/work-experience/${workId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response || !response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка удаления опыта работы');
     }
 
     return await response.json();
