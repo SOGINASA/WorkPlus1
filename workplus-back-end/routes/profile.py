@@ -23,8 +23,7 @@ from models import (
 profile_bp = Blueprint(
     "profile",
     __name__,
-    url_prefix="/api/profile",
-    strict_slashes=False
+    url_prefix="/api/profile"
 )
 
 # Разрешаем CORS для фронта (localhost:3000)

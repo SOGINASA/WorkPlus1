@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
-import { User, Building, Mail, Phone, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle, Calendar, Users, GraduationCap, MessageSquare, FileText, Link } from 'lucide-react';
-import { useAuth } from '../api/AuthUtils';
-import { useNavigate } from 'react-router-dom';
+import { User, Building, Mail, Phone, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle, Calendar, Users, GraduationCap, MessageSquare, FileText, Link, DollarSign, Award, Languages, Clock, CheckSquare } from 'lucide-react';
 
 const RegisterForm = () => {
-  const { register } = useAuth();
-  const navigate = useNavigate();
   const [userType, setUserType] = useState('candidate'); // 'candidate' or 'employer'
   const [formData, setFormData] = useState({
     firstName: '',
@@ -27,6 +23,21 @@ const RegisterForm = () => {
     resume_url: '',
     portfolio_url: '',
     telegram_username: '',
+    // Новые поля для высококвалифицированных кандидатов
+    desired_salary: '',
+    current_salary: '',
+    employment_type: '',
+    work_schedule: '',
+    specialization: '',
+    languages: '',
+    achievements: '',
+    certificates: '',
+    availability: '',
+    relocation_ready: false,
+    remote_ready: false,
+    business_trips_ready: false,
+    profile_visibility: 'public', // public, private, employers_only
+    profile_description: '',
     agreeTerms: false,
     agreeMarketing: false
   });
@@ -34,26 +45,6 @@ const RegisterForm = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Функция для получения пользователя из localStorage
-  const getUserFromStorage = () => {
-    try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-      console.error('Ошибка при чтении пользователя из localStorage:', error);
-      return null;
-    }
-  };
-
-  // Функция для сохранения пользователя в localStorage
-  const saveUserToStorage = (user) => {
-    try {
-      localStorage.setItem('user', JSON.stringify(user));
-    } catch (error) {
-      console.error('Ошибка при сохранении пользователя в localStorage:', error);
-    }
-  };
 
   const cities = [
     'Астана',
@@ -64,13 +55,20 @@ const RegisterForm = () => {
     'Павлодар',
     'Кокшетау',
     'Рудный',
-    'Атырау'
+    'Атырау',
+    'Шымкент',
+    'Караганда',
+    'Тараз',
+    'Усть-Каменогорск',
+    'Семей',
+    'Актобе'
   ];
 
   const industries = [
     'Розничная торговля', 'Ресторанный бизнес', 'Логистика и доставка',
     'Строительство', 'Производство', 'IT и технологии', 'Банки и финансы',
-    'Образование', 'Медицина', 'Услуги', 'Другое'
+    'Образование', 'Медицина', 'Услуги', 'Маркетинг и реклама',
+    'Недвижимость', 'Консалтинг', 'Туризм', 'Автомобильная отрасль', 'Другое'
   ];
 
   const companySizes = [
@@ -83,6 +81,7 @@ const RegisterForm = () => {
     'Среднее специальное',
     'Высшее (бакалавр)',
     'Высшее (магистр)',
+    'Высшее (специалист)',
     'Кандидат наук',
     'Доктор наук'
   ];
@@ -91,6 +90,49 @@ const RegisterForm = () => {
     'Мужской',
     'Женский',
     'Не указывать'
+  ];
+
+  const employmentTypes = [
+    'Полная занятость',
+    'Частичная занятость',
+    'Проектная работа',
+    'Стажировка',
+    'Фриланс',
+    'Подработка'
+  ];
+
+  const workSchedules = [
+    'Полный день',
+    'Гибкий график',
+    'Сменный график',
+    'Удаленная работа',
+    'Вахтовый метод',
+    'Выходные дни'
+  ];
+
+  const specializations = [
+    'Продажи и торговля',
+    'Маркетинг и реклама',
+    'IT и разработка',
+    'Дизайн',
+    'Бухгалтерия и финансы',
+    'HR и управление персоналом',
+    'Логистика',
+    'Производство',
+    'Строительство',
+    'Образование',
+    'Медицина',
+    'Юриспруденция',
+    'Сфера услуг',
+    'Другое'
+  ];
+
+  const availabilityOptions = [
+    'Готов приступить немедленно',
+    'В течение недели',
+    'В течение месяца',
+    'Через 2 недели',
+    'Рассматриваю предложения'
   ];
 
   const handleInputChange = (e) => {
@@ -151,29 +193,20 @@ const RegisterForm = () => {
     
     try {
       const registrationData = { userType, ...formData };
-      const response = await register(registrationData);
+      console.log('Отправляем данные:', registrationData);
       
-      console.log('Регистрация успешна:', response);
+      // Здесь будет реальный API вызов
+      // const response = await register(registrationData);
       
-      // Перенаправление в зависимости от типа пользователя
-      if (userType === 'employer') {
-        navigate('/create-job');
-      } else {
-        navigate('/profile');
-      }
+      // Симуляция успешной регистрации
+      setTimeout(() => {
+        alert('Регистрация успешна! Добро пожаловать в WorkPlus.kz');
+        setIsSubmitting(false);
+      }, 2000);
       
     } catch (error) {
       console.error('Ошибка регистрации:', error);
-      
-      // Более детальная обработка ошибок
-      if (error.message.includes('Failed to fetch')) {
-        alert('Не удается подключиться к серверу. Проверьте, что сервер запущен.');
-      } else if (error.message.includes('Unexpected token')) {
-        alert('Сервер вернул неожиданный ответ. Возможно, неверный URL API.');
-      } else {
-        alert(error.message || 'Произошла ошибка при регистрации');
-      }
-    } finally {
+      alert(error.message || 'Произошла ошибка при регистрации');
       setIsSubmitting(false);
     }
   };
@@ -200,7 +233,7 @@ const RegisterForm = () => {
     {
       icon: <CheckCircle className="w-5 h-5 text-green-400" />,
       text: userType === 'candidate' 
-        ? 'Уведомления о новых вакансиях' 
+        ? 'Возможность быть найденным работодателями' 
         : 'Мультиканальная дистрибуция'
     }
   ];
@@ -401,7 +434,7 @@ const RegisterForm = () => {
                         value={formData.position}
                         onChange={handleInputChange}
                         className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                        placeholder="Например: продавец"
+                        placeholder="Например: продавец-консультант"
                       />
                     </div>
                   </div>
@@ -555,6 +588,227 @@ const RegisterForm = () => {
                       className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base resize-none"
                       placeholder="Укажите ваши навыки через запятую (например: продажи, работа с клиентами, Microsoft Office)"
                     />
+                  </div>
+
+                  {/* Professional Profile Section */}
+                  <div className="bg-gradient-to-r from-yellow-400/5 to-yellow-600/5 border border-yellow-400/20 rounded-lg p-4 md:p-6">
+                    <h4 className="text-lg font-semibold text-yellow-400 mb-4 flex items-center">
+                      <Award className="w-5 h-5 mr-2" />
+                      Профессиональные данные
+                    </h4>
+                    
+                    {/* Salary Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Желаемая зарплата (₸)</label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <input
+                            type="number"
+                            name="desired_salary"
+                            value={formData.desired_salary}
+                            onChange={handleInputChange}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                            placeholder="150000"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Текущая зарплата (₸)</label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <input
+                            type="number"
+                            name="current_salary"
+                            value={formData.current_salary}
+                            onChange={handleInputChange}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                            placeholder="120000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Employment Type and Schedule */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Тип занятости</label>
+                        <select
+                          name="employment_type"
+                          value={formData.employment_type}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                        >
+                          <option value="">Выберите тип занятости</option>
+                          {employmentTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">График работы</label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <select
+                            name="work_schedule"
+                            value={formData.work_schedule}
+                            onChange={handleInputChange}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                          >
+                            <option value="">Выберите график</option>
+                            {workSchedules.map(schedule => (
+                              <option key={schedule} value={schedule}>{schedule}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Specialization and Languages */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Специализация</label>
+                        <select
+                          name="specialization"
+                          value={formData.specialization}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                        >
+                          <option value="">Выберите специализацию</option>
+                          {specializations.map(spec => (
+                            <option key={spec} value={spec}>{spec}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Языки</label>
+                        <div className="relative">
+                          <Languages className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <input
+                            type="text"
+                            name="languages"
+                            value={formData.languages}
+                            onChange={handleInputChange}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                            placeholder="Казахский, Русский, Английский"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Achievements and Certificates */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Достижения</label>
+                        <textarea
+                          name="achievements"
+                          value={formData.achievements}
+                          onChange={handleInputChange}
+                          rows="2"
+                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
+                          placeholder="Награды, признания, успешные проекты"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Сертификаты</label>
+                        <textarea
+                          name="certificates"
+                          value={formData.certificates}
+                          onChange={handleInputChange}
+                          rows="2"
+                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
+                          placeholder="Профессиональные сертификаты, курсы"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Availability */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Готовность к работе</label>
+                      <select
+                        name="availability"
+                        value={formData.availability}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                      >
+                        <option value="">Выберите готовность</option>
+                        {availabilityOptions.map(option => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Profile Description */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">О себе (краткое описание)</label>
+                      <textarea
+                        name="profile_description"
+                        value={formData.profile_description}
+                        onChange={handleInputChange}
+                        rows="3"
+                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
+                        placeholder="Расскажите о своем опыте, целях и преимуществах"
+                        maxLength="500"
+                      />
+                      <div className="text-xs text-gray-400 mt-1">
+                        {formData.profile_description.length}/500 символов
+                      </div>
+                    </div>
+
+                    {/* Work Preferences */}
+                    <div className="space-y-3 mb-4">
+                      <h5 className="text-sm font-medium text-yellow-400">Готовность к:</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="relocation_ready"
+                            checked={formData.relocation_ready}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                          />
+                          <label className="ml-2 text-sm text-gray-300">Переезду</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="remote_ready"
+                            checked={formData.remote_ready}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                          />
+                          <label className="ml-2 text-sm text-gray-300">Удаленной работе</label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="business_trips_ready"
+                            checked={formData.business_trips_ready}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                          />
+                          <label className="ml-2 text-sm text-gray-300">Командировкам</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Profile Visibility */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Видимость профиля</label>
+                      <select
+                        name="profile_visibility"
+                        value={formData.profile_visibility}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                      >
+                        <option value="public">Публичный - виден всем</option>
+                        <option value="employers_only">Только работодателям</option>
+                        <option value="private">Скрытый - только по ссылке</option>
+                      </select>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Публичный профиль поможет работодателям найти вас
+                      </div>
+                    </div>
                   </div>
 
                   {/* URLs */}
@@ -747,6 +1001,19 @@ const RegisterForm = () => {
                 ))}
               </div>
 
+              {userType === 'candidate' && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-400/10 to-blue-400/10 rounded-lg border border-green-400/20">
+                  <h4 className="font-semibold text-green-400 mb-2 flex items-center">
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Высококвалифицированный профиль
+                  </h4>
+                  <p className="text-sm text-gray-300">
+                    Заполните расширенную информацию о себе, чтобы работодатели могли найти вас сами. 
+                    Укажите достижения, сертификаты и желаемые условия работы.
+                  </p>
+                </div>
+              )}
+
               <div className="mt-8 p-4 bg-white/5 rounded-lg border border-yellow-400/10">
                 <h4 className="font-semibold text-yellow-400 mb-2">
                   {userType === 'candidate' ? '🎯 Быстрый поиск работы' : '⚡ Быстрый найм персонала'}
@@ -767,6 +1034,19 @@ const RegisterForm = () => {
                   {userType === 'candidate' ? 'активных соискателей' : 'компаний-партнеров'}
                 </div>
               </div>
+
+              {userType === 'candidate' && (
+                <div className="mt-6 space-y-2">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-400">85%</div>
+                    <div className="text-xs text-gray-300">работодателей ищут кандидатов сами</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-blue-400">3x</div>
+                    <div className="text-xs text-gray-300">больше предложений с детальным профилем</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
