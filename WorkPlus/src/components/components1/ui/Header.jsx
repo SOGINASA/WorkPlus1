@@ -374,13 +374,13 @@ const Header = () => {
                 Контакты
               </a>
               
-              <div className="flex flex-col space-y-3 pt-4 border-t border-gray-700">
+              <div className="pt-4 border-t border-gray-700">
                 {!isAuthenticated() ? (
                   // Мобильное меню для неавторизованных
                   <div className="space-y-3">
                     <a
                       href="/login"
-                      className={getMobileLinkClasses('/login')}
+                      className="block w-full text-center py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setCurrentPath('/login');
@@ -390,7 +390,7 @@ const Header = () => {
                     </a>
                     <a
                       href="/register"
-                      className="border border-gray-600 text-gray-300 hover:text-yellow-400 hover:border-yellow-400 px-4 py-2 rounded-lg transition-all text-center mx-2"
+                      className="block w-full text-center py-3 border border-gray-600 text-gray-300 hover:text-yellow-400 hover:border-yellow-400 rounded-lg transition-all mx-0"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setCurrentPath('/register');
@@ -400,7 +400,7 @@ const Header = () => {
                     </a>
                     <a 
                       href="/register" 
-                      className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center mx-2"
+                      className="block w-full text-center py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all mx-0"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setCurrentPath('/register');
@@ -411,8 +411,8 @@ const Header = () => {
                   </div>
                 ) : (
                   // Мобильное меню для авторизованных
-                  <>
-                    <div className="px-2 py-2 border-b border-gray-600">
+                  <div className="space-y-3">
+                    <div className="px-0 py-3 border-b border-gray-600/50">
                       <p className="text-sm text-yellow-400 font-medium">{user?.name}</p>
                       <p className="text-xs text-gray-400">{user?.email}</p>
                       <p className="text-xs text-gray-500 capitalize">
@@ -422,21 +422,21 @@ const Header = () => {
 
                     <a
                      href={getProfilePath()}
-                     className={getMobileLinkClasses(getProfilePath())}
+                     className="flex items-center w-full py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
                      onClick={() => {
                      setMobileMenuOpen(false);
                      setCurrentPath(getProfilePath());
                       }}
                     >
-                      <Settings className="w-4 h-4 inline mr-2" />
-                     Профиль
+                      <Settings className="w-4 h-4 mr-3" />
+                      Профиль
                     </a>
 
                     {isEmployer && (
                       <>
                         <a
                           href="/admin/dashboard"
-                          className={getMobileLinkClasses('/admin')}
+                          className="flex items-center w-full py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
                           onClick={() => {
                             setMobileMenuOpen(false);
                             setCurrentPath('/admin/dashboard');
@@ -446,7 +446,7 @@ const Header = () => {
                         </a>
                         <a 
                           href="/create-job" 
-                          className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center mx-2"
+                          className="block w-full text-center py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all mx-0"
                           onClick={() => {
                             setMobileMenuOpen(false);
                             setCurrentPath('/create-job');
@@ -459,12 +459,12 @@ const Header = () => {
 
                     <button
                       onClick={handleLogout}
-                      className="text-red-400 hover:text-red-300 transition-colors text-left px-2 py-1"
+                      className="flex items-center w-full py-3 text-red-400 hover:text-red-300 transition-colors border-t border-gray-700/50 mt-4"
                     >
-                      <LogOut className="w-4 h-4 inline mr-2" />
+                      <LogOut className="w-4 h-4 mr-3" />
                       Выйти
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
