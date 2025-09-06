@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import React, { useState, useEffect } from 'react';
-import { Building, Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Building, Menu, X, User, LogOut, Settings, Crown } from 'lucide-react';
 import { useAuth } from '../../api/AuthUtils';
 
 const Header = () => {
@@ -27,7 +27,7 @@ const Header = () => {
   const isCandidate = user && user.user_type === 'candidate';
   const isAdmin = user && user.user_type === 'admin';
 
-  // 🔹 Роуты профиля можно централизованно хранить тут
+  // Роуты профиля
   const profileRoutes = {
     candidate: '/candidate-profile',
     employer: '/employer-profile',
@@ -45,11 +45,19 @@ const Header = () => {
     return false;
   };
 
-  const getLinkClasses = (path, baseClasses = "transition-colors text-sm xl:text-base") => {
+  const getLinkClasses = (path, baseClasses = "transition-colors text-sm xl:text-base whitespace-nowrap") => {
     const isActive = isActiveLink(path);
     return `${baseClasses} ${isActive 
       ? 'text-yellow-400' 
       : 'text-gray-300 hover:text-yellow-400'
+    }`;
+  };
+
+  const getPremiumLinkClasses = (path) => {
+    const isActive = isActiveLink(path);
+    return `transition-colors text-sm xl:text-base whitespace-nowrap flex items-center ${isActive 
+      ? 'text-purple-400' 
+      : 'text-purple-300 hover:text-purple-400'
     }`;
   };
 
@@ -66,7 +74,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <div className="flex items-center space-x-3 md:space-x-4">
+          <div className="flex items-center space-x-3 md:space-x-4 flex-shrink-0">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
               <Building className="w-5 h-5 md:w-6 md:h-6 text-black" />
             </div>
@@ -79,7 +87,7 @@ const Header = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+          <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6 flex-1 justify-center">
             <a 
               href="/" 
               className={getLinkClasses('/')}
@@ -93,6 +101,14 @@ const Header = () => {
               onClick={() => setCurrentPath('/jobs')}
             >
               Вакансии
+            </a>
+            <a 
+              href="/vacancy-key" 
+              className={getPremiumLinkClasses('/vacancy-key')}
+              onClick={() => setCurrentPath('/vacancy-key')}
+            >
+              <Crown className="w-3 h-3 xl:w-4 xl:h-4 mr-1" />
+              Премиум поиск
             </a>
             <a 
               href="/notifications" 
@@ -124,55 +140,54 @@ const Header = () => {
               </a>
             )}
 
-            {/* ссылка на аддминпанель */}
+            {/* ссылка на админпанель */}
             {isAdmin && (
               <a 
                 href="/admin/dashboard" 
                 className={getLinkClasses('/admin')}
                 onClick={() => setCurrentPath('/admin/dashboard')}
               >
-                Панель администратора
+                Админ панель
               </a>
             )}
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
             {!isAuthenticated() ? (
               // Для неавторизованных пользователей
-              <>
+              <div className="flex items-center space-x-3">
                 <a 
                   href="/login" 
-                  className={getLinkClasses('/login')}
+                  className="text-gray-300 hover:text-yellow-400 transition-colors text-sm xl:text-base whitespace-nowrap"
                   onClick={() => setCurrentPath('/login')}
                 >
                   Войти
                 </a>
+                <div className="w-px h-4 bg-gray-600"></div>
                 <a 
                   href="/register" 
-                  className={`${getLinkClasses('/register')} border border-gray-600 px-3 py-2 rounded-lg ${
-                    isActiveLink('/register') ? 'border-yellow-400' : 'hover:border-yellow-400'
-                  }`}
+                  className="border border-gray-600 text-gray-300 hover:text-yellow-400 hover:border-yellow-400 px-3 py-1.5 xl:px-4 xl:py-2 rounded-lg transition-all text-sm xl:text-base whitespace-nowrap"
                   onClick={() => setCurrentPath('/register')}
                 >
                   Регистрация
                 </a>
                 <a 
                   href="/register" 
-                  className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-1.5 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base whitespace-nowrap"
                   onClick={() => setCurrentPath('/register')}
                 >
                   Разместить вакансию
                 </a>
-              </>
+              </div>
             ) : (
               // Для авторизованных пользователей
-              <>
+              <div className="flex items-center space-x-3">
                 {/* Кнопка размещения вакансии только для работодателей */}
                 {isEmployer && (
                   <a 
                     href="/create-job" 
-                    className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-2 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base"
+                    className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-1.5 xl:px-4 xl:py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm xl:text-base whitespace-nowrap"
                     onClick={() => setCurrentPath('/create-job')}
                   >
                     Разместить вакансию
@@ -188,72 +203,72 @@ const Header = () => {
                     <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                       <User className="w-4 h-4 text-black" />
                     </div>
-                    <span className="text-sm xl:text-base hidden xl:block">{user.name}</span>
+                    <span className="text-sm xl:text-base hidden xl:block max-w-24 truncate">{user?.name}</span>
                   </button>
 
                   {/* Выпадающее меню пользователя */}
                   {userMenuOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
-          <div className="px-4 py-2 border-b border-gray-700">
-            <p className="text-sm text-yellow-400 font-medium">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.email}</p>
-            <p className="text-xs text-gray-500 capitalize">
-              {user.user_type === 'candidate' && 'Соискатель'}
-              {user.user_type === 'employer' && 'Работодатель'}
-              {user.user_type === 'admin' && 'Администратор'}
-            </p>
-          </div>
-          
-          <a
-            href={getProfilePath()}
-            className={`block px-4 py-2 text-sm transition-colors ${
-              isActiveLink(getProfilePath()) 
-                ? 'bg-gray-700 text-yellow-400' 
-                : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
-            }`}
-            onClick={() => {
-              setUserMenuOpen(false);
-              setCurrentPath(getProfilePath());
-            }}
-          >
-            <Settings className="w-4 h-4 inline mr-2" />
-            Профиль
-          </a>
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-700">
+                        <p className="text-sm text-yellow-400 font-medium truncate">{user?.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                        <p className="text-xs text-gray-500 capitalize">
+                          {user?.user_type === 'candidate' && 'Соискатель'}
+                          {user?.user_type === 'employer' && 'Работодатель'}
+                          {user?.user_type === 'admin' && 'Администратор'}
+                        </p>
+                      </div>
+                      
+                      <a
+                        href={getProfilePath()}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          isActiveLink(getProfilePath()) 
+                            ? 'bg-gray-700 text-yellow-400' 
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+                        }`}
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setCurrentPath(getProfilePath());
+                        }}
+                      >
+                        <Settings className="w-4 h-4 inline mr-2" />
+                        Профиль
+                      </a>
 
-          {isEmployer && (
-            <a
-              href="/employer/dashboard"
-              className={`block px-4 py-2 text-sm transition-colors ${
-                isActiveLink('/employer/dashboard') 
-                  ? 'bg-gray-700 text-yellow-400' 
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
-              }`}
-              onClick={() => {
-                setUserMenuOpen(false);
-                setCurrentPath('/employer/dashboard');
-              }}
-            >
-              Панель управления
-            </a>
-          )}
+                      {isEmployer && (
+                        <a
+                          href="/employer/dashboard"
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            isActiveLink('/employer/dashboard') 
+                              ? 'bg-gray-700 text-yellow-400' 
+                              : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400'
+                          }`}
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setCurrentPath('/employer/dashboard');
+                          }}
+                        >
+                          Панель управления
+                        </a>
+                      )}
 
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
-          >
-            <LogOut className="w-4 h-4 inline mr-2" />
-            Выйти
-          </button>
-        </div>
-      )}
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 inline mr-2" />
+                        Выйти
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -287,6 +302,17 @@ const Header = () => {
                 }}
               >
                 Вакансии
+              </a>
+              <a 
+                href="/vacancy-key" 
+                className="transition-colors px-2 py-1 flex items-center text-purple-300 hover:text-purple-400"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentPath('/vacancy-key');
+                }}
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Премиум поиск
               </a>
               <a 
                 href="/notifications" 
@@ -351,7 +377,7 @@ const Header = () => {
               <div className="flex flex-col space-y-3 pt-4 border-t border-gray-700">
                 {!isAuthenticated() ? (
                   // Мобильное меню для неавторизованных
-                  <>
+                  <div className="space-y-3">
                     <a
                       href="/login"
                       className={getMobileLinkClasses('/login')}
@@ -364,7 +390,7 @@ const Header = () => {
                     </a>
                     <a
                       href="/register"
-                      className={getMobileLinkClasses('/register')}
+                      className="border border-gray-600 text-gray-300 hover:text-yellow-400 hover:border-yellow-400 px-4 py-2 rounded-lg transition-all text-center mx-2"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setCurrentPath('/register');
@@ -374,7 +400,7 @@ const Header = () => {
                     </a>
                     <a 
                       href="/register" 
-                      className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center"
+                      className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center mx-2"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setCurrentPath('/register');
@@ -382,15 +408,15 @@ const Header = () => {
                     >
                       Разместить вакансию
                     </a>
-                  </>
+                  </div>
                 ) : (
                   // Мобильное меню для авторизованных
                   <>
                     <div className="px-2 py-2 border-b border-gray-600">
-                      <p className="text-sm text-yellow-400 font-medium">{user.name}</p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
+                      <p className="text-sm text-yellow-400 font-medium">{user?.name}</p>
+                      <p className="text-xs text-gray-400">{user?.email}</p>
                       <p className="text-xs text-gray-500 capitalize">
-                        {user.user_type === 'candidate' ? 'Соискатель' : 'Работодатель'}
+                        {user?.user_type === 'candidate' ? 'Соискатель' : 'Работодатель'}
                       </p>
                     </div>
 
@@ -406,7 +432,6 @@ const Header = () => {
                      Профиль
                     </a>
 
-
                     {isEmployer && (
                       <>
                         <a
@@ -421,7 +446,7 @@ const Header = () => {
                         </a>
                         <a 
                           href="/create-job" 
-                          className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center"
+                          className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-center mx-2"
                           onClick={() => {
                             setMobileMenuOpen(false);
                             setCurrentPath('/create-job');

@@ -22,6 +22,7 @@ import Notifications from './pages/Notifications'
 import NotFoundPage from './pages/NotFound';
 import EmployerProfile from './pages/EmployerProfile';
 import CandidateProfile from './pages/CandidateProfile';
+import VacancyKey from './pages/Vacancy_key';
 
 // Admin pages imports
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
@@ -89,6 +90,7 @@ const PublicRoutes = () => {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/jobdetail" element={<JobDetail/>} />
         <Route path="/notifications" element={<Notifications/>} />
+        <Route path="/vacancy-key" element={<VacancyKey/>} />
 
         {/* Защищенные страницы для пользователей */}
         <Route path="/resume-dashboard" element={
