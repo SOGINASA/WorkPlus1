@@ -26,16 +26,13 @@ def create_app():
     jwt.init_app(app)
 
     # Регистрация blueprints
-    from routes.auth import auth_bp
-    from routes.jobs import jobs_bp
-    from routes.employer import employer_bp
-    from routes.companies import companies_bp
-    from routes.profile import profile_bp
+    from routes import auth_bp, jobs_bp, employer_bp, companies_bp, notifications_bp, profile_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
     app.register_blueprint(employer_bp, url_prefix='/api/employer')
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
+    app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
 
     # Главная страница API

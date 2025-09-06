@@ -986,3 +986,35 @@ def get_candidate_profile_dict(user):
         'applications_count': user.job_applications.count(),
         'responses_count': user.resume_responses_received.count()
     }
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    type = db.Column(db.String(50), nullable=False)  # application_accepted, interview_scheduled и т.д.
+    message = db.Column(db.String(255), nullable=False)
+
+    job_id = db.Column(db.Integer, db.ForeignKey("jobs.id"), nullable=True)
+    job_title = db.Column(db.String(255), nullable=True)
+    company_name = db.Column(db.String(255), nullable=True)
+    chat_id = db.Column(db.Integer, nullable=True)
+    interview_date = db.Column(db.DateTime, nullable=True)
+
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "message": self.message,
+            "is_read": self.is_read,
+            "created_at": self.created_at.isoformat(),
+            "job_id": self.job_id,
+            "job_title": self.job_title,
+            "company_name": self.company_name,
+            "chat_id": self.chat_id,
+            "interview_date": self.interview_date.isoformat() if self.interview_date else None,
+        }

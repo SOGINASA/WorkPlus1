@@ -1,0 +1,25 @@
+{
+  "short_name": "WorkPlus",
+  "name": "WorkPlus.kz - HR-экосистема с мультиканальной дистрибуцией",
+  "icons": [
+    {
+      "src": "https://w7.pngwing.com/pngs/257/397/png-transparent-computer-icons-job-recruitment-employment-agency-others.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://w7.pngwing.com/pngs/257/397/png-transparent-computer-icons-job-recruitment-employment-agency-others.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://w7.pngwing.com/pngs/257/397/png-transparent-computer-icons-job-recruitment-employment-agency-others.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff"
+}

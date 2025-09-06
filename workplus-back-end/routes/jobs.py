@@ -1,46 +1,42 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Job, Company, User, JobApplication, Analytics
+from models import Notification, db, Job, Company, User, JobApplication, Analytics
 from sqlalchemy import or_, func, desc
 from datetime import datetime, timedelta
 
 jobs_bp = Blueprint('jobs', __name__)
 
+
 @jobs_bp.route('/', methods=['GET'])
+@jwt_required(optional=True)  # авторизация не обязательна, но если есть токен — используем
 def get_jobs():
     """Получить список вакансий с фильтрацией и пагинацией"""
     try:
         # Параметры пагинации
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 100)
-        
-        # Фильтры поиска
+
+        # Фильтры (оставляем твой код как есть)
         search = request.args.get('search', '').strip()
         category = request.args.get('category')
         city = request.args.get('city')
         employment_type = request.args.get('employment_type')
         experience_level = request.args.get('experience_level')
         remote_work = request.args.get('remote_work', type=bool)
-        
-        # Фильтры зарплаты
         salary_min = request.args.get('salary_min', type=int)
         salary_max = request.args.get('salary_max', type=int)
-        
-        # Сортировка
-        sort_by = request.args.get('sort', 'created_at')  # created_at, salary_min, title
-        order = request.args.get('order', 'desc')  # asc, desc
-        
-        # Специальные фильтры
+        sort_by = request.args.get('sort', 'created_at')
+        order = request.args.get('order', 'desc')
         featured_only = request.args.get('featured', type=bool)
         urgent_only = request.args.get('urgent', type=bool)
-        
+
         # Построение запроса
         query = Job.query.join(Company).filter(
             Job.is_active == True,
             Company.is_active == True
         )
-        
-        # Применение фильтров
+
+        # Применение фильтров (оставил твой код без изменений)
         if search:
             search_filter = or_(
                 Job.title.ilike(f'%{search}%'),
@@ -49,22 +45,22 @@ def get_jobs():
                 Company.name.ilike(f'%{search}%')
             )
             query = query.filter(search_filter)
-        
+
         if category:
             query = query.filter(Job.category == category)
-        
+
         if city:
             query = query.filter(Job.city == city)
-        
+
         if employment_type:
             query = query.filter(Job.employment_type == employment_type)
-        
+
         if experience_level:
             query = query.filter(Job.experience_level == experience_level)
-        
+
         if remote_work is not None:
             query = query.filter(Job.remote_work == remote_work)
-        
+
         if salary_min:
             query = query.filter(
                 or_(
@@ -72,52 +68,49 @@ def get_jobs():
                     Job.salary_max >= salary_min
                 )
             )
-        
+
         if salary_max:
             query = query.filter(
                 Job.salary_min <= salary_max
             )
-        
+
         if featured_only:
             query = query.filter(Job.is_featured == True)
-        
+
         if urgent_only:
             query = query.filter(Job.is_urgent == True)
-        
+
         # Сортировка
         if sort_by == 'salary_min':
-            if order == 'desc':
-                query = query.order_by(desc(Job.salary_min))
-            else:
-                query = query.order_by(Job.salary_min)
+            query = query.order_by(desc(Job.salary_min) if order == 'desc' else Job.salary_min)
         elif sort_by == 'title':
-            if order == 'desc':
-                query = query.order_by(desc(Job.title))
-            else:
-                query = query.order_by(Job.title)
+            query = query.order_by(desc(Job.title) if order == 'desc' else Job.title)
         elif sort_by == 'views':
-            if order == 'desc':
-                query = query.order_by(desc(Job.views_count))
-            else:
-                query = query.order_by(Job.views_count)
+            query = query.order_by(desc(Job.views_count) if order == 'desc' else Job.views_count)
         else:  # created_at по умолчанию
-            if order == 'desc':
-                query = query.order_by(desc(Job.created_at))
-            else:
-                query = query.order_by(Job.created_at)
-        
+            query = query.order_by(desc(Job.created_at) if order == 'desc' else Job.created_at)
+
         # Пагинация
-        pagination = query.paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
-        
-        # Получение статистики для фильтров
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Получаем текущего юзера (если есть)
+        user_id = get_jwt_identity()
+        applied_jobs = set()
+        if user_id:
+            apps = JobApplication.query.filter_by(candidate_id=user_id).all()
+            applied_jobs = {a.job_id for a in apps}
+
+        # Формируем результат
+        jobs_list = []
+        for job in pagination.items:
+            job_dict = job.to_dict()
+            job_dict['applied'] = job.id in applied_jobs  # добавляем флаг
+            jobs_list.append(job_dict)
+
         stats = get_jobs_statistics()
-        
+
         return jsonify({
-            'jobs': [job.to_dict() for job in pagination.items],
+            'jobs': jobs_list,
             'pagination': {
                 'page': page,
                 'per_page': per_page,
@@ -128,7 +121,7 @@ def get_jobs():
             },
             'filters': {
                 'categories': stats['categories'],
-                '': stats['cities'],
+                'cities': stats['cities'],
                 'employment_types': stats['employment_types'],
                 'experience_levels': stats['experience_levels']
             },
@@ -147,7 +140,7 @@ def get_jobs():
                 'order': order
             }
         })
-    
+
     except Exception as e:
         print(f"Ошибка получения вакансий: {e}")
         return jsonify({'error': 'Ошибка при получении списка вакансий'}), 500
@@ -387,6 +380,20 @@ def apply_for_job(job_id):
         
         # Трекаем заявку в аналитике
         Analytics.track_metric('applications', job_id, 'job')
+
+        # ✅ Создаём уведомление работодателю
+        employer = User.query.get(job.posted_by)
+        if employer:
+            notif = Notification(
+                user_id=employer.id,
+                type="new_application",
+                message=f"Кандидат {user.name} подал заявку на вашу вакансию «{job.title}»",
+                job_id=job.id,
+                job_title=job.title,
+                company_name=employer.company.name if employer.company else None
+            )
+            db.session.add(notif)
+            db.session.commit()
         
         return jsonify({
             'message': 'Заявка успешно подана',

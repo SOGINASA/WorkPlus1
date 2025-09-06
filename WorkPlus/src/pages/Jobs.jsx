@@ -101,7 +101,8 @@ useEffect(() => {
         }
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/jobs/?${queryParams}`);
+      const url = `${API_BASE_URL}/api/jobs${queryParams.toString() ? `?${queryParams}` : ''}`;
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error('Ошибка при загрузке вакансий');
@@ -461,11 +462,21 @@ useEffect(() => {
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {job.skills && job.skills.split(',').slice(0, 3).map((skill, index) => (
-                            <span key={index} className="px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs rounded-full">
-                              {skill.trim()}
-                            </span>
-                          ))}
+                          {(() => {
+                            try {
+                              const skills = job.skills ? JSON.parse(job.skills) : [];
+                              return skills.slice(0, 3).map((skill, index) => (
+                                <span 
+                                  key={index} 
+                                  className="px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs rounded-full"
+                                >
+                                  {skill}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return null; // или <span>нет навыков</span>
+                            }
+                          })()}
                           {job.experience_level && (
                             <span className="px-3 py-1 bg-blue-400/10 border border-blue-400/20 text-blue-400 text-xs rounded-full">
                               {experienceLevels[job.experience_level] || job.experience_level}
@@ -500,13 +511,17 @@ useEffect(() => {
                           <Clock className="w-3 h-3" />
                           {formatDate(job.created_at)}
                         </div>
-
-                        <button 
-                          onClick={(e) => handleApplyJob(e, job.id)}
-                          className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
-                        >
-                          Откликнуться
-                        </button>
+                              <button 
+                                onClick={(e) => !job.applied && handleApplyJob(e, job.id)}
+                                className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium transition-all ${
+                                  job.applied
+                                    ? "bg-gray-400 text-white cursor-not-allowed"
+                                    : "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700"
+                                }`}
+                                disabled={job.applied}
+                              >
+                                {job.applied ? "Уже откликнулись" : "Откликнуться"}
+                              </button>  //TODO: fix button
                       </div>
                     </div>
                   </div>

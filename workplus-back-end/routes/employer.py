@@ -125,7 +125,9 @@ def create_job():
         
         # Устанавливаем навыки и языки
         if data.get('skills'):
+            print(data['skills'])
             job.set_skills_list(data['skills'])
+            print(job.skills)
         
         if data.get('languages'):
             job.set_languages_list(data['languages'])

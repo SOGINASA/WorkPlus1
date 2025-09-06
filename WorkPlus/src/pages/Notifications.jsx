@@ -92,7 +92,8 @@ const NotificationsPage = () => {
         queryParams.append('type', selectedType);
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/notifications/?${queryParams}`, {
+      const url = `${API_BASE_URL}/api/notifications${queryParams.toString() ? `?${queryParams}` : ''}`;
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -159,6 +160,7 @@ const NotificationsPage = () => {
       });
 
       if (response.ok) {
+        console.log('Все уведомления отмечены как прочитанные');
         setNotifications(prev => 
           prev.map(notification => ({ ...notification, is_read: true }))
         );
