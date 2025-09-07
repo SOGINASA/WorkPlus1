@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -16,7 +16,7 @@ def create_app():
     app.config.from_object(Config)
     CORS(app, origins=['http://localhost:3000','https://workplus-fork.vercel.app/'],
         allow_headers=['Content-Type', 'Authorization'],
-        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+        methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'], 
         supports_credentials=True
         )
 

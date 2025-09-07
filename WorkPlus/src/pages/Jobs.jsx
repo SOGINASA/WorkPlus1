@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Clock, Building, ChevronRight, Filter, Star, Briefcase, DollarSign, Calendar, Users, Loader } from 'lucide-react';
+import { getUserFromStorage } from '../components/api/AuthUtils';
+import { tr } from 'date-fns/locale';
 
 const JobsPage = () => {
   const navigate = useNavigate();
@@ -34,6 +36,11 @@ useEffect(() => {
   fetchJobCategories();
 }, []);
 
+  let isEmployer = false;
+  let user_data = getUserFromStorage();
+  if (user_data && user_data.user_type == 'employer') {
+    isEmployer = true;
+  }
 
   const cities = [
     'Все города',
@@ -86,6 +93,7 @@ useEffect(() => {
     setError(null);
     
     try {
+      const user_data = getUserFromStorage();
       const queryParams = new URLSearchParams({
         page: page.toString(),
         per_page: '20',
@@ -100,6 +108,10 @@ useEffect(() => {
           queryParams.delete(key);
         }
       });
+
+      if (user_data) {
+        queryParams.set('user_id', user_data.id);
+      }
 
       const url = `${API_BASE_URL}/api/jobs${queryParams.toString() ? `?${queryParams}` : ''}`;
       const response = await fetch(url);
@@ -511,17 +523,24 @@ useEffect(() => {
                           <Clock className="w-3 h-3" />
                           {formatDate(job.created_at)}
                         </div>
-                              <button 
-                                onClick={(e) => !job.applied && handleApplyJob(e, job.id)}
-                                className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium transition-all ${
-                                  job.applied
-                                    ? "bg-gray-400 text-white cursor-not-allowed"
-                                    : "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700"
-                                }`}
-                                disabled={job.applied}
-                              >
-                                {job.applied ? "Уже откликнулись" : "Откликнуться"}
-                              </button>  //TODO: fix button
+                              {!isEmployer && (
+                                <button 
+                                  onClick={(e) => !job.applied && handleApplyJob(e, job.id)}
+                                  className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium transition-all ${
+                                    job.applied
+                                      ? "bg-gray-400 text-white cursor-not-allowed"
+                                      : "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700"
+                                  }`}
+                                  disabled={job.applied}
+                                >
+                                  {job.applied ? "Уже откликнулись" : "Откликнуться"}
+                                </button>
+                              )}
+                              {isEmployer && (
+                                <p className="w-full sm:w-auto px-6 py-2 rounded-lg font-medium text-gray-400">
+                                  Вы не можете откликаться на вакансию, потому что вы - работодатель
+                                </p>
+                              )}
                       </div>
                     </div>
                   </div>

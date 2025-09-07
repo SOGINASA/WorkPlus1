@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from models import Notification, db, Job, Company, User, JobApplication, Analytics
 from sqlalchemy import or_, func, desc
 from datetime import datetime, timedelta
@@ -8,8 +8,11 @@ jobs_bp = Blueprint('jobs', __name__)
 
 
 @jobs_bp.route('/', methods=['GET'])
-@jwt_required(optional=True)  # авторизация не обязательна, но если есть токен — используем
+# @jwt_required(optional=True)  # авторизация не обязательна, но если есть токен — используем
 def get_jobs():
+    if request.method == "OPTIONS":
+        # Прямой ответ БЕЗ редиректов
+        return jsonify({}), 200
     """Получить список вакансий с фильтрацией и пагинацией"""
     try:
         # Параметры пагинации
@@ -94,17 +97,57 @@ def get_jobs():
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         # Получаем текущего юзера (если есть)
-        user_id = get_jwt_identity()
+        # ПРОБЛЕМА: User ID = None (пользователь не авторизован)
+        # Поэтому applied_jobs всегда пустой и applied всегда False
+
+        user_id = request.args.get('user_id', None)
         applied_jobs = set()
+
+        # Отладочная информация
+        print(f"User ID: {user_id}")
+        print(f"Is user authenticated: {user_id is not None}")
+
         if user_id:
             apps = JobApplication.query.filter_by(candidate_id=user_id).all()
-            applied_jobs = {a.job_id for a in apps}
+            applied_jobs = {int(a.job_id) for a in apps}
+            print(f"Found applications: {len(apps)}")
+            print(f"Applied job IDs: {applied_jobs}")
+        else:
+            print("User not authenticated - applied will be False for all jobs")
 
         # Формируем результат
         jobs_list = []
         for job in pagination.items:
             job_dict = job.to_dict()
-            job_dict['applied'] = job.id in applied_jobs  # добавляем флаг
+            
+            # Если пользователь не авторизован, applied = False
+            # Если авторизован, проверяем наличие заявки
+            if user_id is None:
+                job_dict['applied'] = False
+            else:
+                job_dict['applied'] = int(job.id) in applied_jobs
+            
+            jobs_list.append(job_dict)
+
+        print(f"Total jobs processed: {len(jobs_list)}")
+
+        # Альтернативный вариант - более надежный:
+        # Можно также добавить логирование для отладки:
+        print(f"User ID: {user_id}")
+        print(f"Applied jobs: {applied_jobs}")
+        print(f"Current job ID: {job.id}, type: {type(job.id)}")
+        print(f"Applied check result: {int(job.id) in applied_jobs}")
+
+        # Или использовать более явную проверку:
+        for job in pagination.items:
+            job_dict = job.to_dict()
+            is_applied = False
+            if user_id and applied_jobs:
+                # Проверяем оба варианта типов
+                is_applied = (job.id in applied_jobs or 
+                            str(job.id) in applied_jobs or 
+                            int(job.id) in applied_jobs)
+            job_dict['applied'] = is_applied
             jobs_list.append(job_dict)
 
         stats = get_jobs_statistics()
