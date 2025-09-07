@@ -4,12 +4,14 @@ from routes.employer import employer_bp
 from routes.companies import companies_bp  
 from routes.profile import profile_bp
 from routes.notifications import notifications_bp
+from routes.contact import contact_bp
 
 __all__ = [
     'auth_bp',
     'jobs_bp',
-    'employer_bp', 
-    'companies_bp', 
+    'employer_bp',
+    'companies_bp',
     'profile_bp',
-    'notifications_bp'
+    'notifications_bp',
+    'contact_bp',
 ]

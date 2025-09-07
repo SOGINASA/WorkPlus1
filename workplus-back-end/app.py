@@ -14,11 +14,7 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, origins=['http://localhost:3000','https://workplus-fork.vercel.app/'],
-        allow_headers=['Content-Type', 'Authorization'],
-        methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'], 
-        supports_credentials=True
-        )
+    CORS(app, supports_credentials=True)
 
     # Инициализация расширений
     db.init_app(app)
@@ -26,7 +22,7 @@ def create_app():
     jwt.init_app(app)
 
     # Регистрация blueprints
-    from routes import auth_bp, jobs_bp, employer_bp, companies_bp, notifications_bp, profile_bp
+    from routes import auth_bp, jobs_bp, employer_bp, companies_bp, notifications_bp, profile_bp, contact_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
@@ -34,6 +30,7 @@ def create_app():
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
+    app.register_blueprint(contact_bp, url_prefix='/api/contact')
 
     # Главная страница API
     @app.route('/api')

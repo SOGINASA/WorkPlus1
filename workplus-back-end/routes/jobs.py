@@ -135,8 +135,8 @@ def get_jobs():
         # Можно также добавить логирование для отладки:
         print(f"User ID: {user_id}")
         print(f"Applied jobs: {applied_jobs}")
-        print(f"Current job ID: {job.id}, type: {type(job.id)}")
-        print(f"Applied check result: {int(job.id) in applied_jobs}")
+        # print(f"Current job ID: {job.id}, type: {type(job.id)}")
+        # print(f"Applied check result: {int(job.id) in applied_jobs}")
 
         # Или использовать более явную проверку:
         for job in pagination.items:

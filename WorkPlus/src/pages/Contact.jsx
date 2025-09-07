@@ -13,6 +13,8 @@ const Contact = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,8 +26,14 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Имитация отправки формы
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const url = `${API_BASE_URL}/api/contact/create`;
+    let request = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
     
     alert('Спасибо за обращение! Мы свяжемся с вами в ближайшее время.');
     setFormData({
