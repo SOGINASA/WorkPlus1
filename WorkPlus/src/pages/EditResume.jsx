@@ -5,7 +5,7 @@ import {
   GraduationCap, Award, Languages, FileText, Star,
   Camera, Globe, Linkedin, Github, Check
 } from 'lucide-react';
-
+import  { getUserFromStorage, API_BASE_URL } from '../components/api/AuthUtils';
 const CreateResumePage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
@@ -217,6 +217,29 @@ const CreateResumePage = () => {
 
     return Math.round((completed / total) * 100);
   };
+  //TODO: fix it
+  const user = getUserFromStorage();
+  if (!user) {
+    alert('Пожалуйста, войдите в систему, чтобы редактировать резюме.');
+    window.location.href = '/login';  
+  }
+  const user_id = user ? user.id : null;
+
+  const handleSubmit = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/find/${user_id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    const data = await response.json();
+    console.log("Saved:", data);
+    alert("Резюме успешно сохранено!");
+  } catch (err) {
+    console.error("Ошибка сохранения:", err);
+  }
+};
+
 
   const renderStep1 = () => (
     <div className="space-y-6">

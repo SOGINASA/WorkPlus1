@@ -4,6 +4,8 @@ import {
   Award, Languages, FileText, Save, Eye, ChevronLeft, ChevronRight, 
   Plus, X, Upload, Check, AlertCircle, Star, Globe
 } from 'lucide-react';
+import { API_BASE_URL } from '../components/api/AuthUtils';
+
 
 const CreateResumePage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -121,10 +123,20 @@ const CreateResumePage = () => {
     }
   };
 
-  const saveResume = () => {
-    console.log('Saving resume:', resumeData);
-    alert('Резюме успешно сохранено!');
-  };
+  const saveResume = async () => {
+    try {
+    const response = await fetch(`${API_BASE_URL}/api/resumes/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(resumeData),
+    });
+    const data = await response.json();
+    console.log("Saved:", data);
+    alert("Резюме успешно сохранено!");
+  } catch (err) {
+    console.error("Ошибка сохранения:", err);
+  }
+};
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1172,4 +1184,4 @@ const PreviewStep = ({ resumeData }) => {
   );
 };
 
-export default CreateResumePage;
+export default CreateResumePage;  

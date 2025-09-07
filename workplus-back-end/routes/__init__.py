@@ -5,6 +5,7 @@ from routes.companies import companies_bp
 from routes.profile import profile_bp
 from routes.notifications import notifications_bp
 from routes.contact import contact_bp
+from routes.resumes import resume_bp
 
 __all__ = [
     'auth_bp',
@@ -14,4 +15,5 @@ __all__ = [
     'profile_bp',
     'notifications_bp',
     'contact_bp',
+    'resume_bp'
 ]

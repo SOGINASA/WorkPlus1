@@ -157,12 +157,36 @@ def register():
                     # Используем существующую компанию
                     user.company_id = existing_company.id
                 else:
-                    # Создаем новую компанию
+                    # Создаем новую компанию с расширенными полями
                     company = Company(
                         name=data['companyName'].strip(),
                         industry=data.get('industry'),
                         size=data.get('companySize'),
-                        city=data.get('city', 'Петропавловск')
+                        city=data.get('city', 'Петропавловск'),
+                        description=data.get('companyDescription', ''),
+                        website=data.get('companyWebsite'),
+                        email=data.get('companyEmail', data.get('email')),
+                        phone=data.get('companyPhone', data.get('phone')),
+                        address=data.get('companyAddress'),
+                        founded_year=data.get('foundedYear'),
+                        
+                        # Контактное лицо
+                        contact_name=full_name,
+                        contact_position=data.get('position', 'Контактное лицо'),
+                        contact_phone=data.get('phone'),
+                        contact_email=data.get('email'),
+                        
+                        # Социальные сети
+                        instagram=data.get('instagram'),
+                        facebook=data.get('facebook'),
+                        linkedin=data.get('linkedin'),
+                        telegram=data.get('telegram'),
+                        
+                        # Настройки по умолчанию
+                        is_public=data.get('isPublic', True),
+                        email_notifications=data.get('emailNotifications', True),
+                        sms_notifications=data.get('smsNotifications', True),
+                        auto_reply=data.get('autoReply', True)
                     )
                     db.session.add(company)
                     db.session.flush()  # Получаем ID компании

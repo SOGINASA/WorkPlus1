@@ -142,11 +142,23 @@ class Company(db.Model):
     founded_year = db.Column(db.Integer)
     logo_url = db.Column(db.String(255))
     
+    # Контактное лицо
+    contact_name = db.Column(db.String(200))  # ФИО контактного лица
+    contact_position = db.Column(db.String(100))  # Должность контактного лица
+    contact_phone = db.Column(db.String(20))  # Телефон контактного лица
+    contact_email = db.Column(db.String(120))  # Email контактного лица
+    
     # Социальные сети
     instagram = db.Column(db.String(100))
     facebook = db.Column(db.String(100))
     linkedin = db.Column(db.String(100))
     telegram = db.Column(db.String(100))
+    
+    # Настройки
+    is_public = db.Column(db.Boolean, default=True)  # Публичный профиль
+    email_notifications = db.Column(db.Boolean, default=True)  # Email уведомления
+    sms_notifications = db.Column(db.Boolean, default=True)  # SMS уведомления
+    auto_reply = db.Column(db.Boolean, default=True)  # Автоответ
     
     # Статус
     is_verified = db.Column(db.Boolean, default=False)
@@ -174,11 +186,23 @@ class Company(db.Model):
             'size': self.size,
             'founded_year': self.founded_year,
             'logo_url': self.logo_url,
+            'contact_person': {
+                'name': self.contact_name,
+                'position': self.contact_position,
+                'phone': self.contact_phone,
+                'email': self.contact_email
+            },
             'social_media': {
                 'instagram': self.instagram,
                 'facebook': self.facebook,
                 'linkedin': self.linkedin,
                 'telegram': self.telegram
+            },
+            'settings': {
+                'is_public': self.is_public,
+                'email_notifications': self.email_notifications,
+                'sms_notifications': self.sms_notifications,
+                'auto_reply': self.auto_reply
             },
             'is_verified': self.is_verified,
             'rating': self.rating,
@@ -1063,3 +1087,80 @@ class Contact(db.Model):
             'message': self.message,
             'created_at': self.created_at.isoformat()
         }
+    
+class Resume(db.Model):
+    __tablename__ = "resumes"
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
+    city = db.Column(db.String(100))
+    date_of_birth = db.Column(db.String(20))
+    photo = db.Column(db.String(255))  # путь/URL до фото
+    
+    position = db.Column(db.String(100))
+    salary = db.Column(db.String(50))
+    work_format = db.Column(db.String(50))
+    ready_to_relocate = db.Column(db.Boolean, default=False)
+    
+    summary = db.Column(db.Text)
+
+    # связи
+    experience = db.relationship("ResumeExperience", backref="resume", cascade="all, delete-orphan")
+    education = db.relationship("ResumeEducation", backref="resume", cascade="all, delete-orphan")
+    skills = db.relationship("ResumeSkill", backref="resume", cascade="all, delete-orphan")
+    languages = db.relationship("ResumeLanguage", backref="resume", cascade="all, delete-orphan")
+    courses = db.relationship("ResumeCourse", backref="resume", cascade="all, delete-orphan")
+
+
+class ResumeExperience(db.Model):
+    __tablename__ = "resume_experience"
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"))
+    company = db.Column(db.String(120))
+    position = db.Column(db.String(120))
+    start_date = db.Column(db.String(20))
+    end_date = db.Column(db.String(20))
+    current = db.Column(db.Boolean, default=False)
+    description = db.Column(db.Text)
+
+
+
+class ResumeSkill(db.Model):
+    __tablename__ = "resume_skills"
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"))
+    name = db.Column(db.String(100))
+
+
+class ResumeEducation(db.Model):
+    __tablename__ = "resume_education"
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"))
+    institution = db.Column(db.String(120))
+    degree = db.Column(db.String(120))
+    field = db.Column(db.String(120))
+    start_year = db.Column(db.String(10))
+    end_year = db.Column(db.String(10))
+    current = db.Column(db.Boolean, default=False)
+
+
+
+class ResumeLanguage(db.Model):
+    __tablename__ = "resume_languages"
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"))
+    name = db.Column(db.String(100))
+    level = db.Column(db.String(50))
+
+
+
+class ResumeCourse(db.Model):
+    __tablename__ = "resume_courses"
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"))
+    name = db.Column(db.String(120))
+    organization = db.Column(db.String(120))
+    year = db.Column(db.String(10))
+    certificate = db.Column(db.String(120))

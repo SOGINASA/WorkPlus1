@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+export { API_BASE_URL };
 
 // Получение токенов из localStorage
 export const getAccessToken = () => localStorage.getItem('access_token');
@@ -252,6 +253,7 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
+
 
   // Функция выхода
   const logout = () => {

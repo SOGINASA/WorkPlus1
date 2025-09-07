@@ -442,3 +442,427 @@ def get_employer_dashboard():
     except Exception as e:
         print(f"Ошибка получения дашборда: {e}")
         return jsonify({'error': 'Ошибка при получении дашборда'}), 500
+    
+@employer_bp.route('/profile', methods=['GET'])
+@jwt_required()
+def get_employer_profile():
+    """Получить профиль работодателя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        # Получаем компанию работодателя
+        company = Company.query.filter_by(user_id=user_id).first()
+        
+        if not company:
+            # Создаем базовый профиль компании
+            company = Company(
+                user_id=user_id,
+                name='Новая компания',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(company)
+            db.session.commit()
+        
+        # Подсчитываем статистику
+        total_vacancies = Job.query.filter_by(posted_by=user_id).count()
+        active_vacancies = Job.query.filter_by(posted_by=user_id, is_active=True).count()
+        paused_vacancies = Job.query.filter_by(posted_by=user_id, is_active=False).count()
+        
+        # Подсчитываем отклики
+        total_applications = db.session.query(JobApplication).join(Job).filter(
+            Job.posted_by == user_id
+        ).count()
+        
+        new_applications = db.session.query(JobApplication).join(Job).filter(
+            Job.posted_by == user_id,
+            JobApplication.status == 'new'
+        ).count()
+        
+        interview_applications = db.session.query(JobApplication).join(Job).filter(
+            Job.posted_by == user_id,
+            JobApplication.status == 'interview'
+        ).count()
+        
+        approved_applications = db.session.query(JobApplication).join(Job).filter(
+            Job.posted_by == user_id,
+            JobApplication.status == 'approved'
+        ).count()
+        
+        rejected_applications = db.session.query(JobApplication).join(Job).filter(
+            Job.posted_by == user_id,
+            JobApplication.status == 'rejected'
+        ).count()
+        
+        return jsonify({
+            'profile': {
+                # Основная информация о компании
+                'companyName': company.name,
+                'industry': company.industry,
+                'companySize': company.company_size,
+                'website': company.website,
+                'email': company.email,
+                'phone': company.phone,
+                'city': company.city,
+                'address': company.address,
+                'description': company.description,
+                
+                # Контактное лицо
+                'contactName': company.contact_name,
+                'contactPosition': company.contact_position,
+                'contactPhone': company.contact_phone,
+                'contactEmail': company.contact_email,
+                
+                # Настройки
+                'isPublic': company.is_public if company.is_public is not None else True,
+                'emailNotifications': user.email_notifications if user.email_notifications is not None else True,
+                'smsNotifications': user.sms_notifications if user.sms_notifications is not None else True,
+                'autoReply': company.auto_reply if company.auto_reply is not None else True
+            },
+            'stats': {
+                'totalVacancies': total_vacancies,
+                'activeVacancies': active_vacancies,
+                'pausedVacancies': paused_vacancies,
+                'totalApplications': total_applications,
+                'newApplications': new_applications,
+                'interviewApplications': interview_applications,
+                'approvedApplications': approved_applications,
+                'rejectedApplications': rejected_applications,
+                'companyRating': company.rating if hasattr(company, 'rating') else 4.6
+            }
+        })
+        
+    except Exception as e:
+        print(f"Ошибка получения профиля: {e}")
+        return jsonify({'error': 'Ошибка при загрузке профиля'}), 500
+
+
+@employer_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_employer_profile():
+    """Обновить профиль работодателя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        data = request.json
+        if not data:
+            return jsonify({'error': 'Нет данных для обновления'}), 400
+        
+        # Получаем или создаем компанию
+        company = Company.query.filter_by(user_id=user_id).first()
+        if not company:
+            company = Company(user_id=user_id, created_at=datetime.utcnow())
+            db.session.add(company)
+        
+        # Обновляем основную информацию о компании
+        if 'companyName' in data:
+            company.name = data['companyName']
+        if 'industry' in data:
+            company.industry = data['industry']
+        if 'companySize' in data:
+            company.company_size = data['companySize']
+        if 'website' in data:
+            company.website = data['website']
+        if 'email' in data:
+            company.email = data['email']
+        if 'phone' in data:
+            company.phone = data['phone']
+        if 'city' in data:
+            company.city = data['city']
+        if 'address' in data:
+            company.address = data['address']
+        if 'description' in data:
+            company.description = data['description']
+        
+        # Обновляем контактное лицо
+        if 'contactName' in data:
+            company.contact_name = data['contactName']
+        if 'contactPosition' in data:
+            company.contact_position = data['contactPosition']
+        if 'contactPhone' in data:
+            company.contact_phone = data['contactPhone']
+        if 'contactEmail' in data:
+            company.contact_email = data['contactEmail']
+        
+        # Обновляем настройки
+        if 'isPublic' in data:
+            company.is_public = data['isPublic']
+        if 'autoReply' in data:
+            company.auto_reply = data['autoReply']
+        
+        # Обновляем настройки пользователя
+        if 'emailNotifications' in data:
+            user.email_notifications = data['emailNotifications']
+        if 'smsNotifications' in data:
+            user.sms_notifications = data['smsNotifications']
+        
+        company.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Профиль успешно обновлен',
+            'profile': {
+                'companyName': company.name,
+                'industry': company.industry,
+                'companySize': company.company_size,
+                'website': company.website,
+                'email': company.email,
+                'phone': company.phone,
+                'city': company.city,
+                'address': company.address,
+                'description': company.description,
+                'contactName': company.contact_name,
+                'contactPosition': company.contact_position,
+                'contactPhone': company.contact_phone,
+                'contactEmail': company.contact_email,
+                'isPublic': company.is_public,
+                'emailNotifications': user.email_notifications,
+                'smsNotifications': user.sms_notifications,
+                'autoReply': company.auto_reply
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка обновления профиля: {e}")
+        return jsonify({'error': 'Ошибка при обновлении профиля'}), 500
+
+
+@employer_bp.route('/vacancies', methods=['GET'])
+@jwt_required()
+def get_employer_vacancies():
+    """Получить вакансии работодателя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        
+        query = Job.query.filter_by(posted_by=user_id).order_by(Job.created_at.desc())
+        
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        vacancies = []
+        for job in pagination.items:
+            # Подсчитываем отклики и просмотры
+            applications_count = JobApplication.query.filter_by(job_id=job.id).count()
+            views_count = job.views_count if hasattr(job, 'views_count') else 0
+            
+            vacancies.append({
+                'id': job.id,
+                'title': job.title,
+                'department': job.category,
+                'salary': f"{job.salary_min}-{job.salary_max}" if job.salary_min and job.salary_max else 'Не указана',
+                'type': job.employment_type,
+                'status': 'active' if job.is_active else 'paused',
+                'postedDate': job.created_at.isoformat() if job.created_at else None,
+                'applicantsCount': applications_count,
+                'viewsCount': views_count
+            })
+        
+        return jsonify({
+            'vacancies': vacancies,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': pagination.total,
+                'pages': pagination.pages
+            }
+        })
+        
+    except Exception as e:
+        print(f"Ошибка получения вакансий: {e}")
+        return jsonify({'error': 'Ошибка при загрузке вакансий'}), 500
+
+
+@employer_bp.route('/applicants', methods=['GET'])
+@jwt_required()
+def get_employer_applicants():
+    """Получить отклики на вакансии работодателя"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        status_filter = request.args.get('status')
+        
+        # Получаем отклики на все вакансии работодателя
+        query = db.session.query(JobApplication).join(Job).join(User, JobApplication.user_id == User.id).filter(
+            Job.posted_by == user_id
+        )
+        
+        if status_filter and status_filter != 'all':
+            query = query.filter(JobApplication.status == status_filter)
+        
+        query = query.order_by(JobApplication.created_at.desc())
+        
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        applicants = []
+        for application in pagination.items:
+            candidate = application.user
+            job = application.job
+            
+            applicants.append({
+                'id': application.id,
+                'name': candidate.full_name if candidate.full_name else f"{candidate.first_name} {candidate.last_name}",
+                'position': job.title,
+                'vacancyId': job.id,
+                'vacancyTitle': job.title,
+                'appliedDate': application.created_at.isoformat() if application.created_at else None,
+                'status': application.status,
+                'experience': application.experience_years or 'Не указан',
+                'salary': application.desired_salary or 'Не указана',
+                'phone': candidate.phone,
+                'email': candidate.email,
+                'rating': application.score or 4.0,
+                'skills': application.skills.split(',') if application.skills else [],
+                'lastActivity': _get_last_activity(application.updated_at),
+            })
+        
+        return jsonify({
+            'applicants': applicants,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': pagination.total,
+                'pages': pagination.pages
+            }
+        })
+        
+    except Exception as e:
+        print(f"Ошибка получения откликов: {e}")
+        return jsonify({'error': 'Ошибка при загрузке откликов'}), 500
+
+
+def _get_last_activity(updated_at):
+    """Вспомогательная функция для расчета времени последней активности"""
+    if not updated_at:
+        return 'Не известно'
+    
+    diff = datetime.utcnow() - updated_at
+    
+    if diff.days > 7:
+        return f"{diff.days} дней назад"
+    elif diff.days > 0:
+        return f"{diff.days} дней назад"
+    elif diff.seconds > 3600:
+        hours = diff.seconds // 3600
+        return f"{hours} часов назад"
+    else:
+        minutes = diff.seconds // 60
+        return f"{minutes} минут назад"
+
+
+@employer_bp.route('/applicant/<int:application_id>/status', methods=['PUT'])
+@jwt_required()
+def update_applicant_status():
+    """Обновить статус отклика кандидата"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        application_id = request.view_args['application_id']
+        data = request.json
+        
+        if not data or 'status' not in data:
+            return jsonify({'error': 'Не указан новый статус'}), 400
+        
+        # Проверяем, что отклик принадлежит вакансии работодателя
+        application = db.session.query(JobApplication).join(Job).filter(
+            JobApplication.id == application_id,
+            Job.posted_by == user_id
+        ).first()
+        
+        if not application:
+            return jsonify({'error': 'Отклик не найден'}), 404
+        
+        valid_statuses = ['new', 'interview', 'approved', 'rejected']
+        if data['status'] not in valid_statuses:
+            return jsonify({'error': 'Недопустимый статус'}), 400
+        
+        application.status = data['status']
+        application.updated_at = datetime.utcnow()
+        
+        # Добавляем HR заметки если есть
+        if 'notes' in data:
+            application.hr_notes = data['notes']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Статус отклика обновлен',
+            'application': {
+                'id': application.id,
+                'status': application.status,
+                'updated_at': application.updated_at.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка обновления статуса: {e}")
+        return jsonify({'error': 'Ошибка при обновлении статуса'}), 500
+
+
+@employer_bp.route('/vacancy/<int:vacancy_id>/toggle', methods=['PUT'])
+@jwt_required()
+def toggle_vacancy_status():
+    """Переключить статус вакансии (активна/на паузе)"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.user_type != 'employer':
+            return jsonify({'error': 'Доступ только для работодателей'}), 403
+        
+        vacancy_id = request.view_args['vacancy_id']
+        
+        vacancy = Job.query.filter_by(id=vacancy_id, posted_by=user_id).first()
+        if not vacancy:
+            return jsonify({'error': 'Вакансия не найдена'}), 404
+        
+        vacancy.is_active = not vacancy.is_active
+        vacancy.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Статус вакансии обновлен',
+            'vacancy': {
+                'id': vacancy.id,
+                'is_active': vacancy.is_active,
+                'status': 'active' if vacancy.is_active else 'paused'
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка переключения статуса вакансии: {e}")
+        return jsonify({'error': 'Ошибка при обновлении статуса вакансии'}), 500
