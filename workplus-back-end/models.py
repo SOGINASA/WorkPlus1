@@ -308,13 +308,25 @@ class Job(db.Model):
         return "По договоренности"
     
     def to_dict(self, include_applications=False):
+        # Парсим JSON поля
+        def parse_json_field(field_value):
+            if not field_value:
+                return []
+            if isinstance(field_value, str):
+                try:
+                    return json.loads(field_value)
+                except:
+                    # Если не JSON, то разбиваем по строкам
+                    return [line.strip() for line in field_value.split('\n') if line.strip()]
+            return field_value if isinstance(field_value, list) else []
+        
         data = {
             'id': self.id,
             'title': self.title,
             'description': self.description,
-            'requirements': self.requirements,
-            'responsibilities': self.responsibilities,
-            'benefits': self.benefits,
+            'requirements': parse_json_field(self.requirements),
+            'responsibilities': parse_json_field(self.responsibilities),
+            'benefits': parse_json_field(self.benefits),
             'category': self.category,
             'employment_type': self.employment_type,
             'experience_level': self.experience_level,
@@ -1018,3 +1030,15 @@ class Notification(db.Model):
             "chat_id": self.chat_id,
             "interview_date": self.interview_date.isoformat() if self.interview_date else None,
         }
+    
+class SavedJob(db.Model):
+    """Модель сохраненных вакансий"""
+    __tablename__ = 'saved_jobs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('jobs.id'), nullable=False)
+    saved_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Уникальная комбинация пользователь-вакансия
+    __table_args__ = (db.UniqueConstraint('user_id', 'job_id'),)

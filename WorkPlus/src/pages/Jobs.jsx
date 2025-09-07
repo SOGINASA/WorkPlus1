@@ -38,7 +38,7 @@ useEffect(() => {
 
   let isEmployer = false;
   let user_data = getUserFromStorage();
-  if (user_data && user_data.user_type == 'employer') {
+  if (user_data && (user_data.user_type == 'employer' || user_data.user_type == 'admin' )) {
     isEmployer = true;
   }
 

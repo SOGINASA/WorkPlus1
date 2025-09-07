@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
-from models import Notification, db, Job, Company, User, JobApplication, Analytics
+from models import Notification, SavedJob, db, Job, Company, User, JobApplication, Analytics
 from sqlalchemy import or_, func, desc
 from datetime import datetime, timedelta
 
@@ -202,14 +202,20 @@ def get_job_detail(job_id):
             return jsonify({'error': 'Вакансия не найдена'}), 404
         
         # Увеличиваем счетчик просмотров
-        job.views_count += 1
+        job.views_count = (job.views_count or 0) + 1
         db.session.commit()
         
-        # Трекаем просмотр в аналитике
-        Analytics.track_metric('job_views', job.id, 'job')
+        # Трекаем просмотр в аналитике (если Analytics существует)
+        try:
+            Analytics.track_metric('job_views', job.id, 'job')
+        except:
+            pass
         
         # Получаем данные о пользователе если авторизован
         user_application = None
+        user_saved = False
+        current_user_id = None
+        
         try:
             from flask_jwt_extended import verify_jwt_in_request
             verify_jwt_in_request(optional=True)
@@ -217,10 +223,22 @@ def get_job_detail(job_id):
             
             if current_user_id:
                 user_id = int(current_user_id)
+                
+                # Проверяем, подавал ли пользователь заявку
                 user_application = JobApplication.query.filter_by(
                     job_id=job_id,
                     candidate_id=user_id
                 ).first()
+                
+                # Проверяем, сохранена ли вакансия пользователем (если модель SavedJob существует)
+                try:
+                    saved_job = SavedJob.query.filter_by(
+                        job_id=job_id,
+                        user_id=user_id
+                    ).first()
+                    user_saved = saved_job is not None
+                except:
+                    user_saved = False
         except:
             pass
         
@@ -232,8 +250,10 @@ def get_job_detail(job_id):
             Company.is_active == True
         ).limit(5).all()
         
+        # Формируем ответ
         response_data = job.to_dict()
         response_data['user_applied'] = user_application is not None
+        response_data['user_saved'] = user_saved
         response_data['user_application'] = user_application.to_dict(include_candidate=False) if user_application else None
         response_data['related_jobs'] = [
             {
@@ -242,7 +262,7 @@ def get_job_detail(job_id):
                 'company': related_job.company.name,
                 'city': related_job.city,
                 'salary_display': related_job.get_salary_range(),
-                'created_at': related_job.created_at.isoformat()
+                'created_at': related_job.created_at.isoformat() if related_job.created_at else None
             }
             for related_job in related_jobs
         ]
@@ -252,7 +272,6 @@ def get_job_detail(job_id):
     except Exception as e:
         print(f"Ошибка получения вакансии: {e}")
         return jsonify({'error': 'Ошибка при получении вакансии'}), 500
-
 @jobs_bp.route('/search', methods=['POST'])
 def search_jobs():
     """Расширенный поиск вакансий"""
@@ -637,3 +656,68 @@ def calculate_candidate_score(candidate, job):
     except Exception as e:
         print(f"Ошибка расчета скора: {e}")
         return 0.0
+    
+@jobs_bp.route('/<int:job_id>/save', methods=['POST'])
+@jwt_required()
+def save_job(job_id):
+    """Сохранить вакансию в избранное"""
+    try:
+        user_id = int(get_jwt_identity())
+        
+        # Проверяем существование вакансии
+        job = Job.query.filter_by(id=job_id, is_active=True).first()
+        if not job:
+            return jsonify({'error': 'Вакансия не найдена'}), 404
+        
+        # Проверяем, не сохранена ли уже вакансия
+        existing_save = SavedJob.query.filter_by(
+            job_id=job_id,
+            user_id=user_id
+        ).first()
+        
+        if existing_save:
+            return jsonify({'error': 'Вакансия уже сохранена'}), 400
+        
+        # Создаем запись о сохранении
+        saved_job = SavedJob(
+            job_id=job_id,
+            user_id=user_id,
+            saved_at=datetime.utcnow()
+        )
+        
+        db.session.add(saved_job)
+        db.session.commit()
+        
+        return jsonify({'message': 'Вакансия сохранена в избранное'}), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка сохранения вакансии: {e}")
+        return jsonify({'error': 'Ошибка при сохранении вакансии'}), 500
+
+
+@jobs_bp.route('/<int:job_id>/save', methods=['DELETE'])
+@jwt_required()
+def unsave_job(job_id):
+    """Удалить вакансию из избранного"""
+    try:
+        user_id = int(get_jwt_identity())
+        
+        # Находим сохраненную вакансию
+        saved_job = SavedJob.query.filter_by(
+            job_id=job_id,
+            user_id=user_id
+        ).first()
+        
+        if not saved_job:
+            return jsonify({'error': 'Вакансия не найдена в избранном'}), 404
+        
+        db.session.delete(saved_job)
+        db.session.commit()
+        
+        return jsonify({'message': 'Вакансия удалена из избранного'}), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка удаления вакансии из избранного: {e}")
+        return jsonify({'error': 'Ошибка при удалении вакансии из избранного'}), 500

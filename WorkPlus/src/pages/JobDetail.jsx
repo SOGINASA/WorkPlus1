@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Clock, Building, Users, Star, Share2, Heart, 
   ChevronLeft, Briefcase, DollarSign, Calendar, CheckCircle, 
   AlertCircle, Phone, Mail, Globe, Facebook, Instagram, 
-  Send, Upload, Eye, Bookmark
+  Send, Upload, Eye, Bookmark, Loader2, X, AlertTriangle
 } from 'lucide-react';
+import { getUserFromStorage } from '../components/api/AuthUtils';
 
 const JobDetailPage = () => {
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [submittingApplication, setSubmittingApplication] = useState(false);
   const [applicationData, setApplicationData] = useState({
     coverLetter: '',
     phone: '',
@@ -17,107 +22,332 @@ const JobDetailPage = () => {
     resumeFile: null
   });
 
-  // Моковые данные вакансии (в реальном приложении будут загружаться по ID из URL)
-  const job = {
-    id: 1,
-    title: 'Продавец-консультант',
-    company: 'Kaspi Red',
-    logo: '🛍️',
-    salary: '150,000 - 200,000 ₸',
-    salaryMin: 150000,
-    salaryMax: 200000,
-    location: 'Петропавловск',
-    address: 'ТРЦ "Керуен", 1-й этаж',
-    type: 'Полная занятость',
-    schedule: 'Сменный график 2/2',
-    experience: 'От 1 года',
-    education: 'Среднее специальное',
-    description: `
-      Kaspi Red - крупнейшая розничная сеть Казахстана, ищет активного и коммуникабельного продавца-консультанта в магазин электроники и бытовой техники.
-      
-      Мы предлагаем стабильную работу в дружном коллективе, возможности карьерного роста и достойную заработную плату.
-    `,
-    responsibilities: [
-      'Консультирование покупателей по ассортименту товаров',
-      'Помощь в выборе техники согласно потребностям клиента',
-      'Оформление продаж и работа с кассой',
-      'Поддержание порядка в торговом зале',
-      'Участие в инвентаризации товара',
-      'Соблюдение стандартов обслуживания компании'
-    ],
-    requirements: [
-      'Опыт работы в продажах от 1 года',
-      'Коммуникабельность и клиентоориентированность',
-      'Знание казахского и русского языков',
-      'Ответственность и пунктуальность',
-      'Базовые знания работы с ПК',
-      'Готовность работать в сменном графике'
-    ],
-    conditions: [
-      'Официальное трудоустройство',
-      'Заработная плата 150,000 - 200,000 тенге',
-      'Премии за выполнение плана продаж',
-      'Корпоративные скидки на товары',
-      'Обучение за счет компании',
-      'Дружный коллектив и комфортные условия работы'
-    ],
-    postedDate: '2 дня назад',
-    expiryDate: '2024-02-15',
-    isHot: true,
-    rating: 4.5,
-    applicants: 23,
-    views: 156,
-    companyInfo: {
-      name: 'Kaspi Red',
-      logo: '🛍️',
-      description: 'Крупнейшая розничная сеть электроники и бытовой техники в Казахстане. Более 120 магазинов по всей стране.',
-      employees: '5000+',
-      founded: '2012',
-      website: 'kaspi.kz',
-      phone: '+7 (727) 244-44-44',
-      email: 'hr@kaspi.kz',
-      address: 'г. Алматы, ул. Наурызбай батыра, 180',
-      socialMedia: {
-        facebook: 'facebook.com/kaspikz',
-        instagram: 'instagram.com/kaspi.kz'
-      },
-      vacanciesCount: 15,
-      rating: 4.5,
-      reviews: 234
+  // Получить ID вакансии из URL
+  const getJobIdFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+  };
+
+  // Настройка API
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  let isEmployer = false;
+  let user_data = getUserFromStorage();
+  if (user_data && (user_data.user_type == 'employer' || user_data.user_type == 'admin' )) {
+    isEmployer = true;
+  }
+
+  // Функции для форматирования данных
+  const formatArray = (data) => {
+    try {
+      if (!data) return [];
+      if (Array.isArray(data)) return data;
+      if (typeof data === 'string') {
+        // Проверяем, является ли строка JSON
+        if (data.trim().startsWith('[') || data.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(data);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            // Если не удалось парсить JSON, разбиваем по строкам
+            return data.split('\n').filter(item => item.trim());
+          }
+        } else {
+          // Разбиваем по строкам или запятым
+          return data.split(/\n|,/).map(item => item.trim()).filter(item => item);
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error('Error formatting array:', error, data);
+      return [];
     }
   };
 
+  // Загрузка данных вакансии
+  useEffect(() => {
+    const loadJobData = async () => {
+      const jobId = getJobIdFromUrl();
+      
+      if (!jobId) {
+        setError('ID вакансии не указан в URL');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Загружаем вакансию с ID:', jobId);
+        console.log('API URL:', `${API_BASE_URL}/api/jobs/${jobId}`);
+        
+        const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Добавляем JWT токен если есть
+            ...(localStorage.getItem('token') && {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            })
+          }
+        });
+
+        // Проверяем тип контента ответа
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Сервер вернул неожиданный тип данных. Возможно, backend недоступен.');
+        }
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Вакансия не найдена');
+          }
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Ошибка при загрузке вакансии');
+        }
+
+        const jobData = await response.json();
+        setJob(jobData);
+        setIsSaved(jobData.user_saved || false);
+        
+      } catch (err) {
+        console.error('Ошибка при загрузке вакансии:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobData();
+  }, []);
+
   const handleApply = () => {
+    // Проверяем авторизацию
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert('Для подачи заявки необходимо войти в систему');
+      // Здесь можно перенаправить на страницу авторизации
+      // window.location.href = '/login';
+      return;
+    }
     setIsApplying(true);
   };
 
-  const handleSubmitApplication = () => {
-    // Логика отправки заявки
-    console.log('Отправка заявки:', applicationData);
-    alert('Ваш отклик успешно отправлен!');
-    setIsApplying(false);
+  const handleSubmitApplication = async () => {
+    const jobId = getJobIdFromUrl();
+    
+
+
+    try {
+      setSubmittingApplication(true);
+      
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('Для подачи заявки необходимо войти в систему');
+      }
+
+      const applicationPayload = {
+        cover_letter: applicationData.coverLetter,
+        resume_url: applicationData.resumeUrl,
+        portfolio_url: applicationData.portfolioUrl,
+        expected_salary: applicationData.expectedSalary
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/apply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(applicationPayload)
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Сервер вернул неожиданный тип данных');
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка при отправке отклика');
+      }
+      
+      const result = await response.json();
+      alert('Ваш отклик успешно отправлен!');
+      setIsApplying(false);
+      setJob(prev => ({ 
+        ...prev, 
+        user_applied: true,
+        stats: {
+          ...prev.stats,
+          applications: (prev.stats?.applications || 0) + 1
+        }
+      }));
+    } catch (err) {
+      console.error('Ошибка при отправке заявки:', err);
+      alert(`Ошибка: ${err.message}`);
+    } finally {
+      setSubmittingApplication(false);
+    }
   };
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
+  const handleSave = async () => {
+    const jobId = getJobIdFromUrl();
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Для сохранения вакансий необходимо войти в систему');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/save`, {
+        method: isSaved ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json') && response.ok) {
+        setIsSaved(!isSaved);
+      } else if (!response.ok) {
+        const errorData = await response.json();
+        console.warn('Ошибка при сохранении:', errorData.error);
+      }
+    } catch (err) {
+      console.error('Ошибка при сохранении:', err);
+    }
   };
 
   const handleShare = () => {
     setShowShareMenu(!showShareMenu);
   };
 
-  const similarJobs = [
-    { id: 2, title: 'Продавец-кассир', company: 'Sulpak', salary: '140,000 - 180,000 ₸', location: 'Петропавловск' },
-    { id: 3, title: 'Консультант по продажам', company: 'Technodom', salary: '160,000 - 220,000 ₸', location: 'Петропавловск' },
-    { id: 4, title: 'Менеджер по продажам', company: 'DNS', salary: '200,000 - 300,000 ₸', location: 'Петропавловск' }
-  ];
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Ссылка скопирована в буфер обмена');
+    setShowShareMenu(false);
+  };
+
+  const goBack = () => {
+    window.history.back();
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return 'вчера';
+    if (diffDays < 7) return `${diffDays} дн. назад`;
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} нед. назад`;
+    return date.toLocaleDateString('ru-RU');
+  };
+
+  const getEmploymentTypeLabel = (type) => {
+    const types = {
+      'full_time': 'Полная занятость',
+      'part_time': 'Частичная занятость',
+      'remote': 'Удаленная работа',
+      'contract': 'Проектная работа',
+      'internship': 'Стажировка'
+    };
+    return types[type] || type;
+  };
+
+  const getExperienceLevelLabel = (level) => {
+    const levels = {
+      'junior': 'Начинающий',
+      'middle': 'Средний',
+      'senior': 'Старший'
+    };
+    return levels[level] || level;
+  };
+
+  // Состояния загрузки и ошибок
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-yellow-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-300 text-lg">Загрузка вакансии...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Ошибка</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+            >
+              Попробовать снова
+            </button>
+            <button 
+              onClick={goBack}
+              className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Вернуться назад
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return null;
+  }
+
+  // Извлекаем данные из API ответа с безопасной обработкой
+  const responsibilities = formatArray(job.responsibilities);
+  const requirements = formatArray(job.requirements);
+  const benefits = formatArray(job.benefits);
+  const relatedJobs = job.related_jobs || [];
+  
+  // Безопасное извлечение навыков
+  let jobSkills = [];
+  try {
+    const rawSkills = job.skills;
+    console.log('Raw skills:', rawSkills, 'Type:', typeof rawSkills);
+    
+    if (rawSkills) {
+      if (Array.isArray(rawSkills)) {
+        jobSkills = rawSkills;
+      } else if (typeof rawSkills === 'string') {
+        jobSkills = formatArray(rawSkills);
+      } else {
+        jobSkills = [];
+      }
+    }
+  } catch (error) {
+    console.error('Error processing skills:', error);
+    jobSkills = [];
+  }
+  
+  console.log('Processed skills:', jobSkills);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Navigation */}
       <div className="bg-white/5 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button className="flex items-center text-gray-400 hover:text-yellow-400 transition-colors">
+          <button 
+            onClick={goBack}
+            className="flex items-center text-gray-400 hover:text-yellow-400 transition-colors"
+          >
             <ChevronLeft className="w-5 h-5 mr-2" />
             Назад к поиску вакансий
           </button>
@@ -132,7 +362,7 @@ const JobDetailPage = () => {
             <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8 mb-8">
               <div className="flex flex-col md:flex-row md:items-start gap-6">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-400/30 rounded-xl flex items-center justify-center text-3xl md:text-4xl flex-shrink-0">
-                  {job.logo}
+                  <Building className="w-8 h-8 text-yellow-400" />
                 </div>
 
                 <div className="flex-grow min-w-0">
@@ -140,9 +370,14 @@ const JobDetailPage = () => {
                     <div className="min-w-0 flex-grow">
                       <div className="flex items-center gap-3 mb-2">
                         <h1 className="text-2xl md:text-3xl font-bold text-white">{job.title}</h1>
-                        {job.isHot && (
+                        {job.is_urgent && (
                           <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-full">
-                            HOT
+                            СРОЧНО
+                          </span>
+                        )}
+                        {job.is_featured && (
+                          <span className="px-3 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-sm font-medium rounded-full">
+                            VIP
                           </span>
                         )}
                       </div>
@@ -150,20 +385,20 @@ const JobDetailPage = () => {
                       <div className="flex items-center gap-4 text-gray-300 mb-4">
                         <span className="flex items-center gap-1">
                           <Building className="w-4 h-4" />
-                          {job.company}
+                          {job.company?.name}
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          {job.location}
+                          {job.location?.city}
                         </span>
                         <span className="flex items-center gap-1">
                           <Briefcase className="w-4 h-4" />
-                          {job.type}
+                          {getEmploymentTypeLabel(job.employment_type)}
                         </span>
                       </div>
 
                       <div className="text-3xl font-bold text-yellow-400 mb-4">
-                        {job.salary}
+                        {job.salary?.display || 'По договоренности'}
                       </div>
                     </div>
 
@@ -190,13 +425,33 @@ const JobDetailPage = () => {
                         {showShareMenu && (
                           <div className="absolute top-12 right-0 bg-gray-800 border border-gray-700 rounded-lg p-4 min-w-[200px] z-10">
                             <p className="text-white text-sm mb-3">Поделиться вакансией:</p>
-                            <div className="flex gap-2">
-                              <button className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                                <Facebook className="w-4 h-4 text-white" />
+                            <div className="space-y-2">
+                              <button 
+                                onClick={copyToClipboard}
+                                className="w-full text-left p-2 hover:bg-gray-700 rounded text-sm text-gray-300"
+                              >
+                                Копировать ссылку
                               </button>
-                              <button className="p-2 bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors">
-                                <Instagram className="w-4 h-4 text-white" />
-                              </button>
+                              {job.social_publishing?.published_urls?.telegram && (
+                                <a 
+                                  href={job.social_publishing.published_urls.telegram}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block p-2 hover:bg-gray-700 rounded text-sm text-gray-300"
+                                >
+                                  Telegram
+                                </a>
+                              )}
+                              {job.social_publishing?.published_urls?.instagram && (
+                                <a 
+                                  href={job.social_publishing.published_urls.instagram}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block p-2 hover:bg-gray-700 rounded text-sm text-gray-300"
+                                >
+                                  Instagram
+                                </a>
+                              )}
                             </div>
                           </div>
                         )}
@@ -207,29 +462,55 @@ const JobDetailPage = () => {
                   <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400 mb-6">
                     <span className="flex items-center gap-1">
                       <Eye className="w-4 h-4" />
-                      {job.views} просмотров
+                      {job.stats?.views || 0} просмотров
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      {job.applicants} откликов
+                      {job.stats?.applications || 0} откликов
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      Опубликовано {job.postedDate}
+                      Опубликовано {formatDate(job.published_at || job.created_at)}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      До {job.expiryDate}
-                    </span>
+                    {job.expires_at && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        До {new Date(job.expires_at).toLocaleDateString('ru-RU')}
+                      </span>
+                    )}
                   </div>
 
-                  <button 
-                    onClick={handleApply}
-                    className="w-full md:w-auto bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Send className="w-5 h-5" />
-                    Откликнуться на вакансию
-                  </button>
+                  {job.user_applied ? (
+                    <div className="bg-green-500/20 border border-green-500/40 text-green-400 px-6 py-3 rounded-lg flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Вы уже откликнулись на эту вакансию
+                    </div>
+                  ) : isEmployer ? (
+                    <div className="bg-gray-500/20 border border-gray-500/40 text-gray-400 px-6 py-3 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Вы не можете откликаться на вакансию, потому что вы работодатель
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      {/* Быстрая подача заявки */}
+                      <button 
+                        onClick={() => handleSubmitApplication(job.id)}
+                        className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Send className="w-5 h-5" />
+                        Быстрый отклик
+                      </button>
+                      
+                      {/* Детальная подача заявки */}
+                      {/* <button 
+                        onClick={handleApply}
+                        className="px-6 py-3 border border-yellow-400/40 text-yellow-400 rounded-lg font-semibold hover:bg-yellow-400/10 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Upload className="w-5 h-5" />
+                        С резюме
+                      </button> */}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -237,51 +518,76 @@ const JobDetailPage = () => {
             {/* Job Details */}
             <div className="space-y-8">
               {/* Description */}
-              <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">Описание вакансии</h2>
-                <div className="text-gray-300 leading-relaxed whitespace-pre-line">
-                  {job.description}
-                </div>
-              </section>
+              {job.description && (
+                <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6">Описание вакансии</h2>
+                  <div className="text-gray-300 leading-relaxed whitespace-pre-line">
+                    {job.description}
+                  </div>
+                </section>
+              )}
 
               {/* Responsibilities */}
-              <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">Обязанности</h2>
-                <ul className="space-y-3">
-                  {job.responsibilities.map((responsibility, index) => (
-                    <li key={index} className="flex items-start gap-3 text-gray-300">
-                      <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                      {responsibility}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {responsibilities.length > 0 && (
+                <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6">Обязанности</h2>
+                  <ul className="space-y-3">
+                    {responsibilities.map((responsibility, index) => (
+                      <li key={index} className="flex items-start gap-3 text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                        {responsibility}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {/* Requirements */}
-              <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">Требования</h2>
-                <ul className="space-y-3">
-                  {job.requirements.map((requirement, index) => (
-                    <li key={index} className="flex items-start gap-3 text-gray-300">
-                      <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      {requirement}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {requirements.length > 0 && (
+                <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6">Требования</h2>
+                  <ul className="space-y-3">
+                    {requirements.map((requirement, index) => (
+                      <li key={index} className="flex items-start gap-3 text-gray-300">
+                        <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                        {requirement}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-              {/* Conditions */}
-              <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">Условия работы</h2>
-                <ul className="space-y-3">
-                  {job.conditions.map((condition, index) => (
-                    <li key={index} className="flex items-start gap-3 text-gray-300">
-                      <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                      {condition}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {/* Benefits */}
+              {benefits.length > 0 && (
+                <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6">Условия работы</h2>
+                  <ul className="space-y-3">
+                    {benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-3 text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Skills */}
+              {jobSkills && jobSkills.length > 0 && (
+                <section className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6">Необходимые навыки</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {jobSkills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1 bg-yellow-400/20 border border-yellow-400/30 rounded-full text-yellow-400 text-sm"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           </div>
 
@@ -293,99 +599,100 @@ const JobDetailPage = () => {
               <div className="space-y-4">
                 <div>
                   <div className="text-gray-400 text-sm mb-1">Зарплата</div>
-                  <div className="text-white font-semibold">{job.salary}</div>
+                  <div className="text-white font-semibold">{job.salary?.display || 'По договоренности'}</div>
                 </div>
                 <div>
-                  <div className="text-gray-400 text-sm mb-1">График работы</div>
-                  <div className="text-white font-semibold">{job.schedule}</div>
+                  <div className="text-gray-400 text-sm mb-1">Тип занятости</div>
+                  <div className="text-white font-semibold">{getEmploymentTypeLabel(job.employment_type)}</div>
                 </div>
-                <div>
-                  <div className="text-gray-400 text-sm mb-1">Опыт работы</div>
-                  <div className="text-white font-semibold">{job.experience}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400 text-sm mb-1">Образование</div>
-                  <div className="text-white font-semibold">{job.education}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400 text-sm mb-1">Адрес</div>
-                  <div className="text-white font-semibold">{job.address}</div>
-                </div>
+                {job.experience_level && (
+                  <div>
+                    <div className="text-gray-400 text-sm mb-1">Уровень</div>
+                    <div className="text-white font-semibold">{getExperienceLevelLabel(job.experience_level)}</div>
+                  </div>
+                )}
+                {job.education_required && (
+                  <div>
+                    <div className="text-gray-400 text-sm mb-1">Образование</div>
+                    <div className="text-white font-semibold">{job.education_required}</div>
+                  </div>
+                )}
+                {job.location?.address && (
+                  <div>
+                    <div className="text-gray-400 text-sm mb-1">Адрес</div>
+                    <div className="text-white font-semibold">{job.location.address}</div>
+                  </div>
+                )}
+                {job.location?.remote_work && (
+                  <div>
+                    <div className="text-green-400 text-sm font-semibold">Удаленная работа</div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Company Info */}
-            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6">О компании</h3>
-              
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-400/30 rounded-lg flex items-center justify-center text-xl">
-                  {job.companyInfo.logo}
-                </div>
-                <div>
-                  <h4 className="text-white font-semibold">{job.companyInfo.name}</h4>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Star className="w-4 h-4 text-yellow-400" />
-                    {job.companyInfo.rating} ({job.companyInfo.reviews} отзывов)
+            {job.company && (
+              <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-6">О компании</h3>
+                
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-400/30 rounded-lg flex items-center justify-center">
+                    <Building className="w-6 h-6 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold">{job.company.name}</h4>
+                    {job.company.rating && (
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        {job.company.rating}
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {job.company.description && (
+                  <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                    {job.company.description}
+                  </p>
+                )}
+
+                {job.company.website && (
+                  <a 
+                    href={`https://${job.company.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm mb-4"
+                  >
+                    <Globe className="w-4 h-4" />
+                    {job.company.website}
+                  </a>
+                )}
               </div>
-
-              <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-                {job.companyInfo.description}
-              </p>
-
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Сотрудники:</span>
-                  <span className="text-white">{job.companyInfo.employees}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Основана:</span>
-                  <span className="text-white">{job.companyInfo.founded}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Вакансий:</span>
-                  <span className="text-white">{job.companyInfo.vacanciesCount}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-6">
-                <a href={`https://${job.companyInfo.website}`} className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm">
-                  <Globe className="w-4 h-4" />
-                  {job.companyInfo.website}
-                </a>
-                <a href={`tel:${job.companyInfo.phone}`} className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm">
-                  <Phone className="w-4 h-4" />
-                  {job.companyInfo.phone}
-                </a>
-                <a href={`mailto:${job.companyInfo.email}`} className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm">
-                  <Mail className="w-4 h-4" />
-                  {job.companyInfo.email}
-                </a>
-              </div>
-
-              <button className="w-full bg-white/10 border border-gray-600 text-white py-2 px-4 rounded-lg hover:bg-white/15 transition-all text-sm">
-                Все вакансии компании
-              </button>
-            </div>
+            )}
 
             {/* Similar Jobs */}
-            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6">Похожие вакансии</h3>
-              <div className="space-y-4">
-                {similarJobs.map((similarJob) => (
-                  <div key={similarJob.id} className="p-4 bg-white/5 rounded-lg border border-gray-700 hover:border-yellow-400/30 transition-all cursor-pointer">
-                    <h4 className="text-white font-semibold mb-2 text-sm">{similarJob.title}</h4>
-                    <div className="text-gray-400 text-xs mb-2">{similarJob.company}</div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-yellow-400 font-semibold text-sm">{similarJob.salary}</span>
-                      <span className="text-gray-500 text-xs">{similarJob.location}</span>
+            {relatedJobs.length > 0 && (
+              <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-6">Похожие вакансии</h3>
+                <div className="space-y-4">
+                  {relatedJobs.map((relatedJob) => (
+                    <div 
+                      key={relatedJob.id} 
+                      className="p-4 bg-white/5 rounded-lg border border-gray-700 hover:border-yellow-400/30 transition-all cursor-pointer"
+                      onClick={() => window.location.href = `/jobdetail?id=${relatedJob.id}`}
+                    >
+                      <h4 className="text-white font-semibold mb-2 text-sm">{relatedJob.title}</h4>
+                      <div className="text-gray-400 text-xs mb-2">{relatedJob.company}</div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-yellow-400 font-semibold text-sm">{relatedJob.salary_display}</span>
+                        <span className="text-gray-500 text-xs">{relatedJob.city}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -407,7 +714,7 @@ const JobDetailPage = () => {
 
               <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-4 mb-6">
                 <h3 className="text-white font-semibold">{job.title}</h3>
-                <p className="text-gray-300 text-sm">{job.company} • {job.location}</p>
+                <p className="text-gray-300 text-sm">{job.company?.name} • {job.location?.city}</p>
               </div>
 
               <div className="space-y-6">
@@ -444,11 +751,28 @@ const JobDetailPage = () => {
                   <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-400 mb-2">Загрузите ваше резюме</p>
-                    <input type="file" className="hidden" accept=".pdf,.doc,.docx" />
-                    <button type="button" className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm">
+                    <input 
+                      type="file" 
+                      onChange={(e) => setApplicationData({...applicationData, resumeFile: e.target.files[0]})}
+                      className="hidden" 
+                      accept=".pdf,.doc,.docx" 
+                      id="resume-upload"
+                    />
+                    <label 
+                      htmlFor="resume-upload"
+                      className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm cursor-pointer"
+                    >
                       Выбрать файл
-                    </button>
+                    </label>
+                    {applicationData.resumeFile && (
+                      <p className="text-green-400 text-sm mt-2">
+                        Выбран файл: {applicationData.resumeFile.name}
+                      </p>
+                    )}
                   </div>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Пока что загрузка файлов недоступна. Вы можете указать ссылку на резюме в сопроводительном письме.
+                  </p>
                 </div>
 
                 <div>
@@ -467,15 +791,24 @@ const JobDetailPage = () => {
                     type="button"
                     onClick={() => setIsApplying(false)}
                     className="flex-1 px-6 py-3 border border-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all"
+                    disabled={submittingApplication}
                   >
                     Отмена
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmitApplication}
-                    className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-700 transition-all"
+                    disabled={submittingApplication}
+                    className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Отправить отклик
+                    {submittingApplication ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Отправка...
+                      </>
+                    ) : (
+                      'Отправить отклик'
+                    )}
                   </button>
                 </div>
               </div>
