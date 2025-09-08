@@ -14,7 +14,11 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, supports_credentials=True)
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:3000", "https://workplus-fork.vercel.app"]
+        )
 
     # Инициализация расширений
     db.init_app(app)
