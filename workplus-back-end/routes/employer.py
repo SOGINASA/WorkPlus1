@@ -216,7 +216,7 @@ def update_job(job_id):
         print(f"Ошибка обновления вакансии: {e}")
         return jsonify({'error': 'Ошибка при обновлении вакансии'}), 500
 
-@employer_bp.route('/jobs/<int:job_id>', methods=['DELETE'])
+@employer_bp.route('/jobs/<int:job_id>/delete', methods=['PUT'])
 @jwt_required()
 def delete_job(job_id):
     """Удалить вакансию"""
@@ -231,13 +231,13 @@ def delete_job(job_id):
         if not job:
             return jsonify({'error': 'Вакансия не найдена'}), 404
         
-        # Мягкое удаление - просто деактивируем
-        job.is_active = False
+        # Мягкое удаление - только деактивируем
+        job.is_active = not job.is_active
         job.updated_at = datetime.utcnow()
         
         db.session.commit()
         
-        return jsonify({'message': 'Вакансия успешно удалена'})
+        return jsonify({'message': 'Вакансия успешно обновлена', 'is_active': job.is_active})
     
     except Exception as e:
         db.session.rollback()
@@ -455,7 +455,7 @@ def get_employer_profile():
             return jsonify({'error': 'Доступ только для работодателей'}), 403
         
         # Получаем компанию работодателя
-        company = Company.query.filter_by(user_id=user_id).first()
+        company = Company.query.filter_by(id=user.company_id).first()
         
         if not company:
             # Создаем базовый профиль компании
@@ -502,7 +502,7 @@ def get_employer_profile():
                 # Основная информация о компании
                 'companyName': company.name,
                 'industry': company.industry,
-                'companySize': company.company_size,
+                'companySize': company.size,
                 'website': company.website,
                 'email': company.email,
                 'phone': company.phone,
@@ -555,77 +555,69 @@ def update_employer_profile():
         if not data:
             return jsonify({'error': 'Нет данных для обновления'}), 400
         
-        # Получаем или создаем компанию
-        company = Company.query.filter_by(user_id=user_id).first()
+        # Получаем или создаем компанию через связь company_id
+        company = None
+        if user.company_id:
+            company = Company.query.get(user.company_id)
+        
         if not company:
-            company = Company(user_id=user_id, created_at=datetime.utcnow())
+            company = Company(created_at=datetime.utcnow())
             db.session.add(company)
+            db.session.flush()  # чтобы получить company.id
+            user.company_id = company.id
         
-        # Обновляем основную информацию о компании
-        if 'companyName' in data:
-            company.name = data['companyName']
-        if 'industry' in data:
-            company.industry = data['industry']
-        if 'companySize' in data:
-            company.company_size = data['companySize']
-        if 'website' in data:
-            company.website = data['website']
-        if 'email' in data:
-            company.email = data['email']
-        if 'phone' in data:
-            company.phone = data['phone']
-        if 'city' in data:
-            company.city = data['city']
-        if 'address' in data:
-            company.address = data['address']
-        if 'description' in data:
-            company.description = data['description']
+        # Маппинг данных (camelCase → поля модели)
+        mapping = {
+            "companyName": "name",
+            "industry": "industry",
+            "companySize": "size",
+            "website": "website",
+            "email": "email",
+            "phone": "phone",
+            "city": "city",
+            "address": "address",
+            "description": "description",
+            "contactName": "contact_name",
+            "contactPosition": "contact_position",
+            "contactPhone": "contact_phone",
+            "contactEmail": "contact_email",
+            "isPublic": "is_public",
+            "autoReply": "auto_reply"
+        }
         
-        # Обновляем контактное лицо
-        if 'contactName' in data:
-            company.contact_name = data['contactName']
-        if 'contactPosition' in data:
-            company.contact_position = data['contactPosition']
-        if 'contactPhone' in data:
-            company.contact_phone = data['contactPhone']
-        if 'contactEmail' in data:
-            company.contact_email = data['contactEmail']
+        for key, attr in mapping.items():
+            if key in data:
+                setattr(company, attr, data[key])
         
-        # Обновляем настройки
-        if 'isPublic' in data:
-            company.is_public = data['isPublic']
-        if 'autoReply' in data:
-            company.auto_reply = data['autoReply']
-        
-        # Обновляем настройки пользователя
-        if 'emailNotifications' in data:
-            user.email_notifications = data['emailNotifications']
-        if 'smsNotifications' in data:
-            user.sms_notifications = data['smsNotifications']
+        # Настройки пользователя
+        if "emailNotifications" in data:
+            user.email_notifications = data["emailNotifications"]
+        if "smsNotifications" in data:
+            user.sms_notifications = data["smsNotifications"]
         
         company.updated_at = datetime.utcnow()
         db.session.commit()
         
         return jsonify({
-            'message': 'Профиль успешно обновлен',
-            'profile': {
-                'companyName': company.name,
-                'industry': company.industry,
-                'companySize': company.company_size,
-                'website': company.website,
-                'email': company.email,
-                'phone': company.phone,
-                'city': company.city,
-                'address': company.address,
-                'description': company.description,
-                'contactName': company.contact_name,
-                'contactPosition': company.contact_position,
-                'contactPhone': company.contact_phone,
-                'contactEmail': company.contact_email,
-                'isPublic': company.is_public,
-                'emailNotifications': user.email_notifications,
-                'smsNotifications': user.sms_notifications,
-                'autoReply': company.auto_reply
+            "message": "Профиль успешно обновлен",
+            "profile": {
+                "companyName": company.name or "",
+                "industry": company.industry or "",
+                "companySize": company.size or "",
+                "website": company.website or "",
+                "email": company.email or "",
+                "phone": company.phone or "",
+                "city": company.city or "",
+                "address": company.address or "",
+                "description": company.description or "",
+                "contactName": company.contact_name or "",
+                "contactPosition": company.contact_position or "",
+                "contactPhone": company.contact_phone or "",
+                "contactEmail": company.contact_email or "",
+                "isPublic": company.is_public if company.is_public is not None else False,
+                "autoReply": company.auto_reply if company.auto_reply is not None else False,
+                "emailNotifications": user.email_notifications if user.email_notifications is not None else False,
+                "smsNotifications": user.sms_notifications if user.sms_notifications is not None else False,
             }
         })
         
@@ -633,6 +625,8 @@ def update_employer_profile():
         db.session.rollback()
         print(f"Ошибка обновления профиля: {e}")
         return jsonify({'error': 'Ошибка при обновлении профиля'}), 500
+
+
 
 
 @employer_bp.route('/vacancies', methods=['GET'])
@@ -706,7 +700,7 @@ def get_employer_applicants():
         status_filter = request.args.get('status')
         
         # Получаем отклики на все вакансии работодателя
-        query = db.session.query(JobApplication).join(Job).join(User, JobApplication.user_id == User.id).filter(
+        query = db.session.query(JobApplication).join(Job).join(User, JobApplication.candidate_id == User.id).filter(
             Job.posted_by == user_id
         )
         
@@ -723,26 +717,52 @@ def get_employer_applicants():
         
         applicants = []
         for application in pagination.items:
-            candidate = application.user
+            candidate = User.query.get(application.candidate_id)
             job = application.job
             
             applicants.append({
                 'id': application.id,
-                'name': candidate.full_name if candidate.full_name else f"{candidate.first_name} {candidate.last_name}",
+                'name': candidate.name,
                 'position': job.title,
                 'vacancyId': job.id,
                 'vacancyTitle': job.title,
                 'appliedDate': application.created_at.isoformat() if application.created_at else None,
-                'status': application.status,
-                'experience': application.experience_years or 'Не указан',
-                'salary': application.desired_salary or 'Не указана',
+                
+                # status: маппим из БД в фронтовые значения
+                'status': (
+                    'new' if application.status == 'pending' else
+                    'interview' if application.status == 'interview' else
+                    'approved' if application.status == 'hired' else
+                    'rejected' if application.status == 'rejected' else
+                    application.status
+                ),
+                
+                # experience: превращаем число в строку "N лет/год/года"
+                'experience': (
+                    f"{candidate.experience_years} год" if candidate.experience_years == 1 else
+                    f"{candidate.experience_years} года" if candidate.experience_years in [2,3,4] else
+                    f"{candidate.experience_years} лет" if candidate.experience_years else 'Не указано'
+                ),
+                
+                # salary → expected_salary
+                'salary': str(application.expected_salary) if application.expected_salary else None,
+                
                 'phone': candidate.phone,
                 'email': candidate.email,
+                
+                # rating → score (с дефолтом 4.0)
                 'rating': application.score or 4.0,
-                'skills': application.skills.split(',') if application.skills else [],
+                
+                # фронт ждёт skills = список
+                'skills': candidate.get_skills_list(),
+                
+                # lastActivity — человекочитаемый
                 'lastActivity': _get_last_activity(application.updated_at),
+                
+                # avatar (во фронте есть, в БД нет → заглушка)
+                'avatar': None
             })
-        
+
         return jsonify({
             'applicants': applicants,
             'pagination': {
@@ -752,6 +772,7 @@ def get_employer_applicants():
                 'pages': pagination.pages
             }
         })
+
         
     except Exception as e:
         print(f"Ошибка получения откликов: {e}")
@@ -779,7 +800,7 @@ def _get_last_activity(updated_at):
 
 @employer_bp.route('/applicant/<int:application_id>/status', methods=['PUT'])
 @jwt_required()
-def update_applicant_status():
+def update_applicant_status(application_id):
     """Обновить статус отклика кандидата"""
     try:
         user_id = int(get_jwt_identity())
@@ -788,7 +809,7 @@ def update_applicant_status():
         if not user or user.user_type != 'employer':
             return jsonify({'error': 'Доступ только для работодателей'}), 403
         
-        application_id = request.view_args['application_id']
+        
         data = request.json
         
         if not data or 'status' not in data:

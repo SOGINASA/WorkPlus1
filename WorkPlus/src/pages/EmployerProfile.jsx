@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building, Mail, Phone, MapPin, Globe, Upload, Camera, 
   Edit3, Save, X, Plus, Trash2, Users, Briefcase, Calendar, 
@@ -7,6 +7,7 @@ import {
   TrendingUp, Award, Target, Play, Pause, MoreVertical,
   Send, Bell, Shield, Settings
 } from 'lucide-react';
+import { API_BASE_URL } from '../components/api/AuthUtils';
 
 const EmployerProfile = () => {
   const [activeTab, setActiveTab] = useState('company');
@@ -16,138 +17,80 @@ const EmployerProfile = () => {
   const [modalType, setModalType] = useState('');
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   
-  const [profileData, setProfileData] = useState({
-    // Company Info
-    companyName: 'ТОО "Техномир"',
-    industry: 'Розничная торговля',
-    companySize: '50-100',
-    website: 'https://tehnomir.kz',
-    email: 'hr@tehnomir.kz',
-    phone: '+7 (7152) 55-44-33',
-    city: 'Петропавловск',
-    address: 'ул. Конституции, 15',
-    description: 'Крупнейшая сеть магазинов бытовой техники и электроники в Северном Казахстане. Работаем с 2010 года, имеем 5 филиалов в регионе.',
-    logo: null,
-    
-    // Contact Person
-    contactName: 'Светлана Петрова',
-    contactPosition: 'HR-менеджер',
-    contactPhone: '+7 (701) 123-45-67',
-    contactEmail: 's.petrova@tehnomir.kz',
-    
-    // Settings
-    isPublic: true,
-    emailNotifications: true,
-    smsNotifications: true,
-    autoReply: true
-  });
+  const [profileData, setProfileData] = useState({});
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [vacancies, setVacancies] = useState([]);
 
-  const [vacancies, setVacancies] = useState([
-    {
-      id: 1,
-      title: 'Продавец-консультант',
-      department: 'Розничные продажи',
-      salary: '180000-220000',
-      type: 'full-time',
-      status: 'active',
-      postedDate: '2024-02-15',
-      applicantsCount: 12,
-      viewsCount: 156
-    },
-    {
-      id: 2,
-      title: 'Кассир',
-      department: 'Розничные продажи',
-      salary: '150000-180000',
-      type: 'full-time',
-      status: 'active',
-      postedDate: '2024-02-10',
-      applicantsCount: 8,
-      viewsCount: 98
-    },
-    {
-      id: 3,
-      title: 'Менеджер по продажам',
-      department: 'Продажи',
-      salary: '300000-400000',
-      type: 'full-time',
-      status: 'paused',
-      postedDate: '2024-02-01',
-      applicantsCount: 23,
-      viewsCount: 234
-    }
-  ]);
 
-  const [applicants, setApplicants] = useState([
-    {
-      id: 1,
-      name: 'Алексей Иванов',
-      position: 'Продавец-консультант',
-      vacancyId: 1,
-      vacancyTitle: 'Продавец-консультант',
-      appliedDate: '2024-02-16',
-      status: 'new',
-      experience: '3 года',
-      salary: '200000',
-      phone: '+7 (701) 234-56-78',
-      email: 'alexey@example.com',
-      rating: 4.5,
-      avatar: null,
-      skills: ['Продажи', 'Работа с клиентами', '1С'],
-      lastActivity: '2 часа назад'
-    },
-    {
-      id: 2,
-      name: 'Мария Сидорова',
-      position: 'Кассир',
-      vacancyId: 2,
-      vacancyTitle: 'Кассир',
-      appliedDate: '2024-02-15',
-      status: 'interview',
-      experience: '2 года',
-      salary: '170000',
-      phone: '+7 (701) 345-67-89',
-      email: 'maria@example.com',
-      rating: 4.2,
-      avatar: null,
-      skills: ['Кассовые операции', 'Клиентский сервис'],
-      lastActivity: '5 часов назад'
-    },
-    {
-      id: 3,
-      name: 'Дмитрий Петров',
-      position: 'Менеджер по продажам',
-      vacancyId: 3,
-      vacancyTitle: 'Менеджер по продажам',
-      appliedDate: '2024-02-14',
-      status: 'approved',
-      experience: '5 лет',
-      salary: '350000',
-      phone: '+7 (701) 456-78-90',
-      email: 'dmitry@example.com',
-      rating: 4.8,
-      avatar: null,
-      skills: ['B2B продажи', 'CRM', 'Переговоры'],
-      lastActivity: '1 день назад'
-    },
-    {
-      id: 4,
-      name: 'Анна Козлова',
-      position: 'Продавец-консультант',
-      vacancyId: 1,
-      vacancyTitle: 'Продавец-консультант',
-      appliedDate: '2024-02-13',
-      status: 'rejected',
-      experience: '1 год',
-      salary: '180000',
-      phone: '+7 (701) 567-89-01',
-      email: 'anna@example.com',
-      rating: 3.8,
-      avatar: null,
-      skills: ['Продажи', 'Работа с клиентами'],
-      lastActivity: '3 дня назад'
-    }
-  ]);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/employer/profile`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+        const data = await response.json();
+        console.log('Fetched profile data:', data.profile);
+        setProfileData(data.profile);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+
+    const fetchVacancies = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/employer/vacancies`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+        const data = await response.json();
+        console.log('Fetched vacancies:', data.vacancies);
+        setVacancies(data.vacancies);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchVacancies();
+  }, []);
+
+  const [applicants, setApplicants] = useState([]);
+  const [isApplicantsLoading, setIsApplicantsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/employer/applicants`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+        const data = await response.json();
+        console.log('Fetched applicants:', data.applicants);
+        setApplicants(data.applicants);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsApplicantsLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setProfileData(prev => ({
@@ -158,8 +101,31 @@ const EmployerProfile = () => {
 
   const handleSave = () => {
     setIsEditing(false);
-    setShowModal(true);
-    setModalType('success');
+    (async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/employer/profile`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        });
+
+        if (response.ok) {
+          setShowModal(true);
+          setModalType('success');
+        } else {
+          const error = await response.json();
+          console.error(error);
+          alert(`Ошибка: ${error.message}`);
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Ошибка: Не удалось изменить данные профиля');
+      }
+    })();
   };
 
   const handleCancel = () => {
@@ -167,8 +133,7 @@ const EmployerProfile = () => {
   };
 
   const handleCreateVacancy = () => {
-    setShowModal(true);
-    setModalType('createVacancy');
+    window.location.href = '/create-job';
   };
 
   const handleSearchCandidates = () => {
@@ -179,6 +144,7 @@ const EmployerProfile = () => {
   const handleShowAnalytics = () => {
     setShowModal(true);
     setModalType('analytics');
+    window.location.href = '/resume-dashboard';
   };
 
   const handleEditVacancy = (vacancyId) => {
@@ -187,24 +153,56 @@ const EmployerProfile = () => {
   };
 
   const handleViewVacancy = (vacancyId) => {
-    setShowModal(true);
-    setModalType('viewVacancy');
+    // setShowModal(true);
+    // setModalType('viewVacancy');
+    window.location.href = `/jobdetail?id=${vacancyId}`  
   };
 
-  const toggleVacancyStatus = (vacancyId) => {
-    setVacancies(prev => prev.map(vacancy => 
+  const toggleVacancyStatus = async (vacancyId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employer/jobs/${vacancyId}/delete`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setVacancies(prev => prev.map(vacancy => 
       vacancy.id === vacancyId 
         ? { ...vacancy, status: vacancy.status === 'active' ? 'paused' : 'active' }
         : vacancy
     ));
-    setShowModal(true);
-    setModalType('toggleStatus');
+      } else {
+        console.error(data.error);
+        alert(`Ошибка: ${data.error}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Ошибка: Не удалось изменить статус вакансии');
+    }
   };
 
   const handleApplicantAction = (applicant, action) => {
     setSelectedApplicant(applicant);
     setShowModal(true);
     setModalType(action);
+
+    if (action === 'reject' || action === 'approve') {
+      fetch(`${API_BASE_URL}/api/employer/applicant/${applicant.id}/status`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: action === 'approve' ? 'approved' : 'rejected' }),
+      })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error(error));
+    }
     
     if (action === 'approve' || action === 'reject') {
       setApplicants(prev => prev.map(app => 
@@ -247,6 +245,21 @@ const EmployerProfile = () => {
 
   const handleDeleteAccount = () => {
     if (window.confirm('Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.')) {
+      fetch(`${API_BASE_URL}/api/auth/deactivate`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      }).then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          localStorage.removeItem('user');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+        }
+      })
+      .catch(err => console.error(err));
       setShowModal(true);
       setModalType('deleteAccount');
     }
@@ -698,13 +711,14 @@ const EmployerProfile = () => {
                               <Eye className="w-4 h-4 mr-1" />
                               Просмотр
                             </button>
-                            <button
+                            {/* <button
                               onClick={() => handleEditVacancy(vacancy.id)}
                               className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all text-sm"
                             >
                               <Edit3 className="w-4 h-4 mr-1" />
                               Изменить
-                            </button>
+                            </button> */}  
+                            {/* TODO : add page for it */}
                             <button className="p-2 text-gray-400 hover:text-white transition-colors">
                               <MoreVertical className="w-4 h-4" />
                             </button>
@@ -807,7 +821,7 @@ const EmployerProfile = () => {
                                 </button>
                               </>
                             )}
-                            <button
+                            {/* <button
                               onClick={() => handleApplicantAction(applicant, 'message')}
                               className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
                             >
@@ -820,7 +834,7 @@ const EmployerProfile = () => {
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               Профиль
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>

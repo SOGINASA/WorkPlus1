@@ -62,7 +62,15 @@ const HomePage = () => {
         order: 'desc'
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/jobs/?${queryParams}`);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE_URL}/api/jobs/?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
       
       if (!response.ok) {
         throw new Error('Ошибка при загрузке вакансий');

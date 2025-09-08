@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Building, MapPin, Clock, DollarSign, FileText, Users, ArrowRight, AlertCircle, Check, X } from 'lucide-react';
-import { useAuth } from '../components/api/AuthUtils';
+import { useAuth, getUserFromStorage } from '../components/api/AuthUtils';
 import JobApiService from '../components/api/JobApiService';
 
 const CreateJobPage = () => {
@@ -67,7 +67,9 @@ const CreateJobPage = () => {
   const loadCompanies = async () => {
     try {
       const data = await JobApiService.getCompanies();
-      setCompanies(data.companies || []);
+      const user_email = getUserFromStorage().email;
+      const filteredCompanies = data.companies.filter(c => c.contact_person.email === user_email);
+      setCompanies(filteredCompanies || []);
     } catch (err) {
       console.error('Ошибка загрузки компаний:', err);
       // Не показываем ошибку пользователю, просто логируем

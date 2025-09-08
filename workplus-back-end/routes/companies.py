@@ -5,7 +5,7 @@ from sqlalchemy import desc, func
 
 companies_bp = Blueprint('companies', __name__)
 
-@companies_bp.route('/', methods=['GET', 'OPTIONS'])
+@companies_bp.route('/', methods=['GET'])
 @jwt_required(optional=True)
 def get_companies():
     """Получить список компаний"""

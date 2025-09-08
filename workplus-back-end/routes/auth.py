@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from models import db, User, Company
+from models import Job, JobApplication, db, User, Company
 from datetime import datetime, timedelta
 import re
 
@@ -113,7 +113,7 @@ def register():
                 return jsonify({'error': f'Неверный формат ссылки для поля {url_field}'}), 400
     
     # Проверка уникальности email
-    existing_user = User.query.filter_by(email=data['email'].lower()).first()
+    existing_user = User.query.filter_by(email=data['companyEmail'].lower()).first()
     if existing_user:
         return jsonify({'error': 'Пользователь с таким email уже существует'}), 400
     
@@ -122,7 +122,7 @@ def register():
         full_name = f"{data.get('firstName', '')} {data.get('lastName', '')}".strip()
         
         user = User(
-            email=data['email'].lower(),
+            email=data['companyEmail'].lower(),
             name=full_name,
             phone=data.get('phone'),
             city=data.get('city', 'Петропавловск'),
@@ -165,7 +165,7 @@ def register():
                         city=data.get('city', 'Петропавловск'),
                         description=data.get('companyDescription', ''),
                         website=data.get('companyWebsite'),
-                        email=data.get('companyEmail', data.get('email')),
+                        email=data.get('companyEmail', data.get('companyEmail')),
                         phone=data.get('companyPhone', data.get('phone')),
                         address=data.get('companyAddress'),
                         founded_year=data.get('foundedYear'),
@@ -174,7 +174,7 @@ def register():
                         contact_name=full_name,
                         contact_position=data.get('position', 'Контактное лицо'),
                         contact_phone=data.get('phone'),
-                        contact_email=data.get('email'),
+                        contact_email=data.get('companyEmail'),
                         
                         # Социальные сети
                         instagram=data.get('instagram'),
@@ -547,3 +547,33 @@ def deactivate_account():
         db.session.rollback()
         print(f"Ошибка деактивации аккаунта: {e}")
         return jsonify({'error': 'Ошибка при деактивации аккаунта'}), 500
+    
+    
+@auth_bp.route('/deactivate', methods=['DELETE'])
+@jwt_required()
+def delete_account():
+    """Удаление аккаунта"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        # Удаляем связанные компании
+        company = Company.query.filter_by(user_id=user_id).first()
+        if company:
+            JobApplication.query.filter_by(company_id=company.id).delete(synchronize_session=False)
+            Job.query.filter_by(company_id=company.id).delete(synchronize_session=False)
+            db.session.delete(company)
+        
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': 'Аккаунт удален'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка удаления аккаунта: {e}")
+        return jsonify({'error': 'Ошибка при удалении аккаунта'}), 500
+
