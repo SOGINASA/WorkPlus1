@@ -252,7 +252,7 @@ const FinancialReports = () => {
     { category: 'Персонал', amount: 658000, percentage: 48.9, color: '#F59E0B' },
     { category: 'Маркетинг', amount: 269000, percentage: 20.0, color: '#22C55E' },
     { category: 'Технологии', amount: 202000, percentage: 15.0, color: '#3B82F6' },
-    { category: 'Офис и аренда', amount: 135000, percentage: 10.0, color: '#8B5CF6' },
+    // { category: 'Офис и аренда', amount: 135000, percentage: 10.0, color: '#8B5CF6' },
     { category: 'Прочие', amount: 81000, percentage: 6.1, color: '#EF4444' }
   ];
 

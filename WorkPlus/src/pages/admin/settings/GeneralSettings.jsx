@@ -219,9 +219,9 @@ const GeneralSettings = () => {
   };
 
   const timezoneOptions = [
-    { value: 'Asia/Almaty', label: 'Алматы (GMT+6)' },
-    { value: 'Asia/Aqtobe', label: 'Актобе (GMT+5)' },
-    { value: 'Asia/Atyrau', label: 'Атырау (GMT+5)' },
+    { value: 'Asia/Almaty', label: 'Алматы (GMT+5)' },
+    // { value: 'Asia/Aqtobe', label: 'Актобе (GMT+5)' },
+    // { value: 'Asia/Atyrau', label: 'Атырау (GMT+5)' },
     { value: 'UTC', label: 'UTC (GMT+0)' }
   ];
 

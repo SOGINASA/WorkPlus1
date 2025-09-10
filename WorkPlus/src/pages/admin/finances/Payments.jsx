@@ -263,14 +263,14 @@ const Payments = () => {
       icon: CheckCircle,
       color: 'green'
     },
-    {
-      title: 'Средний чек',
-      amount: '₸2,348',
-      change: '+5.2%',
-      trend: 'up',
-      icon: CreditCard,
-      color: 'blue'
-    },
+    // {
+    //   title: 'Средний чек',
+    //   amount: '₸2,348',
+    //   change: '+5.2%',
+    //   trend: 'up',
+    //   icon: CreditCard,
+    //   color: 'blue'
+    // },
     {
       title: 'Возвратов',
       amount: '1.8%',

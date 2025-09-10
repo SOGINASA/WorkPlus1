@@ -105,9 +105,9 @@ const PremiumSearchPage = () => {
 
   const stats = [
     { number: '95%', label: 'Успешных закрытий' },
-    { number: '2x', label: 'Средняя зарплата' },
-    { number: '48ч', label: 'Первые кандидаты' },
-    { number: '500+', label: 'Закрытых позиций' }
+    { number: '10', label: 'Кандидатов ищем' },
+    { number: 'До результата', label: 'Работаем' },
+    { number: 'Под ключ', label: 'Оплата за результат' }
   ];
 
   const handleSearch = () => {
@@ -128,9 +128,9 @@ const PremiumSearchPage = () => {
             </div>
             
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-              Найдем топовых специалистов
+              Поиск специалистов
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                с зарплатой до 2x
+                под ключ по договору
               </span>
             </h1>
             

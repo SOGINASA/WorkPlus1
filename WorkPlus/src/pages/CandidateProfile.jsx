@@ -416,14 +416,14 @@ const CandidateProfile = () => {
   const tabs = [
     { id: 'personal', name: 'Профиль', icon: <User className="w-4 h-4" /> },
     { id: 'applications', name: 'Мои отклики', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'responses', name: 'Отклики на резюме', icon: <Heart className="w-4 h-4" /> },
+    // { id: 'responses', name: 'Отклики на резюме', icon: <Heart className="w-4 h-4" /> },
     { id: 'settings', name: 'Настройки', icon: <FileText className="w-4 h-4" /> }
   ];
 
   const profileStats = [
     { label: 'Просмотры резюме', value: '234', trend: '+12%' },
     { label: 'Мои отклики', value: myApplications.length.toString(), trend: `+${myApplications.filter(app => app.status === 'new').length}` },
-    { label: 'Отклики на резюме', value: resumeResponses.length.toString(), trend: `+${resumeResponses.filter(r => r.status === 'new').length}` },
+    // { label: 'Отклики на резюме', value: resumeResponses.length.toString(), trend: `+${resumeResponses.filter(r => r.status === 'new').length}` },
     { label: 'Рейтинг', value: '4.8', trend: <Star className="w-4 h-4 text-yellow-400 fill-current" /> }
   ];
 
