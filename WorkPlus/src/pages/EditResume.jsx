@@ -5,8 +5,9 @@ import {
   GraduationCap, Award, Languages, FileText, Star,
   Camera, Globe, Linkedin, Github, Check
 } from 'lucide-react';
-import  { getUserFromStorage, API_BASE_URL } from '../components/api/AuthUtils';
-const CreateResumePage = () => {
+import { getUserFromStorage, API_BASE_URL } from '../components/api/AuthUtils';
+
+const EditResume = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const [formData, setFormData] = useState({
@@ -58,6 +59,55 @@ const CreateResumePage = () => {
     { id: 5, title: 'Навыки и языки', icon: <Star className="w-5 h-5" /> },
     { id: 6, title: 'Дополнительно', icon: <FileText className="w-5 h-5" /> }
   ];
+
+  // Добавляем недостающие функции навигации
+  const handleNext = () => {
+    if (currentStep < 6) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Исправляем функцию расчета прогресса
+  const calculateCompletion = () => {
+    let completed = 0;
+    let total = 20; // Общее количество важных полей
+
+    // Личная информация (6 полей)
+    if (formData.firstName) completed++;
+    if (formData.lastName) completed++;
+    if (formData.email) completed++;
+    if (formData.phone) completed++;
+    if (formData.city) completed++;
+    if (formData.photo) completed++;
+
+    // Желаемая позиция (2 поля)
+    if (formData.position) completed++;
+    if (formData.salary) completed++;
+
+    // О себе (1 поле)
+    if (formData.summary) completed++;
+
+    // Опыт работы (3 балла за каждый опыт)
+    completed += Math.min(formData.experience.length, 3);
+
+    // Образование (2 балла за каждое образование)
+    completed += Math.min(formData.education.length * 2, 4);
+
+    // Навыки (3 балла за навыки)
+    if (formData.skills.length >= 3) completed += 3;
+    else completed += formData.skills.length;
+
+    // Языки (2 балла за языки)
+    completed += Math.min(formData.languages.length, 2);
+
+    return Math.round((completed / total) * 100);
+  };
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({
@@ -183,63 +233,32 @@ const CreateResumePage = () => {
     alert('Резюме опубликовано!');
   };
 
-  const getCompletionPercentage = () => {
-    let completed = 0;
-    let total = 20; // Общее количество важных полей
-
-    // Личная информация (6 полей)
-    if (formData.firstName) completed++;
-    if (formData.lastName) completed++;
-    if (formData.email) completed++;
-    if (formData.phone) completed++;
-    if (formData.city) completed++;
-    if (formData.photo) completed++;
-
-    // Желаемая позиция (2 поля)
-    if (formData.position) completed++;
-    if (formData.salary) completed++;
-
-    // О себе (1 поле)
-    if (formData.summary) completed++;
-
-    // Опыт работы (3 балла за каждый опыт)
-    completed += Math.min(formData.experience.length, 3);
-
-    // Образование (2 балла за каждое образование)
-    completed += Math.min(formData.education.length * 2, 4);
-
-    // Навыки (3 балла за навыки)
-    if (formData.skills.length >= 3) completed += 3;
-    else completed += formData.skills.length;
-
-    // Языки (2 балла за языки)
-    completed += Math.min(formData.languages.length, 2);
-
-    return Math.round((completed / total) * 100);
-  };
-  //TODO: fix it
+  // Исправляем проверку пользователя
   const user = getUserFromStorage();
-  if (!user) {
-    alert('Пожалуйста, войдите в систему, чтобы редактировать резюме.');
-    window.location.href = '/login';  
-  }
   const user_id = user ? user.id : null;
 
-  const handleSubmit = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/resumes/find/${user_id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    const data = await response.json();
-    console.log("Saved:", data);
-    alert("Резюме успешно сохранено!");
-  } catch (err) {
-    console.error("Ошибка сохранения:", err);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert('Пожалуйста, войдите в систему, чтобы редактировать резюме.');
+      window.location.href = '/login';
+      return;
+    }
 
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/resumes/find/${user_id}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+        // Убираем body для GET запроса
+      });
+      const data = await response.json();
+      console.log("Saved:", data);
+      alert("Резюме успешно сохранено!");
+    } catch (err) {
+      console.error("Ошибка сохранения:", err);
+    }
+  };
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -255,7 +274,7 @@ const CreateResumePage = () => {
               <Camera className="w-8 h-8 md:w-12 md:h-12 text-gray-400" />
             )}
           </div>
-          <button className="text-yellow-400 hover:text-yellow-500 text-sm transition-colors">
+          <button type="button" className="text-yellow-400 hover:text-yellow-500 text-sm transition-colors">
             <Upload className="w-4 h-4 inline mr-1" />
             Загрузить фото
           </button>
@@ -425,6 +444,7 @@ const CreateResumePage = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl md:text-2xl font-bold text-white">Опыт работы</h2>
         <button
+          type="button"
           onClick={addExperience}
           className="flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
         >
@@ -445,6 +465,7 @@ const CreateResumePage = () => {
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-white">Место работы</h3>
                 <button
+                  type="button"
                   onClick={() => removeExperience(exp.id)}
                   className="text-red-400 hover:text-red-300 transition-colors"
                 >
@@ -531,6 +552,7 @@ const CreateResumePage = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl md:text-2xl font-bold text-white">Образование</h2>
         <button
+          type="button"
           onClick={addEducation}
           className="flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
         >
@@ -551,6 +573,7 @@ const CreateResumePage = () => {
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-white">Учебное заведение</h3>
                 <button
+                  type="button"
                   onClick={() => removeEducation(edu.id)}
                   className="text-red-400 hover:text-red-300 transition-colors"
                 >
@@ -635,104 +658,108 @@ const CreateResumePage = () => {
   );
 
   const renderStep5 = () => {
-  const [newSkill, setNewSkill] = useState('');
+    const [newSkill, setNewSkill] = useState('');
 
-  const handleSkillKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addSkill(newSkill);
-      setNewSkill('');
-    }
-  };
+    const handleSkillKeyPress = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill(newSkill);
+        setNewSkill('');
+      }
+    };
 
-  return (
-    <div className="space-y-8">
-      <h2 className="text-xl md:text-2xl font-bold text-white">Навыки и языки</h2>
-      
-      {/* Навыки */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Навыки</h3>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {formData.skills.map((skill) => (
-            <span
-              key={skill}
-              className="flex items-center bg-yellow-500 text-black px-3 py-1 rounded-full text-sm"
-            >
-              {skill}
-              <button
-                onClick={() => removeSkill(skill)}
-                className="ml-2 text-black hover:text-red-600"
+    return (
+      <div className="space-y-8">
+        <h2 className="text-xl md:text-2xl font-bold text-white">Навыки и языки</h2>
+        
+        {/* Навыки */}
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">Навыки</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {formData.skills.map((skill) => (
+              <span
+                key={skill}
+                className="flex items-center bg-yellow-500 text-black px-3 py-1 rounded-full text-sm"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </span>
-          ))}
-        </div>
-
-        <input
-          type="text"
-          value={newSkill}
-          onChange={(e) => setNewSkill(e.target.value)}
-          onKeyPress={handleSkillKeyPress}
-          placeholder="Введите навык и нажмите Enter"
-          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white 
-                     focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-        />
-      </div>
-
-      {/* Языки */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Языки</h3>
-        <button
-          onClick={addLanguage}
-          className="flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 
-                     text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить язык
-        </button>
-
-        {formData.languages.length === 0 ? (
-          <p className="text-gray-400">Добавьте языки</p>
-        ) : (
-          <div className="space-y-4">
-            {formData.languages.map((lang) => (
-              <div
-                key={lang.id}
-                className="flex flex-col md:flex-row items-center gap-4 bg-white/5 border border-gray-700 rounded-xl p-4"
-              >
-                <input
-                  type="text"
-                  value={lang.name}
-                  onChange={(e) => updateLanguage(lang.id, 'name', e.target.value)}
-                  placeholder="Например: Английский"
-                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                />
-                <select
-                  value={lang.level}
-                  onChange={(e) => updateLanguage(lang.id, 'level', e.target.value)}
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                >
-                  <option value="basic">Базовый</option>
-                  <option value="intermediate">Средний</option>
-                  <option value="advanced">Продвинутый</option>
-                  <option value="native">Родной</option>
-                </select>
+                {skill}
                 <button
-                  onClick={() => removeLanguage(lang.id)}
-                  className="text-red-400 hover:text-red-300 transition-colors"
+                  type="button"
+                  onClick={() => removeSkill(skill)}
+                  className="ml-2 text-black hover:text-red-600"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
-              </div>
+              </span>
             ))}
           </div>
-        )}
+
+          <input
+            type="text"
+            value={newSkill}
+            onChange={(e) => setNewSkill(e.target.value)}
+            onKeyPress={handleSkillKeyPress}
+            placeholder="Введите навык и нажмите Enter"
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white 
+                       focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+          />
+        </div>
+
+        {/* Языки */}
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">Языки</h3>
+          <button
+            type="button"
+            onClick={addLanguage}
+            className="flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 
+                       text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить язык
+          </button>
+
+          {formData.languages.length === 0 ? (
+            <p className="text-gray-400">Добавьте языки</p>
+          ) : (
+            <div className="space-y-4">
+              {formData.languages.map((lang) => (
+                <div
+                  key={lang.id}
+                  className="flex flex-col md:flex-row items-center gap-4 bg-white/5 border border-gray-700 rounded-xl p-4"
+                >
+                  <input
+                    type="text"
+                    value={lang.name}
+                    onChange={(e) => updateLanguage(lang.id, 'name', e.target.value)}
+                    placeholder="Например: Английский"
+                    className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  />
+                  <select
+                    value={lang.level}
+                    onChange={(e) => updateLanguage(lang.id, 'level', e.target.value)}
+                    className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  >
+                    <option value="basic">Базовый</option>
+                    <option value="intermediate">Средний</option>
+                    <option value="advanced">Продвинутый</option>
+                    <option value="native">Родной</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeLanguage(lang.id)}
+                    className="text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
-    const renderStep6 = () => (
+    );
+  };
+
+  const renderStep6 = () => (
     <div className="space-y-6">
       <h2 className="text-xl md:text-2xl font-bold text-white mb-6">Дополнительная информация</h2>
       
@@ -746,8 +773,9 @@ const CreateResumePage = () => {
             formData.certificates.map((cert, index) => (
               <div key={index} className="bg-white/5 border border-gray-700 rounded-xl p-4 md:p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <h4 className="text-md font-semibold text-white">Сертификат {index +  1}</h4>
+                  <h4 className="text-md font-semibold text-white">Сертификат {index + 1}</h4>
                   <button
+                    type="button"
                     onClick={() => {
                       const updated = [...formData.certificates];
                       updated.splice(index, 1);
@@ -822,6 +850,7 @@ const CreateResumePage = () => {
           )}
         </div>
         <button
+          type="button"
           onClick={() => updateFormData('certificates', [...formData.certificates, {}])}
           className="mt-4 flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
         >
@@ -842,6 +871,7 @@ const CreateResumePage = () => {
                 <div className="flex justify-between items-start mb-4">
                   <h4 className="text-md font-semibold text-white">Работа {index + 1}</h4>
                   <button
+                    type="button"
                     onClick={() => {
                       const updated = [...formData.portfolio];
                       updated.splice(index, 1);
@@ -885,12 +915,61 @@ const CreateResumePage = () => {
           )}
         </div>
         <button
+          type="button"
           onClick={() => updateFormData('portfolio', [...formData.portfolio, {}])}
           className="mt-4 flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Добавить работу
         </button>
+      </div>
+
+      {/* Социальные сети */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-4">Социальные сети</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">LinkedIn</label>
+            <div className="relative">
+              <Linkedin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={formData.socialLinks.linkedin}
+                onChange={(e) => updateFormData('socialLinks', { ...formData.socialLinks, linkedin: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">GitHub</label>
+            <div className="relative">
+              <Github className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={formData.socialLinks.github}
+                onChange={(e) => updateFormData('socialLinks', { ...formData.socialLinks, github: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                placeholder="https://github.com/username"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Личный сайт</label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={formData.socialLinks.website}
+                onChange={(e) => updateFormData('socialLinks', { ...formData.socialLinks, website: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                placeholder="https://your-website.com"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -952,6 +1031,6 @@ const CreateResumePage = () => {
       </div>
     </div>
   );
-}
- 
+};
+
 export default EditResume;
