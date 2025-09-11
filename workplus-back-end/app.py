@@ -27,7 +27,7 @@ def create_app():
     jwt.init_app(app)
 
     # Регистрация blueprints
-    from routes import auth_bp, jobs_bp, employer_bp, companies_bp, notifications_bp, profile_bp, contact_bp, resume_bp
+    from routes import auth_bp, jobs_bp, employer_bp, companies_bp, notifications_bp, profile_bp, contact_bp, resume_bp, admin_users_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
@@ -37,6 +37,7 @@ def create_app():
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
     app.register_blueprint(resume_bp, url_prefix='/api/resumes')
+    app.register_blueprint(admin_users_bp, url_prefix='/api/admin')
 
     # Главная страница API
     @app.route('/api')

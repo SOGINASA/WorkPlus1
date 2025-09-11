@@ -6,6 +6,7 @@ from routes.profile import profile_bp
 from routes.notifications import notifications_bp
 from routes.contact import contact_bp
 from routes.resumes import resume_bp
+from routes.admin.admin_users import admin_users_bp
 
 __all__ = [
     'auth_bp',
