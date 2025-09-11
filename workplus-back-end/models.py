@@ -412,7 +412,7 @@ class JobApplication(db.Model):
     expected_salary = db.Column(db.Integer)
     
     # Статус
-    status = db.Column(db.String(20), default='pending')  # pending, viewed, interview, rejected, hired
+    status = db.Column(db.String(20), default='new')  # new, approved, rejected
     
     # Скоринг
     score = db.Column(db.Float, default=0.0)

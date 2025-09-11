@@ -289,8 +289,8 @@ export const useAuth = () => {
   return context;
 };
 
-// Компонент для защиты маршрутов
-export const ProtectedRoute = ({ children }) => {
+// Компонент для защиты маршрутов с проверкой типа пользователя
+export const ProtectedRoute = ({ children, allowedTypes }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -303,6 +303,19 @@ export const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     window.location.href = '/login';
+    return null;
+  }
+
+  // Проверка типа пользователя
+  if (allowedTypes && !allowedTypes.includes(user.user_type)) {
+    // Если тип пользователя не разрешён, перенаправляем в зависимости от роли
+    if (user.user_type === 'admin') {
+      window.location.href = '/admin';   // например, админку
+    } else if (user.user_type === 'employer') {
+      window.location.href = '/employer-profile'; // страница работодателя
+    } else {
+      window.location.href = '/candidate-profile';  // профиль обычного пользователя
+    }
     return null;
   }
 

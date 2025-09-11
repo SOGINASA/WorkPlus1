@@ -89,35 +89,41 @@ const PublicRoutes = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
-        <Route path="/jobdetail" element={<JobDetail/>} />
-        <Route path="/notifications" element={<Notifications/>} />
-        <Route path="/vacancy-key" element={<VacancyKey/>} />
-        <Route path="/edit-resume" element={<EditResume/>} />
+        <Route path="/jobdetail" element={<JobDetail />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/vacancy-key" element={<VacancyKey />} />
+        <Route path="/edit-resume" element={
+          <ProtectedRoute allowedTypes={['candidate']}>
+            <EditResume />
+          </ProtectedRoute>
+        } />
 
-        {/* Защищенные страницы для пользователей */}
+        {/* Защищенные страницы для кандидатов */}
         <Route path="/resume-dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['candidate']}>
             <ResumeDashboard />
           </ProtectedRoute>
         } />
         <Route path="/create-resume" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['candidate']}>
             <CreateResume />
           </ProtectedRoute>
         } />
+        <Route path="/candidate-profile" element={
+          <ProtectedRoute allowedTypes={['candidate']}>
+            <CandidateProfile />
+          </ProtectedRoute>
+        } />
+
+        {/* Защищенные страницы для работодателей */}
         <Route path="/create-job" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['employer']}>
             <CreateJob />
           </ProtectedRoute>
         } />
         <Route path="/employer-profile" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['employer']}>
             <EmployerProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/candidate-profile" element={ 
-          <ProtectedRoute>
-            <CandidateProfile />
           </ProtectedRoute>
         } />
 
@@ -138,178 +144,178 @@ const AdminRoutes = () => {
         
         {/* Dashboard */}
         <Route path="dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <AdminDashboard />
           </ProtectedRoute>
         } />
         <Route path="dashboard/analytics" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Analytics />
           </ProtectedRoute>
         } />
         <Route path="dashboard/reports" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Reports />
           </ProtectedRoute>
         } />
 
         {/* Jobs */}
         <Route path="jobs/list" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <JobList />
           </ProtectedRoute>
         } />
         <Route path="jobs/moderation" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <JobModeration />
           </ProtectedRoute>
         } />
         <Route path="jobs/analytics" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <JobAnalytics />
           </ProtectedRoute>
         } />
         <Route path="jobs/templates" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <JobTemplates />
           </ProtectedRoute>
         } />
 
         {/* Users */}
         <Route path="users/list" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <UserList />
           </ProtectedRoute>
         } />
         <Route path="users/employers" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <EmployerList />
           </ProtectedRoute>
         } />
         <Route path="users/candidates" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <CandidateList />
           </ProtectedRoute>
         } />
         <Route path="users/profiles" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <UserProfile />
           </ProtectedRoute>
         } />
 
         {/* Moderation */}
         <Route path="moderation/queue" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <ReviewQueue />
           </ProtectedRoute>
         } />
         <Route path="moderation/reports" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <ReportsManagement />
           </ProtectedRoute>
         } />
         <Route path="moderation/content" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <ContentModeration />
           </ProtectedRoute>
         } />
 
         {/* Social */}
         <Route path="social/manager" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <SocialManager />
           </ProtectedRoute>
         } />
         <Route path="social/scheduler" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <PostScheduler />
           </ProtectedRoute>
         } />
         <Route path="social/analytics" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <SocialAnalytics />
           </ProtectedRoute>
         } />
         <Route path="social/calendar" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <ContentCalendar />
           </ProtectedRoute>
         } />
 
         {/* Finances */}
         <Route path="finances/revenue" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Revenue />
           </ProtectedRoute>
         } />
         <Route path="finances/subscriptions" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Subs />
           </ProtectedRoute>
         } />
         <Route path="finances/payments" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Payments />
           </ProtectedRoute>
         } />
         <Route path="finances/reports" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <FinanceialReports />
           </ProtectedRoute>
         } />
 
         {/* CRM */}
         <Route path="crm/leads" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Leads />
           </ProtectedRoute>
         } />
         <Route path="crm/pipeline" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Customers />
           </ProtectedRoute>
         } />
         <Route path="crm/clients" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Deals />
           </ProtectedRoute>
         } />
 
         {/* Settings */}
         <Route path="settings/general" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <GeneralSettings />
           </ProtectedRoute>
         } />
         <Route path="settings/pricing" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <PricingSettings />
           </ProtectedRoute>
         } />
         <Route path="settings/integrations" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <IntegrationSettings />
           </ProtectedRoute>
         } />
         <Route path="settings/permissions" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <UserPermissions />
           </ProtectedRoute>
         } />
 
         {/* Analytics */}
         <Route path="analytics/funnels" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <Conversions />
           </ProtectedRoute>
         } />
         <Route path="analytics/cohorts" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <CohortAnalysis />
           </ProtectedRoute>
         } />
         <Route path="analytics/geo" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedTypes={['admin']}>
             <GeoAnalysis />
           </ProtectedRoute>
         } />

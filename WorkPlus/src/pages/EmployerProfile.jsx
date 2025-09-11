@@ -743,7 +743,6 @@ const EmployerProfile = () => {
                       >
                         <option value="all">Все отклики</option>
                         <option value="new">Новые</option>
-                        <option value="interview">На собеседовании</option>
                         <option value="approved">Одобренные</option>
                         <option value="rejected">Отклоненные</option>
                       </select>

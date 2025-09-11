@@ -482,7 +482,7 @@ def seed_applications():
     for i, job in enumerate(jobs[:5]):  # Первые 5 вакансий
         for j, candidate in enumerate(candidates[:3]):  # Первые 3 кандидата
             if random.random() > 0.3:  # 70% вероятность отклика
-                status_options = ['pending', 'viewed', 'interview', 'rejected', 'hired']
+                status_options = ['new', 'approved', 'rejected']
                 application = {
                     'job_id': job.id,
                     'candidate_id': candidate.id,

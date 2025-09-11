@@ -324,7 +324,7 @@ def update_application_status(app_id):
         
         # Обновляем статус
         if 'status' in data:
-            valid_statuses = ['pending', 'viewed', 'interview', 'rejected', 'hired']
+            valid_statuses = ['approved', 'rejected', 'new']
             if data['status'] not in valid_statuses:
                 return jsonify({'error': 'Некорректный статус'}), 400
             
@@ -730,10 +730,6 @@ def get_employer_applicants():
                 
                 # status: маппим из БД в фронтовые значения
                 'status': (
-                    'new' if application.status == 'pending' else
-                    'interview' if application.status == 'interview' else
-                    'approved' if application.status == 'hired' else
-                    'rejected' if application.status == 'rejected' else
                     application.status
                 ),
                 
