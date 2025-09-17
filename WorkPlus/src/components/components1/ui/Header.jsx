@@ -421,11 +421,11 @@ const Header = () => {
                     </div>
 
                     <a
-                     href={getProfilePath()}
-                     className="flex items-center w-full py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
-                     onClick={() => {
-                     setMobileMenuOpen(false);
-                     setCurrentPath(getProfilePath());
+                      href={getProfilePath()}
+                      className="flex items-center w-full py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setCurrentPath(getProfilePath());
                       }}
                     >
                       <Settings className="w-4 h-4 mr-3" />
@@ -435,11 +435,11 @@ const Header = () => {
                     {isEmployer && (
                       <>
                         <a
-                          href="/admin/dashboard"
+                          href="/employer/dashboard"
                           className="flex items-center w-full py-3 text-gray-300 hover:text-yellow-400 transition-colors border-b border-gray-700/50"
                           onClick={() => {
                             setMobileMenuOpen(false);
-                            setCurrentPath('/admin/dashboard');
+                            setCurrentPath('/employer/dashboard');
                           }}
                         >
                           Панель управления
