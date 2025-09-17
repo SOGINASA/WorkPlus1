@@ -129,17 +129,8 @@ const Header = () => {
               </a>
             )}
             
-            {/* Показываем размещение вакансий только для работодателей */}
-            {isEmployer && (
-              <a 
-                href="/create-job" 
-                className={getLinkClasses('/create-job')}
-                onClick={() => setCurrentPath('/create-job')}
-              >
-                Разместить вакансию
-              </a>
-            )}
-
+            {/* УБИРАЕМ ДУБЛИРУЮЩУЮ КНОПКУ ОТСЮДА - она будет только в секции actions справа */}
+            
             {/* ссылка на админпанель */}
             {isAdmin && (
               <a 
@@ -183,7 +174,7 @@ const Header = () => {
             ) : (
               // Для авторизованных пользователей
               <div className="flex items-center space-x-3">
-                {/* Кнопка размещения вакансии только для работодателей */}
+                {/* Кнопка размещения вакансии только для работодателей - ЕДИНСТВЕННАЯ КНОПКА */}
                 {isEmployer && (
                   <a 
                     href="/create-job" 
@@ -339,7 +330,7 @@ const Header = () => {
                 </a>
               )}
 
-              {/* Показываем размещение вакансий только для работодателей */}
+              {/* В мобильном меню оставляем ссылку на размещение вакансий в навигации для работодателей */}
               {isEmployer && (
                 <a 
                   href="/create-job" 
@@ -444,6 +435,7 @@ const Header = () => {
                         >
                           Панель управления
                         </a>
+                        {/* В мобильном меню кнопка размещения вакансий для работодателей остается */}
                         <a 
                           href="/create-job" 
                           className="block w-full text-center py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all mx-0"
