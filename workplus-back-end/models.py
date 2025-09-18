@@ -1005,23 +1005,44 @@ def extend_user_model():
 
 # Дополнительные методы для User модели (можно добавить через monkey patching или наследование)
 def get_candidate_profile_dict(user):
-    """Получить полный словарь профиля кандидата"""
     if user.user_type != 'candidate':
         return None
-    
+
     profile = user.candidate_profile
     if not profile:
         return None
-    
+
+    try:
+        recent_views = user.profile_views.order_by(ProfileView.viewed_at.desc()).limit(10).all()
+    except AttributeError:
+        recent_views = (
+            ProfileView.query
+            .filter_by(candidate_id=user.id)
+            .order_by(ProfileView.viewed_at.desc())
+            .limit(10)
+            .all()
+        )
+
+    # applications и resume_responses_received могут быть либо Query, либо List
+    def safe_count(rel):
+        if rel is None:
+            return 0
+        try:
+            return rel.count()  # для lazy="dynamic" (AppenderQuery)
+        except Exception:
+            return len(rel)     # для обычных списков
+
+
     return {
         'profile': profile.to_dict(),
-        'skills': [skill.to_dict() for skill in profile.skills],
-        'education': [edu.to_dict() for edu in profile.education.order_by(Education.end_year.desc())],
-        'work_experience': [exp.to_dict() for exp in profile.work_experience.order_by(WorkExperience.end_date.desc())],
-        'recent_views': [view.to_dict() for view in user.profile_views.order_by(ProfileView.viewed_at.desc()).limit(10)],
-        'applications_count': user.job_applications.count(),
-        'responses_count': user.resume_responses_received.count()
+        'skills': [s.to_dict() for s in profile.skills],
+        'education': [e.to_dict() for e in profile.education],
+        'work_experience': [w.to_dict() for w in profile.work_experience],
+        'recent_views': [v.to_dict() for v in recent_views],
+        'applications_count': safe_count(user.applications),
+    'responses_count': safe_count(user.resume_responses_received),
     }
+
 
 class Notification(db.Model):
     __tablename__ = "notifications"

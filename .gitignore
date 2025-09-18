@@ -67,6 +67,7 @@ temp/
 /instance
 /WorkPlus-back-end/__pycache__
 /WorkPlus-back-end/routes/__pycache__
+/WorkPlus-back-end/routes/admin/__pycache__/
 /WorkPlus-back-end/utils/__pycache__
 /WorkPlus-back-end/workplus.log
 /WorkPlus-back-end/instance
