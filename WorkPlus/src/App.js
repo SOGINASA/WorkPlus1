@@ -24,6 +24,7 @@ import EmployerProfile from './pages/EmployerProfile';
 import CandidateProfile from './pages/CandidateProfile';
 import VacancyKey from './pages/Vacancy_key';
 import EditResume from './pages/EditResume';
+import Advantages from './pages/Advantages';
 
 // Admin pages imports
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
@@ -92,6 +93,7 @@ const PublicRoutes = () => {
         <Route path="/jobdetail" element={<JobDetail />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/vacancy-key" element={<VacancyKey />} />
+        <Route path="/advantages" element={<Advantages />} />
         <Route path="/edit-resume" element={
           <ProtectedRoute allowedTypes={['candidate']}>
             <EditResume />
