@@ -7,6 +7,9 @@ from routes.notifications import notifications_bp
 from routes.contact import contact_bp
 from routes.resumes import resume_bp
 from routes.admin.admin_users import admin_users_bp
+from routes.admin.admin_user_list import admin_user_list_bp
+from routes.admin.admin_employer_list import admin_employer_bp
+from routes.admin.admin_user_profile import user_profile_bp
 
 __all__ = [
     'auth_bp',
@@ -16,5 +19,8 @@ __all__ = [
     'profile_bp',
     'notifications_bp',
     'contact_bp',
-    'resume_bp'
+    'resume_bp',
+    'admin_users_bp',
+    'admin_user_list_bp',
+    'admin_employer_bp'
 ]

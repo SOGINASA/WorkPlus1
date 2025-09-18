@@ -1,101 +1,115 @@
-import React, { useState } from 'react';
-import { ArrowLeft, User, Building2, Mail, Phone, MapPin, Calendar, Star, Briefcase, Eye, Edit, Ban, CheckCircle, XCircle, Clock, TrendingUp, Users, Award, AlertTriangle, MessageSquare } from 'lucide-react';
+// src/pages/admin/UserProfile.jsx
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from "react-router-dom";
+import { getUser, updateUser, updateCandidateProfile, updateEmployerProfile } from "../../../components/api/UserService";
+import { ArrowLeft, User, Building2, Mail, Phone, MapPin, Calendar, Star, Briefcase, Edit, Ban, CheckCircle, XCircle, Clock, TrendingUp, Users, Award, AlertTriangle, MessageSquare } from 'lucide-react';
 
 const UserProfile = () => {
+  const [searchParams] = useSearchParams();
+  const userId = searchParams.get("id");
+
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState(null);          // весь объект, который вернул API
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({});    // для редактирования
 
-  // Пример данных пользователя
-  const userProfile = {
-    id: 1,
-    type: 'employer', // employer, candidate, admin
-    name: 'Анна Смирнова',
-    email: 'anna.smirnova@techsolutions.kz',
-    phone: '+7 701 123 45 67',
-    avatar: null,
-    status: 'active',
-    registeredDate: '15 ноября 2024',
-    lastActivity: '2 часа назад',
-    rating: 4.8,
-    
-    // Для работодателя
-    company: {
-      name: 'Tech Solutions KZ',
-      industry: 'IT и разработка',
-      size: '50-100 сотрудников',
-      website: 'https://techsolutions.kz',
-      description: 'Лидирующая IT-компания в сфере разработки корпоративных решений'
-    },
-    location: 'Петропавловск',
-    subscription: 'pro',
-    
-    // Статистика
-    stats: {
-      activeJobs: 8,
-      totalJobs: 23,
-      totalHires: 15,
-      monthlySpent: 285000,
-      avgTimeToHire: 12,
-      candidateRating: 4.8
-    },
-    
-    // Активность
-    recentActivity: [
-      { date: '20 дек 2024', action: 'Разместил вакансию "Senior React Developer"', type: 'job_post' },
-      { date: '19 дек 2024', action: 'Отправил оффер кандидату Максим Петров', type: 'offer_sent' },
-      { date: '18 дек 2024', action: 'Провел интервью с Еленой Козловой', type: 'interview' },
-      { date: '17 дек 2024', action: 'Обновил тарифный план на Pro', type: 'subscription' }
-    ],
-    
-    // Нарушения
-    violations: [
-      { date: '15 дек 2024', type: 'warning', description: 'Неполное описание вакансии', status: 'resolved' },
-      { date: '10 дек 2024', type: 'complaint', description: 'Жалоба на несоответствие условий', status: 'pending' }
-    ]
+  // безопасные геттеры
+  const candidate = user?.candidate_profile || null;
+  const company = user?.company || null;
+  const jobs = user?.jobs || [];
+  const activity = user?.activity || [];
+  const stats = user?.stats || {};
+  const violations = user?.violations || [];
+
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const data = await getUser(userId);
+        setUser(data);
+        setFormData({
+          name: data.name || "",
+          phone: data.phone || "",
+          city: data.city || "",
+        });
+      } catch (e) {
+        console.error("Ошибка загрузки профиля:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSave = async () => {
+    try {
+      let updated;
+      if (user.user_type === "candidate") {
+        updated = await updateCandidateProfile(userId, formData);
+        setUser(prev => ({ ...prev, candidate_profile: { ...(prev.candidate_profile || {}), ...updated } }));
+      } else if (user.user_type === "employer") {
+        updated = await updateEmployerProfile(userId, formData);
+        setUser(prev => ({ ...prev, company: { ...(prev.company || {}), ...updated } }));
+      } else {
+        updated = await updateUser(userId, formData);
+        setUser(prev => ({ ...prev, ...updated }));
+      }
+      setIsEditing(false);
+    } catch (e) {
+      console.error("Ошибка сохранения:", e);
+    }
   };
-
-  const tabs = [
-    { id: 'overview', label: 'Обзор', icon: <User className="w-4 h-4" /> },
-    { id: 'activity', label: 'Активность', icon: <Clock className="w-4 h-4" /> },
-    { id: 'stats', label: 'Статистика', icon: <TrendingUp className="w-4 h-4" /> },
-    { id: 'violations', label: 'Нарушения', icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: 'settings', label: 'Настройки', icon: <Edit className="w-4 h-4" /> }
-  ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':
+      case true:
+      case "active":
         return 'text-green-400 bg-green-400/10 border-green-400/20';
-      case 'blocked':
+      case false:
+      case "blocked":
         return 'text-red-400 bg-red-400/10 border-red-400/20';
-      case 'pending':
-        return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
       default:
         return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
     }
   };
 
-  const getSubscriptionColor = (subscription) => {
-    switch (subscription) {
-      case 'free':
-        return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
-      case 'start':
-        return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
-      case 'growth':
-        return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
-      case 'pro':
-        return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-      default:
-        return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+  if (!userId) return <div className="p-6 text-red-400">❌ ID пользователя не передан</div>;
+  if (loading) return <div className="p-6 text-white">Загрузка...</div>;
+  if (!user) return <div className="p-6 text-red-400">❌ Пользователь не найден</div>;
+
+  // быстрые вычисления для карточек статистики при отсутствии значений
+  const computedStats = (() => {
+    if (user.user_type === 'employer') {
+      const activeJobs = jobs.filter(j => (j.status || 'active') === 'active').length;
+      return {
+        activeJobs: stats.activeJobs ?? activeJobs,
+        totalJobs: stats.totalJobs ?? jobs.length,
+        totalHires: stats.totalHires ?? 0,
+        avgTimeToHire: stats.avgTimeToHire ?? 0,
+        monthlySpent: stats.monthlySpent ?? 0,
+      };
+    } else if (user.user_type === 'candidate') {
+      const apps = candidate?.applications?.length || 0;
+      const views = candidate?.stats?.views_total || 0;
+      return {
+        activeJobs: 0,
+        totalJobs: 0,
+        totalHires: apps,  // условно показываем кол-во откликов
+        avgTimeToHire: 0,
+        monthlySpent: views, // просто показатель активности профиля
+      };
     }
-  };
+    return { activeJobs: 0, totalJobs: 0, totalHires: 0, avgTimeToHire: 0, monthlySpent: 0 };
+  })();
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+          <button onClick={() => window.history.back()} className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
@@ -113,7 +127,7 @@ const UserProfile = () => {
             <Ban className="w-4 h-4 mr-2" />
             Заблокировать
           </button>
-          <button className="flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm">
+          <button onClick={() => setIsEditing(true)} className="flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm">
             <Edit className="w-4 h-4 mr-2" />
             Редактировать
           </button>
@@ -125,18 +139,15 @@ const UserProfile = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
           <div className="w-20 h-20 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-black font-bold text-2xl">
-              {userProfile.name.split(' ').map(n => n[0]).join('')}
+              {user.name?.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
-              <h2 className="text-xl font-bold text-white">{userProfile.name}</h2>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(userProfile.status)}`}>
-                {userProfile.status === 'active' ? 'Активен' : userProfile.status}
-              </span>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getSubscriptionColor(userProfile.subscription)}`}>
-                {userProfile.subscription.toUpperCase()}
+              <h2 className="text-xl font-bold text-white">{user.name}</h2>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(user.is_active)}`}>
+                {user.is_active ? 'Активен' : 'Заблокирован'}
               </span>
             </div>
             
@@ -144,39 +155,39 @@ const UserProfile = () => {
               <div className="space-y-2">
                 <div className="flex items-center text-gray-300 text-sm">
                   <Mail className="w-4 h-4 mr-3 text-gray-500" />
-                  {userProfile.email}
+                  {user.email}
                 </div>
                 <div className="flex items-center text-gray-300 text-sm">
                   <Phone className="w-4 h-4 mr-3 text-gray-500" />
-                  {userProfile.phone}
+                  {user.phone || '—'}
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center text-gray-300 text-sm">
                   <MapPin className="w-4 h-4 mr-3 text-gray-500" />
-                  {userProfile.location}
+                  {user.city || '—'}
                 </div>
                 <div className="flex items-center text-gray-300 text-sm">
                   <Calendar className="w-4 h-4 mr-3 text-gray-500" />
-                  Регистрация: {userProfile.registeredDate}
+                  Регистрация: {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                 </div>
               </div>
             </div>
             
-            {userProfile.company && (
+            {company && (
               <div className="bg-white/5 border border-gray-700 rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-2">
                   <Building2 className="w-5 h-5 text-yellow-400" />
-                  <h3 className="text-lg font-semibold text-white">{userProfile.company.name}</h3>
+                  <h3 className="text-lg font-semibold text-white">{company.name}</h3>
                 </div>
-                <p className="text-gray-300 text-sm mb-2">{userProfile.company.description}</p>
+                <p className="text-gray-300 text-sm mb-2">{company.description}</p>
                 <div className="flex flex-wrap gap-4 text-xs text-gray-400">
-                  <span>{userProfile.company.industry}</span>
-                  <span>{userProfile.company.size}</span>
-                  {userProfile.company.website && (
-                    <a href={userProfile.company.website} className="text-yellow-400 hover:text-yellow-300">
-                      {userProfile.company.website}
+                  <span>{company.industry}</span>
+                  <span>{company.size}</span>
+                  {company.website && (
+                    <a href={company.website} className="text-yellow-400 hover:text-yellow-300" target="_blank" rel="noreferrer">
+                      {company.website}
                     </a>
                   )}
                 </div>
@@ -187,10 +198,10 @@ const UserProfile = () => {
           <div className="text-right space-y-2">
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5 text-yellow-400 fill-current" />
-              <span className="text-xl font-bold text-white">{userProfile.rating}</span>
+              <span className="text-xl font-bold text-white">{(stats.candidateRating || 0).toFixed ? (stats.candidateRating || 0).toFixed(1) : (stats.candidateRating || 0)}</span>
             </div>
             <p className="text-gray-400 text-sm">Рейтинг</p>
-            <p className="text-gray-500 text-xs">Онлайн: {userProfile.lastActivity}</p>
+            {/* Можно вывести lastActivity, если начнёшь его считать на бэке */}
           </div>
         </div>
       </div>
@@ -200,30 +211,32 @@ const UserProfile = () => {
         <div className="bg-white/5 border border-gray-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Briefcase className="w-8 h-8 text-blue-400" />
-            <span className="text-2xl font-bold text-white">{userProfile.stats.activeJobs}</span>
+            <span className="text-2xl font-bold text-white">{computedStats.activeJobs}</span>
           </div>
           <p className="text-sm text-gray-400">Активных вакансий</p>
         </div>
         <div className="bg-white/5 border border-gray-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Users className="w-8 h-8 text-green-400" />
-            <span className="text-2xl font-bold text-white">{userProfile.stats.totalHires}</span>
+            <span className="text-2xl font-bold text-white">{computedStats.totalHires}</span>
           </div>
-          <p className="text-sm text-gray-400">Всего найми</p>
+          <p className="text-sm text-gray-400">{user.user_type === 'employer' ? 'Всего наймов' : 'Откликов'}</p>
         </div>
         <div className="bg-white/5 border border-gray-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Clock className="w-8 h-8 text-purple-400" />
-            <span className="text-2xl font-bold text-white">{userProfile.stats.avgTimeToHire}</span>
+            <span className="text-2xl font-bold text-white">{computedStats.avgTimeToHire}</span>
           </div>
           <p className="text-sm text-gray-400">Дней до найма</p>
         </div>
         <div className="bg-white/5 border border-gray-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Award className="w-8 h-8 text-yellow-400" />
-            <span className="text-2xl font-bold text-white">{userProfile.stats.monthlySpent.toLocaleString()}</span>
+            <span className="text-2xl font-bold text-white">
+              {Number(computedStats.monthlySpent || 0).toLocaleString()}
+            </span>
           </div>
-          <p className="text-sm text-gray-400">₸ в месяц</p>
+          <p className="text-sm text-gray-400">{user.user_type === 'employer' ? '₸ в месяц' : 'Просмотров профиля'}</p>
         </div>
       </div>
 
@@ -231,7 +244,13 @@ const UserProfile = () => {
       <div className="bg-white/5 border border-gray-700 rounded-xl overflow-hidden">
         <div className="border-b border-gray-700">
           <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => (
+            {[
+              { id: 'overview', label: 'Обзор', icon: <User className="w-4 h-4" /> },
+              { id: 'activity', label: 'Активность', icon: <Clock className="w-4 h-4" /> },
+              { id: 'stats', label: 'Статистика', icon: <TrendingUp className="w-4 h-4" /> },
+              { id: 'violations', label: 'Нарушения', icon: <AlertTriangle className="w-4 h-4" /> },
+              { id: 'settings', label: 'Настройки', icon: <Edit className="w-4 h-4" /> }
+            ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -249,153 +268,165 @@ const UserProfile = () => {
         </div>
 
         <div className="p-6">
-          {/* Overview Tab */}
+          {/* Overview */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Основная информация</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">ID пользователя</span>
-                      <span className="text-white">#{userProfile.id}</span>
+              {user.user_type === 'candidate' && candidate && (
+                <>
+                  <h3 className="text-lg font-semibold text-white">Навыки</h3>
+                  <ul className="flex flex-wrap gap-2">
+                    {(candidate.skills || []).map((s, i) => (
+                      <li key={i} className="px-3 py-1 bg-gray-700 rounded">{s.name || s}</li>
+                    ))}
+                  </ul>
+
+                  <h3 className="text-lg font-semibold text-white mt-6">Опыт работы</h3>
+                  {(candidate.work_experience || []).map((exp, i) => (
+                    <div key={i} className="p-3 bg-gray-800 rounded-lg text-gray-300">
+                      <b>{exp.company_name}</b> — {exp.position} ({exp.period})
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Тип аккаунта</span>
-                      <span className="text-white">Работодатель</span>
+                  ))}
+
+                  <h3 className="text-lg font-semibold text-white mt-6">Образование</h3>
+                  {(candidate.education || []).map((edu, i) => (
+                    <div key={i} className="p-3 bg-gray-800 rounded-lg text-gray-300">
+                      <b>{edu.institution}</b> — {edu.degree} ({edu.period})
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Дата регистрации</span>
-                      <span className="text-white">{userProfile.registeredDate}</span>
+                  ))}
+                </>
+              )}
+
+              {user.user_type === 'employer' && company && (
+                <>
+                  <h3 className="text-lg font-semibold text-white">Вакансии</h3>
+                  {jobs.length ? jobs.map(job => (
+                    <div key={job.id} className="p-3 bg-gray-800 rounded-lg text-gray-300 mb-2">
+                      <b>{job.title}</b> — {job.employment_type || '—'} ({job.status || 'active'})
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Последняя активность</span>
-                      <span className="text-white">{userProfile.lastActivity}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Подписка и платежи</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Тарифный план</span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getSubscriptionColor(userProfile.subscription)}`}>
-                        {userProfile.subscription.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Месячные расходы</span>
-                      <span className="text-green-400 font-medium">{userProfile.stats.monthlySpent.toLocaleString()} ₸</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Всего размещено</span>
-                      <span className="text-white">{userProfile.stats.totalJobs} вакансий</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  )) : <p className="text-gray-400">Нет активных вакансий</p>}
+                </>
+              )}
             </div>
           )}
 
-          {/* Activity Tab */}
+          {/* Activity */}
           {activeTab === 'activity' && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white mb-4">Недавняя активность</h3>
-              {userProfile.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-4 p-4 bg-white/5 border border-gray-700 rounded-lg">
+              {activity.length ? activity.map((a, idx) => (
+                <div key={idx} className="flex items-start space-x-4 p-4 bg-white/5 border border-gray-700 rounded-lg">
                   <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
                   <div className="flex-1">
-                    <p className="text-white">{activity.action}</p>
-                    <p className="text-gray-400 text-sm">{activity.date}</p>
+                    <p className="text-white">{a.title}</p>
+                    {a.subtitle ? <p className="text-gray-400 text-sm">{a.subtitle}</p> : null}
+                    <p className="text-gray-500 text-xs mt-1">{a.date ? new Date(a.date).toLocaleString() : ''}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    activity.type === 'job_post' ? 'bg-blue-400/10 text-blue-400' :
-                    activity.type === 'offer_sent' ? 'bg-green-400/10 text-green-400' :
-                    activity.type === 'interview' ? 'bg-purple-400/10 text-purple-400' :
+                    a.type === 'job_post' ? 'bg-blue-400/10 text-blue-400' :
+                    a.type === 'application' ? 'bg-green-400/10 text-green-400' :
+                    a.type === 'application_received' ? 'bg-purple-400/10 text-purple-400' :
                     'bg-yellow-400/10 text-yellow-400'
                   }`}>
-                    {activity.type.replace('_', ' ')}
+                    {a.type}
                   </span>
                 </div>
-              ))}
+              )) : (
+                <p className="text-gray-400">Пока нет активности</p>
+              )}
             </div>
           )}
 
-          {/* Stats Tab */}
+          {/* Stats */}
           {activeTab === 'stats' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-white mb-4">Подробная статистика</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white/5 border border-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Эффективность найма</h4>
-                  <div className="text-2xl font-bold text-green-400 mb-1">85%</div>
-                  <p className="text-gray-400 text-sm">Успешных закрытий</p>
+                  <h4 className="text-white font-medium mb-2">Эффективность</h4>
+                  <div className="text-2xl font-bold text-green-400 mb-1">
+                    {user.user_type === 'employer' ? `${Math.min(100, (computedStats.totalHires || 0) * 5)}%` : `${Math.min(100, (candidate?.applications?.length || 0) * 10)}%`}
+                  </div>
+                  <p className="text-gray-400 text-sm">условный показатель</p>
                 </div>
                 
                 <div className="bg-white/5 border border-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Время отклика</h4>
-                  <div className="text-2xl font-bold text-blue-400 mb-1">2.5ч</div>
-                  <p className="text-gray-400 text-sm">Среднее время</p>
+                  <h4 className="text-white font-medium mb-2">Отклики / Найм</h4>
+                  <div className="text-2xl font-bold text-blue-400 mb-1">
+                    {user.user_type === 'employer' ? (computedStats.totalHires || 0) : (candidate?.applications?.length || 0)}
+                  </div>
+                  <p className="text-gray-400 text-sm">{user.user_type === 'employer' ? 'наймов всего' : 'откликов всего'}</p>
                 </div>
                 
                 <div className="bg-white/5 border border-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Рейтинг кандидатов</h4>
-                  <div className="text-2xl font-bold text-yellow-400 mb-1">4.8</div>
-                  <p className="text-gray-400 text-sm">Средняя оценка</p>
+                  <h4 className="text-white font-medium mb-2">Просмотры профиля</h4>
+                  <div className="text-2xl font-bold text-yellow-400 mb-1">
+                    {candidate?.stats?.views_total || 0}
+                  </div>
+                  <p className="text-gray-400 text-sm">всего просмотров</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Violations Tab */}
+          {/* Violations */}
           {activeTab === 'violations' && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white mb-4">Нарушения и жалобы</h3>
-              {userProfile.violations.length > 0 ? (
-                userProfile.violations.map((violation, index) => (
-                  <div key={index} className="flex items-start space-x-4 p-4 bg-white/5 border border-gray-700 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${
-                      violation.type === 'warning' ? 'bg-yellow-400' : 'bg-red-400'
-                    }`}></div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          violation.type === 'warning' 
-                            ? 'bg-yellow-400/10 text-yellow-400' 
-                            : 'bg-red-400/10 text-red-400'
-                        }`}>
-                          {violation.type === 'warning' ? 'Предупреждение' : 'Жалоба'}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          violation.status === 'resolved' 
-                            ? 'bg-green-400/10 text-green-400' 
-                            : 'bg-yellow-400/10 text-yellow-400'
-                        }`}>
-                          {violation.status === 'resolved' ? 'Решено' : 'В обработке'}
-                        </span>
-                      </div>
-                      <p className="text-white">{violation.description}</p>
-                      <p className="text-gray-400 text-sm">{violation.date}</p>
+              {violations.length ? violations.map((v, i) => (
+                <div key={i} className="flex items-start space-x-4 p-4 bg-white/5 border border-gray-700 rounded-lg">
+                  <div className={`w-3 h-3 rounded-full mt-1 ${v.type === 'warning' ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${v.type === 'warning' ? 'bg-yellow-400/10 text-yellow-400' : 'bg-red-400/10 text-red-400'}`}>
+                        {v.type === 'warning' ? 'Предупреждение' : 'Жалоба'}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${v.status === 'resolved' ? 'bg-green-400/10 text-green-400' : 'bg-yellow-400/10 text-yellow-400'}`}>
+                        {v.status === 'resolved' ? 'Решено' : 'В обработке'}
+                      </span>
                     </div>
+                    <p className="text-white">{v.description}</p>
+                    <p className="text-gray-400 text-sm">{v.date ? new Date(v.date).toLocaleDateString() : ''}</p>
                   </div>
-                ))
-              ) : (
+                </div>
+              )) : (
                 <div className="text-center py-8">
                   <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
                   <h4 className="text-lg font-medium text-white mb-2">Нарушений не найдено</h4>
-                  <p className="text-gray-400">Пользователь соблюдает все правила платформы</p>
+                  <p className="text-gray-400">Пользователь соблюдает правила платформы</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Settings Tab */}
+          {/* Settings (с подписями к полям) */}
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-white mb-4">Управление аккаунтом</h3>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="text-white font-medium">Редактирование профиля</h4>
+                  <div className="space-y-3">
+                    <label className="block text-sm text-gray-400">
+                      Имя
+                      <input name="name" value={formData.name} onChange={handleChange} className="mt-1 w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-white" />
+                    </label>
+                    <label className="block text-sm text-gray-400">
+                      Телефон
+                      <input name="phone" value={formData.phone} onChange={handleChange} className="mt-1 w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-white" />
+                    </label>
+                    <label className="block text-sm text-gray-400">
+                      Город
+                      <input name="city" value={formData.city} onChange={handleChange} className="mt-1 w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-white" />
+                    </label>
+                    <div className="flex justify-end">
+                      <button onClick={handleSave} className="px-4 py-2 bg-green-600 rounded-lg flex items-center text-white">
+                        <CheckCircle className="w-4 h-4 mr-2" /> Сохранить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <h4 className="text-white font-medium">Статус аккаунта</h4>
                   <div className="space-y-3">
@@ -405,14 +436,12 @@ const UserProfile = () => {
                         <span>Активировать аккаунт</span>
                       </div>
                     </button>
-                    
                     <button className="w-full flex items-center justify-between p-4 bg-yellow-600/10 border border-yellow-600/20 rounded-lg text-yellow-400 hover:bg-yellow-600/20 transition-all">
                       <div className="flex items-center space-x-3">
                         <Clock className="w-5 h-5" />
                         <span>Временно заблокировать</span>
                       </div>
                     </button>
-                    
                     <button className="w-full flex items-center justify-between p-4 bg-red-600/10 border border-red-600/20 rounded-lg text-red-400 hover:bg-red-600/20 transition-all">
                       <div className="flex items-center space-x-3">
                         <XCircle className="w-5 h-5" />
@@ -421,41 +450,12 @@ const UserProfile = () => {
                     </button>
                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <h4 className="text-white font-medium">Дополнительные действия</h4>
-                  <div className="space-y-3">
-                    <button className="w-full flex items-center justify-between p-4 bg-blue-600/10 border border-blue-600/20 rounded-lg text-blue-400 hover:bg-blue-600/20 transition-all">
-                      <div className="flex items-center space-x-3">
-                        <MessageSquare className="w-5 h-5" />
-                        <span>Отправить уведомление</span>
-                      </div>
-                    </button>
-                    
-                    <button className="w-full flex items-center justify-between p-4 bg-purple-600/10 border border-purple-600/20 rounded-lg text-purple-400 hover:bg-purple-600/20 transition-all">
-                      <div className="flex items-center space-x-3">
-                        <Award className="w-5 h-5" />
-                        <span>Изменить тарифный план</span>
-                      </div>
-                    </button>
-                    
-                    <button className="w-full flex items-center justify-between p-4 bg-white/5 border border-gray-700 rounded-lg text-gray-300 hover:bg-white/10 transition-all">
-                      <div className="flex items-center space-x-3">
-                        <Edit className="w-5 h-5" />
-                        <span>Редактировать данные</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
               </div>
-              
-              {/* Admin Notes */}
+
+              {/* Заметки админа оставил без изменений стиля */}
               <div>
                 <h4 className="text-white font-medium mb-4">Заметки администратора</h4>
-                <textarea
-                  className="w-full h-32 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none"
-                  placeholder="Добавьте заметки о пользователе для других администраторов..."
-                ></textarea>
+                <textarea className="w-full h-32 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none" placeholder="Добавьте заметки о пользователе..."></textarea>
                 <div className="flex justify-end mt-3">
                   <button className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all text-sm">
                     Сохранить заметку
@@ -464,6 +464,7 @@ const UserProfile = () => {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
