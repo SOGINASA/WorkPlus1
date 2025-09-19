@@ -25,6 +25,7 @@ import CandidateProfile from './pages/CandidateProfile';
 import VacancyKey from './pages/Vacancy_key';
 import EditResume from './pages/EditResume';
 import Advantages from './pages/Advantages';
+import ResumeGen from './pages/WorkPlusAI/WorkPlusAI';
 
 // Admin pages imports
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
@@ -94,6 +95,7 @@ const PublicRoutes = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/vacancy-key" element={<VacancyKey />} />
         <Route path="/advantages" element={<Advantages />} />
+        <Route path="/resume-gen" element={<ResumeGen />} />
         <Route path="/edit-resume" element={
           <ProtectedRoute allowedTypes={['candidate']}>
             <EditResume />
