@@ -109,7 +109,7 @@ const AdvantagesPage = () => {
   ];
 
   return (
-    <div className="bg-slate-900 text-white">
+    <div className="bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="relative py-12 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent"></div>
@@ -150,8 +150,8 @@ const AdvantagesPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {mainAdvantages.map((advantage, index) => (
-              <div key={index} className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 md:p-8 hover:border-yellow-400/30 transition-all group">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/5 border border-yellow-400/20 rounded-full flex items-center justify-center mb-6 group-hover:border-yellow-400/40 group-hover:bg-yellow-400/10 transition-all">
+              <div key={index} className="bg-gray-800/50 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 md:p-8 hover:border-yellow-400/30 transition-all group">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-800 border border-yellow-400/20 rounded-full flex items-center justify-center mb-6 group-hover:border-yellow-400/40 group-hover:bg-yellow-400/10 transition-all">
                   {advantage.icon}
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-4 group-hover:text-yellow-400 transition-colors">
@@ -181,7 +181,7 @@ const AdvantagesPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {socialChannels.map((channel, index) => (
-              <div key={index} className="text-center bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all">
+              <div key={index} className="text-center bg-gray-800/50 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all">
                 <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Smartphone className="w-6 h-6 text-slate-900" />
                 </div>
@@ -207,7 +207,7 @@ const AdvantagesPage = () => {
             </p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-2xl overflow-hidden">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-yellow-400/10 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -258,7 +258,7 @@ const AdvantagesPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {metrics.map((metric, index) => (
-              <div key={index} className="text-center bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all group">
+              <div key={index} className="text-center bg-gray-800/50 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all group">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                   {metric.icon}
                 </div>
@@ -281,7 +281,7 @@ const AdvantagesPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all">
               <div className="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-green-400" />
               </div>
