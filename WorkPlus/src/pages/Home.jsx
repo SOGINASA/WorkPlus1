@@ -345,6 +345,76 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Resume Generator CTA */}
+      <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-gradient-to-r from-yellow-400/10 to-yellow-600/10 border border-yellow-400/20 rounded-2xl p-6 md:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center px-3 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full mb-4">
+                  <Award className="w-4 h-4 text-yellow-400 mr-2" />
+                  <span className="text-yellow-400 text-sm font-medium">Генератор резюме</span>
+                </div>
+                
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+                  Создайте профессиональное резюме за 5 минут
+                </h2>
+                
+                <p className="text-gray-300 mb-6 leading-relaxed">
+                  Наш ИИ-помощник поможет составить идеальное резюме, которое привлечет внимание работодателей. 
+                  Автоматически подберет ключевые навыки под вашу специальность.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span className="text-sm text-gray-300">Профессиональные шаблоны</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span className="text-sm text-gray-300">ИИ-подсказки</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span className="text-sm text-gray-300">Экспорт в PDF</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span className="text-sm text-gray-300">Адаптация под вакансию</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6 mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Award className="w-8 h-8 text-black" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Увеличьте шансы на 3x</h3>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Качественное резюме повышает вероятность получения приглашения на собеседование в 3 раза
+                  </p>
+                  <div className="inline-flex items-center px-3 py-1 bg-yellow-400/20 border border-yellow-400/30 rounded-full mb-4">
+                    <span className="text-yellow-400 text-xs font-medium">Премиум-функция</span>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => navigate('/resume-gen')}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center justify-center"
+                >
+                  <Award className="w-5 h-5 mr-2" />
+                  Создать резюме
+                </button>
+                <p className="text-gray-400 text-xs mt-2">
+                  Стоимость: от 500 ₸
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-yellow-400/5 to-yellow-600/5">
         <div className="max-w-4xl mx-auto text-center">
