@@ -60,7 +60,19 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">© 2025 WorkPlus.kz. Все права защищены.</p>
+<p className="text-gray-400 text-sm">
+  © 2025 WorkPlus.kz. Все права защищены.{" "}
+  <b>
+    <a
+      href="https://sunity.kz"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-red-500 hover:text-yellow-400 transition-colors"
+    >
+      Сделано Sunity.kz
+    </a>
+  </b>
+</p>
             <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6">
               <span className="text-gray-400 text-sm">Петропавловск, Казахстан</span>
               <a href="tel:+77001234567" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm flex items-center">
