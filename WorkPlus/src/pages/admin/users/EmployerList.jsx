@@ -235,9 +235,11 @@ const EmployerList = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-white/5 rounded-lg transition-all">
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" onClick={(e) => {
+                            window.location.href=`/admin/users/profiles?id=${employer.id}`;
+                          }}>
+                            <Eye className="w-4 h-4" />
+                          </button>
                       <button className="p-2 text-gray-400 hover:text-blue-400 hover:bg-white/5 rounded-lg transition-all">
                         <Edit className="w-4 h-4" />
                       </button>
@@ -247,11 +249,6 @@ const EmployerList = () => {
                       >
                         <Ban className="w-4 h-4" />
                       </button>
-                      <div className="relative">
-                        <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </div>
                     </div>
                   </td>
                 </tr>

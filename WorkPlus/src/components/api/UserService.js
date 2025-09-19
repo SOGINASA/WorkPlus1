@@ -23,7 +23,9 @@ export const updateUser = async (id, data) => {
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error("Ошибка обновления пользователя");
-  return response.json();
+  const json = await response.json();
+  console.log("Updated user:", data);
+  return json;
 };
 
 // Массовое обновление

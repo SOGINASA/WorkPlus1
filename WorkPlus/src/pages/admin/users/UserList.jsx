@@ -380,8 +380,10 @@ const UserList = () => {
 
                         {/* Кнопка "ещё" (оставляем на будущее) */}
                         <div className="relative">
-                          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-                            <MoreHorizontal className="w-4 h-4" />
+                          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" onClick={(e) => {
+                            window.location.href=`/admin/users/profiles?id=${user.id}`;
+                          }}>
+                            <Eye className="w-4 h-4" />
                           </button>
                         </div>
                       </div>

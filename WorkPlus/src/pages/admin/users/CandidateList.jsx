@@ -1,12 +1,11 @@
 // src/pages/admin/users/CandidateList.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  User,
   Search,
   Phone,
   MapPin,
   Ban,
-  MoreHorizontal,
+  Eye,
 } from "lucide-react";
 import { getCandidates, updateUser } from "../../../components/api/UserService";
 
@@ -153,8 +152,10 @@ const CandidateList = () => {
                       >
                         <Ban className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-                        <MoreHorizontal className="w-4 h-4" />
+                      <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" onClick={(e) => {
+                            window.location.href=`/admin/users/profiles?id=${c.id}`;
+                          }}>
+                            <Eye className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>

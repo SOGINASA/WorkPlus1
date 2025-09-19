@@ -1,23 +1,23 @@
-# backend/routes/user_profile.py
 import datetime
 from flask import Blueprint, jsonify, request
-from sqlalchemy import desc, func
-from models import Company, JobApplication, ProfileView, db, User, get_candidate_profile_dict, Job
+from sqlalchemy import desc
+from models import (
+    Company, JobApplication, ProfileView, db, User, Job,
+)
 
-user_profile_bp = Blueprint("user_profile_bp", __name__, url_prefix="/api/admin/user_profile")
+user_profile_bp = Blueprint("user_profile_bp", __name__)
 
-# Получить профиль пользователя
+# ---------- GET: профиль ----------
 @user_profile_bp.route("/<int:user_id>", methods=["GET"])
 def get_user_profile(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "Пользователь не найден"}), 404
 
-    # базовые поля
-    base = user.to_dict(include_sensitive=True) if hasattr(user, "to_dict") else {
+    base = {
         "id": user.id,
         "name": user.name,
-        "email": user.email,
+        "email": getattr(user, "email", None),
         "phone": getattr(user, "phone", None),
         "city": getattr(user, "city", None),
         "user_type": user.user_type,
@@ -26,32 +26,30 @@ def get_user_profile(user_id):
     }
 
     result = dict(base)
-    result["violations"] = []  # если модели нет — отдадим пустой список
+    result["violations"] = []  # пока без реальной модели
 
     if user.user_type == "candidate":
-        # профиль кандидата (см. фикс выше)
-        from models import get_candidate_profile_dict
-        cand = get_candidate_profile_dict(user)
-        result["candidate_profile"] = cand
+        # краткий слепок кандидатского профиля, если есть отношения/метод
+        cand = getattr(user, "candidate_profile", None)
+        result["candidate_profile"] = cand.to_dict() if cand and hasattr(cand, "to_dict") else {}
 
-        # Активность
+        # Активность кандидата
         apps = (db.session.query(JobApplication)
-            .filter(JobApplication.candidate_id == user.id)   # ✅ корректное поле
-            .order_by(JobApplication.created_at.desc())
-            .limit(10).all())
+                .filter(JobApplication.candidate_id == user.id)
+                .order_by(JobApplication.created_at.desc())
+                .limit(10).all())
 
         views = (db.session.query(ProfileView)
-            .filter(ProfileView.candidate_id == user.id)     # ✅ корректное поле
-            .order_by(ProfileView.viewed_at.desc())
-            .limit(10).all())
-
+                 .filter(ProfileView.candidate_id == user.id)
+                 .order_by(ProfileView.viewed_at.desc())
+                 .limit(10).all())
 
         result["activity"] = [
             *[{
                 "date": a.created_at.isoformat() if a.created_at else None,
                 "type": "application",
-                "title": getattr(a, "job", {}).title if getattr(a, "job", None) else "Отклик",
-                "subtitle": getattr(getattr(a, "job", None), "company", {}).name if getattr(getattr(a, "job", None), "company", None) else "",
+                "title": getattr(getattr(a, "job", None), "title", "Отклик"),
+                "subtitle": getattr(getattr(getattr(a, "job", None), "company", None), "name", ""),
             } for a in apps],
             *[{
                 "date": v.viewed_at.isoformat() if v.viewed_at else None,
@@ -65,14 +63,12 @@ def get_user_profile(user_id):
         result["stats"].update({
             "applications_last_30d": db.session.query(JobApplication)
                 .filter(
-                    JobApplication.candidate_id == user.id,  # правильное поле
-                    JobApplication.created_at >= datetime.datetime.utcnow() - datetime.timedelta(days=30)  # кросс-БД вариант
-                )
-                .count()
+                    JobApplication.candidate_id == user.id,
+                    JobApplication.created_at >= datetime.datetime.utcnow() - datetime.timedelta(days=30)
+                ).count()
         })
 
     elif user.user_type == "employer":
-        # Компания
         company = user.company
         result["company"] = company.to_dict() if company and hasattr(company, "to_dict") else (
             {
@@ -85,20 +81,18 @@ def get_user_profile(user_id):
             } if company else None
         )
 
-        # Вакансии
         jobs = Job.query.filter_by(company_id=company.id).order_by(desc(Job.created_at)).all() if company else []
         result["jobs"] = [j.to_dict() if hasattr(j, "to_dict") else {
             "id": j.id, "title": j.title, "employment_type": getattr(j, "employment_type", None),
-            "status": getattr(j, "status", None), "created_at": j.created_at.isoformat() if j.created_at else None
+            "status": getattr(j, "status", None),
+            "created_at": j.created_at.isoformat() if j.created_at else None
         } for j in jobs]
 
-        # Активность: публикации, отклики
         recent_apps = (db.session.query(JobApplication)
-               .join(Job, JobApplication.job_id == Job.id)
-               .filter(Job.company_id == company.id)
-               .order_by(JobApplication.created_at.desc())
-               .limit(10).all())
-
+                       .join(Job, JobApplication.job_id == Job.id)
+                       .filter(Job.company_id == (company.id if company else None))
+                       .order_by(JobApplication.created_at.desc())
+                       .limit(10).all()) if company else []
 
         result["activity"] = [
             *[{
@@ -115,37 +109,34 @@ def get_user_profile(user_id):
             } for a in recent_apps],
         ]
 
-        # Статистика
         active_jobs = [j for j in jobs if getattr(j, "status", "active") == "active"]
         result["stats"] = {
             "activeJobs": len(active_jobs),
             "totalJobs": len(jobs),
             "applicationsReceived": len(recent_apps),
-            # можно добавить доп. метрики, если есть поля
         }
-
     else:
-        # admin — простая заглушка, чтобы вкладки не были пустыми
         result["activity"] = []
         result["stats"] = {}
 
-    # Нарушения — если модели нет, оставляем пусто (UI сам покажет "Нарушений нет")
-    result["violations"] = result.get("violations", [])
-
     return jsonify(result)
 
-
+# ---------- PUT: базовые поля пользователя ----------
 @user_profile_bp.route("/<int:user_id>", methods=["PUT"])
 def update_user_profile(user_id):
+    print("penis")
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "Пользователь не найден"}), 404
 
     data = request.json or {}
-    # безопасные поля
+    print(data)
     for key in ["name", "phone", "city"]:
         if key in data:
             setattr(user, key, data[key])
+    
+    if "city" in data:
+        user.city = data["city"]
 
     db.session.commit()
     return jsonify({
@@ -155,33 +146,31 @@ def update_user_profile(user_id):
         "city": getattr(user, "city", None),
     })
 
-
-# ✅ Обновить профиль кандидата
+# ---------- PUT: профиль кандидата ----------
 @user_profile_bp.route("/<int:user_id>/candidate", methods=["PUT"])
 def update_candidate_profile(user_id):
     user = User.query.get(user_id)
     if not user or user.user_type != "candidate":
         return jsonify({"error": "Кандидат не найден"}), 404
 
-    profile = user.candidate_profile
+    profile = getattr(user, "candidate_profile", None)
     if not profile:
         return jsonify({"error": "Профиль кандидата отсутствует"}), 404
 
     data = request.json or {}
-    if "desired_position" in data:
-        profile.desired_position = data["desired_position"]
-    if "salary_from" in data:
-        profile.salary_from = data["salary_from"]
-    if "salary_to" in data:
-        profile.salary_to = data["salary_to"]
-    if "about" in data:
-        profile.about = data["about"]
+    for key in ["desired_position", "salary_from", "salary_to", "about"]:
+        if key in data:
+            setattr(profile, key, data[key])
 
     db.session.commit()
-    return jsonify(profile.to_dict())
+    return jsonify(profile.to_dict() if hasattr(profile, "to_dict") else {
+        "desired_position": getattr(profile, "desired_position", None),
+        "salary_from": getattr(profile, "salary_from", None),
+        "salary_to": getattr(profile, "salary_to", None),
+        "about": getattr(profile, "about", None),
+    })
 
-
-# ✅ Обновить компанию работодателя
+# ---------- PUT: работодатель/компания ----------
 @user_profile_bp.route("/<int:user_id>/employer", methods=["PUT"])
 def update_employer_profile(user_id):
     user = User.query.get(user_id)
@@ -193,12 +182,43 @@ def update_employer_profile(user_id):
         return jsonify({"error": "Компания не найдена"}), 404
 
     data = request.json or {}
-    if "name" in data:
-        company.name = data["name"]
-    if "description" in data:
-        company.description = data["description"]
-    if "industry" in data:
-        company.industry = data["industry"]
+    print(data)
+
+    # поля компании
+    for key in ["name", "description", "industry", "size", "website"]:
+        if key in data:
+            setattr(company, key, data[key])
+
+    # контактные/город владельца аккаунта
+    for key in ["city", "phone", "email"]:
+        if key in data:
+            setattr(user, key, data[key])
+
+    if "city" in data:
+        user.city = data["city"]
 
     db.session.commit()
-    return jsonify(company.to_dict())
+    return jsonify(company.to_dict() if hasattr(company, "to_dict") else {
+        "id": company.id,
+        "name": company.name,
+        "description": getattr(company, "description", ""),
+        "industry": getattr(company, "industry", ""),
+        "size": getattr(company, "size", ""),
+        "website": getattr(company, "website", ""),
+    })
+
+# ---------- PATCH: статус (блок/разблок) ----------
+@user_profile_bp.route("/<int:user_id>/status", methods=["PATCH"])
+def update_user_status(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Пользователь не найден"}), 404
+
+    data = request.json or {}
+    status = data.get("status")  # "active" / "blocked"
+    if status not in ("active", "blocked"):
+        return jsonify({"error": "Некорректный статус"}), 400
+
+    user.is_active = (status == "active")
+    db.session.commit()
+    return jsonify({"id": user.id, "is_active": user.is_active})

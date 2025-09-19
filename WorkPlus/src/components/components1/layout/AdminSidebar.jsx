@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { getUserFromStorage }  from '../../api/AuthUtils';
+const userID = getUserFromStorage()?.id;
 import {
   LayoutDashboard,
   Briefcase,
@@ -60,7 +62,7 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
         { name: 'Все пользователи', icon: Users, path: '/admin/users/list', description: 'Полный список' },
         { name: 'Работодатели', icon: Building2, path: '/admin/users/employers', description: 'Компании и HR' },
         { name: 'Соискатели', icon: User, path: '/admin/users/candidates', description: 'Кандидаты' },
-        { name: 'Профили', icon: UserCheck, path: '/admin/users/profiles', description: 'Профили пользователей' }
+        { name: 'Профиль', icon: UserCheck, path: `/admin/users/profiles?id=${userID}`, description: 'Профиль текущего пользователя' }
       ]
     },
     {
