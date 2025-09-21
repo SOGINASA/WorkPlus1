@@ -120,7 +120,8 @@ def create_job():
             publish_to_instagram=data.get('publish_to_instagram', False),
             publish_to_telegram=data.get('publish_to_telegram', False),
             publish_to_facebook=data.get('publish_to_facebook', False),
-            publish_to_linkedin=data.get('publish_to_linkedin', False)
+            publish_to_linkedin=data.get('publish_to_linkedin', False),
+            
         )
         
         # Устанавливаем навыки и языки

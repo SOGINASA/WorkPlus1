@@ -272,6 +272,8 @@ def get_job_detail(job_id):
     except Exception as e:
         print(f"Ошибка получения вакансии: {e}")
         return jsonify({'error': 'Ошибка при получении вакансии'}), 500
+    
+    
 @jobs_bp.route('/search', methods=['POST'])
 def search_jobs():
     """Расширенный поиск вакансий"""

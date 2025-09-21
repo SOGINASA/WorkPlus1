@@ -50,7 +50,20 @@ class User(db.Model):
     # Связи
     company = db.relationship('Company', backref='employees')
     applications = db.relationship('JobApplication', backref='candidate', lazy='dynamic')
-    posted_jobs = db.relationship('Job', backref='poster', lazy='dynamic')
+    posted_jobs = db.relationship(
+        'Job',
+        foreign_keys='Job.posted_by',
+        back_populates='poster',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+
+    moderated_jobs = db.relationship(
+        'Job',
+        foreign_keys='Job.moderated_by_id',
+        back_populates='moderator',
+        lazy='dynamic'
+    )
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -269,9 +282,26 @@ class Job(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime)
     expires_at = db.Column(db.DateTime)
+
+    #модерация
+    moderation_status = db.Column(db.String(20), default="pending")  # pending|approved|rejected
+    moderation_comment = db.Column(db.Text, nullable=True)
+    moderated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    moderated_at = db.Column(db.DateTime, nullable=True)
     
     # Связи
     applications = db.relationship('JobApplication', backref='job', lazy='dynamic')
+
+    poster = db.relationship(
+        'User',
+        foreign_keys=[posted_by],
+        back_populates='posted_jobs'
+    )
+    moderator = db.relationship(
+        'User',
+        foreign_keys=[moderated_by_id],
+        back_populates='moderated_jobs'
+    )
     
     def get_skills_list(self):
         """Получить список навыков"""
@@ -384,6 +414,12 @@ class Job(db.Model):
             'stats': {
                 'views': self.views_count,
                 'applications': self.applications_count
+            },
+            'moderation': {
+                'status': self.moderation_status,
+                'moderator': self.moderator.to_dict() if self.moderator else None,
+                'comment': self.moderation_comment,
+                'moderated_at': self.moderated_at.isoformat() if self.moderated_at else None
             },
             'company': self.company.to_dict() if self.company else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -674,26 +710,25 @@ class Analytics(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     @staticmethod
-    def track_metric(metric_type, entity_id=None, entity_type=None, value=1, meta_data=None):
+    def track_metric(metric_type, entity_id=None, entity_type=None, value=1, meta_data=None, metric_date=None):
         """Трек метрики"""
         try:
-            today = datetime.utcnow().date()
-            
-            # Ищем существующую запись за сегодня
+            day = metric_date or datetime.utcnow().date()
+
             existing = Analytics.query.filter_by(
-                date=today,
+                date=day,
                 metric_type=metric_type,
                 entity_id=entity_id,
                 entity_type=entity_type
             ).first()
-            
+
             if existing:
                 existing.value += value
                 if meta_data:
                     existing.meta_data = json.dumps(meta_data)
             else:
                 new_metric = Analytics(
-                    date=today,
+                    date=day,
                     metric_type=metric_type,
                     entity_id=entity_id,
                     entity_type=entity_type,
@@ -701,7 +736,7 @@ class Analytics(db.Model):
                     meta_data=json.dumps(meta_data) if meta_data else None
                 )
                 db.session.add(new_metric)
-            
+
             db.session.commit()
         except Exception as e:
             db.session.rollback()

@@ -1,10 +1,9 @@
 // src/pages/admin/moderation/ContentModeration.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Image, FileText, MessageSquare, Eye, Trash2, CheckCircle, XCircle,
-  Filter, Search, Calendar, User, AlertTriangle, Download, MoreVertical,
-  Play, Pause, Volume2, VolumeX, ZoomIn, RotateCcw
-} from 'lucide-react';
+  Search, Calendar, AlertTriangle, Download, MoreVertical,
+  Play} from 'lucide-react';
 
 const ContentModeration = () => {
   const [contentType, setContentType] = useState('all');

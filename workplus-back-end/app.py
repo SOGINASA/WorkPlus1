@@ -39,7 +39,9 @@ def create_app():
         admin_users_bp,
         admin_user_list_bp,
         admin_employer_bp,
-        user_profile_bp
+        user_profile_bp,
+        admin_jobs_bp,
+        job_analytics_bp
     )
 
 
@@ -56,6 +58,8 @@ def create_app():
     app.register_blueprint(admin_user_list_bp, url_prefix='/api/admin/user_list')
     app.register_blueprint(admin_employer_bp, url_prefix="/api/admin/employers")
     app.register_blueprint(user_profile_bp, url_prefix="/api/admin/user_profile")
+    app.register_blueprint(admin_jobs_bp, url_prefix="/api/admin/jobs")
+    app.register_blueprint(job_analytics_bp, url_prefix="/api/admin/job_analytics")
 
     # Главная страница API
     @app.route('/api')
