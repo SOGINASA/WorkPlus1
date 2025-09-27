@@ -93,6 +93,8 @@ def get_jobs():
         else:  # created_at по умолчанию
             query = query.order_by(desc(Job.created_at) if order == 'desc' else Job.created_at)
 
+        query = query.filter(Job.moderation_status == "approved")
+
         # Пагинация
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -129,7 +131,6 @@ def get_jobs():
             
             jobs_list.append(job_dict)
 
-        print(f"Total jobs processed: {len(jobs_list)}")
 
         # Альтернативный вариант - более надежный:
         # Можно также добавить логирование для отладки:
@@ -139,18 +140,19 @@ def get_jobs():
         # print(f"Applied check result: {int(job.id) in applied_jobs}")
 
         # Или использовать более явную проверку:
-        for job in pagination.items:
-            job_dict = job.to_dict()
-            is_applied = False
-            if user_id and applied_jobs:
-                # Проверяем оба варианта типов
-                is_applied = (job.id in applied_jobs or 
-                            str(job.id) in applied_jobs or 
-                            int(job.id) in applied_jobs)
-            job_dict['applied'] = is_applied
-            jobs_list.append(job_dict)
+        # for job in pagination.items:
+        #     job_dict = job.to_dict()
+        #     is_applied = False
+        #     if user_id and applied_jobs:
+        #         # Проверяем оба варианта типов
+        #         is_applied = (job.id in applied_jobs or 
+        #                     str(job.id) in applied_jobs or 
+        #                     int(job.id) in applied_jobs)
+        #     job_dict['applied'] = is_applied
+        #     jobs_list.append(job_dict)
 
         stats = get_jobs_statistics()
+        print(f"Total jobs processed: {len(jobs_list)}")
 
         return jsonify({
             'jobs': jobs_list,
@@ -723,3 +725,52 @@ def unsave_job(job_id):
         db.session.rollback()
         print(f"Ошибка удаления вакансии из избранного: {e}")
         return jsonify({'error': 'Ошибка при удалении вакансии из избранного'}), 500
+
+@jobs_bp.route('/', methods=['POST'])
+@jwt_required()
+def create_job():
+    """Создать вакансию (админ/работодатель)"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+
+        if not user or user.user_type not in ("admin", "employer"):
+            return jsonify({"error": "Недостаточно прав"}), 403
+
+        data = request.get_json()
+        if not data or "title" not in data:
+            return jsonify({"error": "Не переданы данные"}), 400
+
+        # Проверка компании
+        company_id = data.get("company_id") or user.company_id
+        if not company_id:
+            return jsonify({"error": "Не указана компания"}), 400
+
+        job = Job(
+            title=data["title"],
+            description=data.get("description", ""),
+            requirements="\n".join(data.get("requirements", [])),
+            responsibilities="\n".join(data.get("responsibilities", [])),
+            benefits="\n".join(data.get("benefits", [])),
+            category=data.get("category", "Другое"),
+            employment_type=data.get("employment_type", "full_time"),
+            experience_level=data.get("experience_level", "junior"),
+            salary_min=data.get("salary_min"),
+            salary_max=data.get("salary_max"),
+            salary_currency=data.get("salary_currency", "KZT"),
+            city=data.get("city"),
+            company_id=company_id,
+            posted_by=user.id,
+            is_active=True,
+            moderation_status="pending"
+        )
+
+        db.session.add(job)
+        db.session.commit()
+
+        return jsonify(job.to_dict()), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка при создании вакансии: {e}")
+        return jsonify({"error": "Ошибка при создании вакансии"}), 500

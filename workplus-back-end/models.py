@@ -1220,3 +1220,65 @@ class ResumeCourse(db.Model):
     organization = db.Column(db.String(120))
     year = db.Column(db.String(10))
     certificate = db.Column(db.String(120))
+
+class JobTemplate(db.Model):
+    """Шаблон вакансии (для админов)"""
+    __tablename__ = 'job_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    requirements = db.Column(db.Text)
+    responsibilities = db.Column(db.Text)
+    conditions = db.Column(db.Text)
+
+    category = db.Column(db.String(50), nullable=False)
+    salary_min = db.Column(db.Integer)
+    salary_max = db.Column(db.Integer)
+    salary_currency = db.Column(db.String(5), default="KZT")
+
+    tags = db.Column(db.Text)  # JSON список тегов
+
+    usage_count = db.Column(db.Integer, default=0)
+    rating = db.Column(db.Float, default=0.0)
+    success_rate = db.Column(db.Integer, default=0)
+
+    status = db.Column(db.String(20), default="active")  # active/draft
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_tags(self):
+        import json
+        if self.tags:
+            try:
+                return json.loads(self.tags)
+            except:
+                return [t.strip() for t in self.tags.split(",")]
+        return []
+
+    def set_tags(self, tags_list):
+        import json
+        self.tags = json.dumps(tags_list, ensure_ascii=False) if tags_list else None
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "requirements": self.requirements.split("\n") if self.requirements else [],
+            "responsibilities": self.responsibilities.split("\n") if self.responsibilities else [],
+            "conditions": self.conditions.split("\n") if self.conditions else [],
+            "category": self.category,
+            "salary": {
+                "min": self.salary_min,
+                "max": self.salary_max,
+                "currency": self.salary_currency
+            },
+            "tags": self.get_tags(),
+            "usageCount": self.usage_count,
+            "rating": self.rating,
+            "successRate": self.success_rate,
+            "status": self.status,
+            "lastUpdated": self.last_updated.isoformat() if self.last_updated else None,
+        }

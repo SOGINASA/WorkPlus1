@@ -1229,7 +1229,7 @@ const RegisterForm = () => {
 
               <div className="text-center text-sm text-gray-400">
                 Уже есть аккаунт?{' '}
-                <a href="#" className="text-yellow-400 hover:underline">Войти</a>
+                <a href="/login" className="text-yellow-400 hover:underline">Войти</a>
               </div>
             </form>
           </div>

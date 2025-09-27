@@ -121,6 +121,7 @@ useEffect(() => {
       }
 
       const data = await response.json();
+      console.log('Fetched jobs:', data.jobs);
       setJobs(data.jobs || []);
       setPagination(data.pagination || {});
       setFilters(data.filters || {});

@@ -12,6 +12,7 @@ from routes.admin.admin_employer_list import admin_employer_bp
 from routes.admin.admin_user_profile import user_profile_bp
 from routes.admin.admin_jobs import admin_jobs_bp
 from routes.admin.admin_job_analytics import job_analytics_bp
+from routes.admin.admin_job_templates import job_templates_bp
 
 __all__ = [
     "auth_bp",
@@ -28,4 +29,5 @@ __all__ = [
     "user_profile_bp",
     "admin_jobs_bp",
     "job_analytics_bp",
+    "job_templates_bp"
 ]

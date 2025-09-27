@@ -67,3 +67,12 @@ export const updateJob = async (id, data) => {
   if (!response.ok) throw new Error("Ошибка обновления вакансии");
   return response.json();
 };
+
+export const createJob = async (data) => {
+  const response = await apiRequest(`/api/jobs/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Ошибка при создании вакансии");
+  return response.json();
+};
