@@ -26,6 +26,8 @@ import VacancyKey from './pages/Vacancy_key';
 import EditResume from './pages/EditResume';
 import Advantages from './pages/Advantages';
 import ResumeGen from './pages/WorkPlusAI/WorkPlusAI';
+import SinglePost from './pages/SinglePost';
+import UserBlogPage from './pages/UserBlogPage';
 
 // Admin pages imports
 import AdminDashboard from '../src/pages/admin/dashboard/Dashboard';
@@ -60,6 +62,7 @@ import JobList from '../src/pages/admin/jobs/JobList';
 import JobModeration from '../src/pages/admin/jobs/JobModeration';
 import JobAnalytics from '../src/pages/admin/jobs/JobAnalytics';
 import JobTemplates from '../src/pages/admin/jobs/JobTemplates';
+import AdminBlogPage from '../src/pages/admin/AdminBlogPage';
 
 function App() {
   return (
@@ -131,6 +134,18 @@ const PublicRoutes = () => {
           </ProtectedRoute>
         } />
 
+        <Route path="/blog/post/:id" element={
+          <ProtectedRoute allowedTypes={['admin', 'employer', 'candidate']}>
+            <SinglePost />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/blog/create" element={
+          <ProtectedRoute allowedTypes={['admin', 'employer', 'candidate']}>
+            <UserBlogPage />
+          </ProtectedRoute>
+        } />
+
         {/* 404 для публичных страниц */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
@@ -152,6 +167,13 @@ const AdminRoutes = () => {
             <AdminDashboard />
           </ProtectedRoute>
         } />
+
+        <Route path="blog" element={
+          <ProtectedRoute allowedTypes={['admin']}>
+            <AdminBlogPage />
+          </ProtectedRoute>
+        } />
+
         <Route path="dashboard/analytics" element={
           <ProtectedRoute allowedTypes={['admin']}>
             <Analytics />

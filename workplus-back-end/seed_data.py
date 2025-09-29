@@ -1070,6 +1070,106 @@ def seed_job_templates():
     db.session.commit()
     print("✅ Базовые шаблоны вакансий созданы")
 
+def seed_blog_posts():
+    # Проверим, есть ли уже посты
+    if BlogPost.query.count() > 0:
+        print("✅ Посты блога уже существуют")
+        return
+
+    # Создаем категории
+    categories = ["IT", "Маркетинг", "Карьера", "Образование"]
+    category_objs = []
+    for c in categories:
+        cat = BlogCategory(name=c)
+        db.session.add(cat)
+        category_objs.append(cat)
+
+    # Создаем теги
+    tags = ["python", "react", "sql", "soft-skills", "frontend", "backend"]
+    tag_objs = []
+    for t in tags:
+        tg = BlogTag(name=t)
+        db.session.add(tg)
+        tag_objs.append(tg)
+
+    db.session.commit()
+
+    # Найдем любого пользователя-автора
+    author = User.query.filter_by(user_type="employer").first() or \
+             User.query.filter_by(user_type="admin").first() or \
+             User.query.first()
+
+    if not author:
+        print("❌ Нет пользователей для назначения автором постов")
+        return
+
+    # Демо статьи
+    demo_posts = [
+        {
+            "title": "Как освоить Python за 3 месяца",
+            "excerpt": "Пошаговый план изучения Python с нуля для начинающих.",
+            "content": "Python — это универсальный язык программирования, который отлично подходит для веба, анализа данных и автоматизации...",
+            "category": "IT",
+            "tags": ["python", "backend"],
+            "image": "https://picsum.photos/800/400?random=1",
+            "read_time": "5 мин",
+            "is_featured": True
+        },
+        {
+            "title": "ТОП-5 советов для успешного собеседования",
+            "excerpt": "Как правильно подготовиться к интервью и произвести впечатление.",
+            "content": "Собеседование — это не только проверка ваших знаний, но и возможность показать soft-skills...",
+            "category": "Карьера",
+            "tags": ["soft-skills"],
+            "image": "https://picsum.photos/800/400?random=2",
+            "read_time": "7 мин",
+            "is_featured": False
+        },
+        {
+            "title": "Почему стоит изучать React",
+            "excerpt": "React стал стандартом в разработке интерфейсов. Вот почему он так популярен.",
+            "content": "React — это библиотека JavaScript, созданная Facebook. Она упрощает создание UI и позволяет делать приложения быстрее...",
+            "category": "IT",
+            "tags": ["react", "frontend"],
+            "image": "https://picsum.photos/800/400?random=3",
+            "read_time": "6 мин",
+            "is_featured": False
+        },
+        {
+            "title": "Как построить карьеру в маркетинге",
+            "excerpt": "Маркетинг — одна из самых востребованных сфер. Разберем ключевые шаги.",
+            "content": "Карьерный путь маркетолога может включать digital, контент-маркетинг, SEO и многое другое...",
+            "category": "Маркетинг",
+            "tags": ["soft-skills"],
+            "image": "https://picsum.photos/800/400?random=4",
+            "read_time": "8 мин",
+            "is_featured": False
+        },
+    ]
+
+    # Создаем посты
+    for p in demo_posts:
+        category = BlogCategory.query.filter_by(name=p["category"]).first()
+        post_tags = BlogTag.query.filter(BlogTag.name.in_(p["tags"])).all()
+
+        post = BlogPost(
+            title=p["title"],
+            excerpt=p["excerpt"],
+            content=p["content"],
+            category=category,
+            author_id=author.id,
+            image_url=p["image"],
+            read_time=p["read_time"],
+            is_featured=p["is_featured"],
+            created_at=datetime.utcnow()
+        )
+        post.tags = post_tags
+
+        db.session.add(post)
+
+    db.session.commit()
+    print("✅ Демо посты успешно добавлены")
+
 
 def seed_all():
     """Запуск всех функций создания тестовых данных"""
@@ -1089,6 +1189,7 @@ def seed_all():
     seed_social_posts()
     seed_resumes()
     seed_job_templates()
+    seed_blog_posts()
     
     print("=" * 60)
     print("✅ Создание тестовых данных завершено!")

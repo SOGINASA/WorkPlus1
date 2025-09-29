@@ -1282,3 +1282,64 @@ class JobTemplate(db.Model):
             "status": self.status,
             "lastUpdated": self.last_updated.isoformat() if self.last_updated else None,
         }
+
+class BlogPost(db.Model):
+    __tablename__ = 'blog_posts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    excerpt = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+    category_id = db.Column(db.Integer, db.ForeignKey("blog_categories.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    is_approved = db.Column(db.Boolean, nullable=True, default=None)  
+    is_active = db.Column(db.Boolean, default=True)
+
+    image_url = db.Column(db.String(255))
+    read_time = db.Column(db.String(20))
+    is_featured = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # связи
+    author = db.relationship("User", backref="blog_posts")
+    category = db.relationship("BlogCategory", backref="posts")
+    tags = db.relationship("BlogTag", secondary="blog_post_tags", back_populates="posts")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "excerpt": self.excerpt,
+            "content": self.content,
+            "author": self.author.name if self.author else None,
+            "category": self.category.name if self.category else None,
+            "tags": [t.name for t in self.tags],
+            "image": self.image_url,
+            "read_time": self.read_time,
+            "is_featured": self.is_featured,
+            "created_at": self.created_at.isoformat(),
+            "is_approved": self.is_approved
+        }
+
+class BlogCategory(db.Model):
+    __tablename__ = "blog_categories"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+blog_post_tags = db.Table(
+    "blog_post_tags",
+    db.Column("post_id", db.Integer, db.ForeignKey("blog_posts.id"), primary_key=True),
+    db.Column("tag_id", db.Integer, db.ForeignKey("blog_tags.id"), primary_key=True)
+)
+
+class BlogTag(db.Model):
+    __tablename__ = "blog_tags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
+    posts = db.relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")

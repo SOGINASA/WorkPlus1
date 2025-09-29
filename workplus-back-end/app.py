@@ -42,7 +42,8 @@ def create_app():
         user_profile_bp,
         admin_jobs_bp,
         job_analytics_bp,
-        job_templates_bp
+        job_templates_bp,
+        blog_bp
     )
 
 
@@ -62,6 +63,7 @@ def create_app():
     app.register_blueprint(admin_jobs_bp, url_prefix="/api/admin/jobs")
     app.register_blueprint(job_analytics_bp, url_prefix="/api/admin/job_analytics")
     app.register_blueprint(job_templates_bp, url_prefix="/api/job-templates")
+    app.register_blueprint(blog_bp, url_prefix="/api/blog")
 
     # Главная страница API
     @app.route('/api')

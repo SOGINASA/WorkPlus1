@@ -6,6 +6,7 @@ from routes.profile import profile_bp
 from routes.notifications import notifications_bp
 from routes.contact import contact_bp
 from routes.resumes import resume_bp
+from routes.blog import blog_bp
 from routes.admin.admin_users import admin_users_bp
 from routes.admin.admin_user_list import admin_user_list_bp
 from routes.admin.admin_employer_list import admin_employer_bp
@@ -29,5 +30,6 @@ __all__ = [
     "user_profile_bp",
     "admin_jobs_bp",
     "job_analytics_bp",
-    "job_templates_bp"
+    "job_templates_bp",
+    "blog_bp"
 ]
