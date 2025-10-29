@@ -1,7 +1,6 @@
 // src/pages/CandidateProfile.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import * as CandidateService from "../components/api/CandidateService";
-import { getUserFromStorage } from "../components/api/AuthUtils";
 import { 
   User, Building, Mail, Phone, MapPin, Briefcase, Camera, 
   Edit3, Save, X, Plus, Trash2, Award, Calendar, DollarSign,
@@ -89,7 +88,7 @@ const emptyProfile = {
   jobAlerts: true,
 };
 
-export default function CandidateProfile() {
+export default function ProfileByID() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -131,7 +130,9 @@ export default function CandidateProfile() {
     setLoading(true);
     setError(null);
     try {
-      const profile = await CandidateService.getProfile();
+      const url = new URL(window.location.href);
+      const userId = url.pathname.split("/candidate-profile/")[1] || "";
+      const profile = await CandidateService.profileById(userId);
       console.log("profile loaded:", profile);
 
       setProfileData((prev) => ({
@@ -254,8 +255,7 @@ export default function CandidateProfile() {
   };
 
   const shareProfile = () => {
-    const userId = getUserFromStorage().id;
-    const profileUrl = `${window.location.origin}/candidate-profile/${userId}`;
+    const profileUrl = `${window.location.href}`;
     navigator.clipboard.writeText(profileUrl).then(() => {
       alert('Ссылка на профиль скопирована в буфер обмена');
     }).catch(() => {
@@ -468,13 +468,13 @@ export default function CandidateProfile() {
               <div className="flex flex-wrap gap-3">
                 {!isEditing ? (
                   <>
-                    <button
+                    {/* <button
                       onClick={startEditing}
                       className="px-4 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-xl font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all flex items-center"
                     >
                       <Edit3 className="w-4 h-4 mr-2" />
                       Редактировать
-                    </button>
+                    </button> */}
                     <button
                       onClick={shareProfile}
                       className="px-4 py-2.5 bg-white/10 border border-yellow-400/20 text-white rounded-xl font-medium hover:border-yellow-400/40 transition-all flex items-center"

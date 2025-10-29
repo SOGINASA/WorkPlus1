@@ -22,6 +22,7 @@ import Notifications from './pages/Notifications'
 import NotFoundPage from './pages/NotFound';
 import EmployerProfile from './pages/EmployerProfile';
 import CandidateProfile from './pages/CandidateProfile';
+import ProfileByID from './pages/ProfileByID';
 import VacancyKey from './pages/Vacancy_key';
 import EditResume from './pages/EditResume';
 import Advantages from './pages/Advantages';
@@ -119,6 +120,12 @@ const PublicRoutes = () => {
         <Route path="/candidate-profile" element={
           <ProtectedRoute allowedTypes={['candidate']}>
             <CandidateProfile />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/candidate-profile/:id" element={
+          <ProtectedRoute allowedTypes={['admin', 'employer', 'candidate']}>
+            <ProfileByID />
           </ProtectedRoute>
         } />
 

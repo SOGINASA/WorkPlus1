@@ -62,3 +62,14 @@ export async function exportProfile() {
   if (!res.ok) throw new Error("Не удалось экспортировать профиль");
   return res; // обработка blob на стороне вызывающего, если нужно
 }
+
+export async function profileById(userId) {
+  const res = await apiRequest(`/api/profile/${userId}`, { method: "GET" });
+  if (!res.ok) throw new Error("Не удалось загрузить профиль по ID");
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  // console.log("profileById response:", data);
+  return data;
+}

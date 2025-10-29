@@ -210,6 +210,130 @@ def get_profile():
         return jsonify({"error": "Внутренняя ошибка сервера"}), 500
 
 
+@profile_bp.route("/<int:user_id>", methods=["GET"])
+@jwt_required()
+def get_profile_by_id(user_id):
+    try:
+        user = User.query.get(user_id)
+        if user.user_type != 'candidate':
+            return jsonify({"error": "Пользователь не является кандидатом"}), 400
+        if not user:
+            return jsonify({"error": "Пользователь не найден"}), 404
+
+        # Разбиваем name на first/last для совместимости
+        first_name, last_name = _split_name(user.name)
+
+        # Базовый профиль — заполняем ВСЕ доступные поля из users
+        profile = {
+            "id": user.id,
+            "email": user.email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "name": user.name,  # на фронте иногда нужен full_name/name
+            "phone": user.phone,
+            "city": user.city,
+            "user_type": user.user_type,
+
+            # Кандидатские поля, которые у вас также есть в users
+            "birth_date": user.birth_date.isoformat() if user.birth_date else None,
+            "gender": user.gender,
+            "education_level": user.education_level,
+            "experience_years": user.experience_years,
+
+            # Ссылки/контакты
+            "resume_url": user.resume_url,
+            "portfolio_url": user.portfolio_url,
+            "telegram_username": user.telegram_username,
+
+            # Связь с компанией (для работодателей)
+            "company_id": user.company_id,
+            "position": user.position,
+
+            # Настройки
+            "is_active": user.is_active,
+            "is_verified": user.is_verified,
+            "email_notifications": user.email_notifications,
+            "sms_notifications": user.sms_notifications,
+
+            # Аватары отключены — возвращаем None
+            "avatar": None,
+
+            # Служебные даты
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+        }
+
+        # Если это кандидат — дополняем/перекрываем из CandidateProfile
+        if user.user_type == "candidate":
+            cp = CandidateProfile.query.filter_by(user_id=user_id).first()
+            if cp:
+                profile.update(
+                    {
+                        # Если в CP есть дата рождения/опыт — они важнее
+                        "birth_date": cp.birth_date.isoformat() if cp.birth_date else profile.get("birth_date"),
+                        "current_position": cp.current_position,
+                        "desired_position": cp.desired_position,
+                        "salary_from": cp.salary_from,
+                        "salary_to": cp.salary_to,
+                        "experience_years": (
+                            cp.experience_years if cp.experience_years is not None else profile.get("experience_years")
+                        ),
+                        "work_schedule": cp.work_schedule,
+                        "about": cp.about,
+                        "is_public": cp.is_public,
+                        # уведомления — если в CP явно заданы, перекрываем user.*
+                        "email_notifications": (
+                            cp.email_notifications if cp.email_notifications is not None else profile.get("email_notifications")
+                        ),
+                        "sms_notifications": (
+                            cp.sms_notifications if cp.sms_notifications is not None else profile.get("sms_notifications")
+                        ),
+                        "job_alerts": cp.job_alerts,
+                        "resume_file": cp.resume_file,  # файл, загруженный через endpoint резюме
+
+                        # Списки
+                        "skills": [s.name for s in cp.skills.order_by(Skill.name.asc()).all()],
+                        "education": [
+                            {
+                                "institution": e.institution,
+                                "specialty": e.specialty,
+                                "degree": e.degree,
+                                "start_year": e.start_year,
+                                "end_year": e.end_year,
+                                "is_current": e.is_current,
+                                "gpa": e.gpa,
+                                "description": e.description,
+                            }
+                            for e in cp.education.order_by(desc(Education.end_year)).all()
+                        ],
+                        "work_experience": [
+                            {
+                                "company": w.company_name,
+                                "position": w.position,
+                                "start_date": w.start_date.isoformat() if w.start_date else None,
+                                "end_date": w.end_date.isoformat() if w.end_date else None,
+                                "description": w.description,
+                                "is_current": w.is_current,
+                            }
+                            for w in cp.work_experience.order_by(desc(WorkExperience.start_date)).all()
+                        ],
+                    }
+                )
+
+                # Для совместимости с фронтом: вычислим "name" из частей, если пусто
+                if not profile.get("name"):
+                    parts = [profile.get("first_name"), profile.get("last_name")]
+                    profile["name"] = " ".join([p for p in parts if p]).strip() or None
+
+        return jsonify(profile), 200
+
+    except Exception as e:
+        current_app.logger.exception(f"get_profile error: {e}")
+        return jsonify({"error": "Внутренняя ошибка сервера"}), 500
+
+
+
 # ==========================
 # Профиль — обновить
 # ==========================
