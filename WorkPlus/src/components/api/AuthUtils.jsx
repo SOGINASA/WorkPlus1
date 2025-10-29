@@ -321,3 +321,7 @@ export const ProtectedRoute = ({ children, allowedTypes }) => {
 
   return children;
 };
+
+export const profile_link = (userId) => {
+  return `/candidate-profile/${userId}`;
+};

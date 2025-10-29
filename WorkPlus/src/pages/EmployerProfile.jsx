@@ -7,7 +7,7 @@ import {
   TrendingUp, Award, Target, Play, Pause, MoreVertical,
   Send, Bell, Shield, Settings
 } from 'lucide-react';
-import { API_BASE_URL } from '../components/api/AuthUtils';
+import { API_BASE_URL, profile_link } from '../components/api/AuthUtils';
 
 const EmployerProfile = () => {
   const [activeTab, setActiveTab] = useState('company');
@@ -774,7 +774,7 @@ const EmployerProfile = () => {
                                 <span className="text-gray-400">Опыт:</span> {applicant.experience}
                               </div>
                               <div>
-                                <span className="text-gray-400">Желаемая зарплата:</span> {applicant.salary} ₸
+                                <span className="text-gray-400">Желаемая зарплата:</span> {applicant.salary} 
                               </div>
                               <div>
                                 <span className="text-gray-400">Подал заявку:</span> {new Date(applicant.appliedDate).toLocaleDateString('ru-RU')}
@@ -834,6 +834,10 @@ const EmployerProfile = () => {
                               <Eye className="w-4 h-4 mr-1" />
                               Профиль
                             </button> */}
+                            <a href={profile_link(applicant.id)} className="flex items-center px-3 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 transition-all text-sm">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Подробнее
+                            </a>
                           </div>
                         </div>
                       </div>

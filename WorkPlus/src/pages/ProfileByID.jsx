@@ -106,25 +106,25 @@ export default function ProfileByID() {
   const initials = useMemo(() => getInitials(profileData.name), [profileData.name]);
 
   // --------- LOAD DATA ----------
-  const loadApplications = async (page = 1, perPage = 20, status = appsFilter) => {
-    const appsRes = await CandidateService.getApplications({ page, perPage, status });
-    const apps = (appsRes.applications || []).map((a) => ({
-      id: a.id,
-      vacancyTitle: a.vacancy_title,
-      companyName: a.company_name,
-      appliedDate: a.applied_date,
-      status: a.status,
-      salary: a.salary,
-      location: a.location,
-      response: a.response,
-      responseDate: a.response_date,
-      companyLogo: a.company_logo || null,
-      priority: a.priority || null,
-      jobId: a.job_id,
-    }));
-    setMyApplications(apps);
-    setAppsPagination(appsRes.pagination || null);
-  };
+  // const loadApplications = async (page = 1, perPage = 20, status = appsFilter) => {
+  //   // const appsRes = await CandidateService.getApplications({ page, perPage, status });
+  //   const apps = (appsRes.applications || []).map((a) => ({
+  //     id: a.id,
+  //     vacancyTitle: a.vacancy_title,
+  //     companyName: a.company_name,
+  //     appliedDate: a.applied_date,
+  //     status: a.status,
+  //     salary: a.salary,
+  //     location: a.location,
+  //     response: a.response,
+  //     responseDate: a.response_date,
+  //     companyLogo: a.company_logo || null,
+  //     priority: a.priority || null,
+  //     jobId: a.job_id,
+  //   }));
+  //   setMyApplications(apps);
+  //   setAppsPagination(appsRes.pagination || null);
+  // };
 
   const loadAll = async () => {
     setLoading(true);
@@ -159,7 +159,7 @@ export default function ProfileByID() {
         jobAlerts: profile.job_alerts !== false,
       }));
 
-      await loadApplications(1, 20, appsFilter);
+      // await loadApplications(1, 20, appsFilter);
     } catch (e) {
       setError(e?.message || "Не удалось загрузить данные профиля");
     } finally {
@@ -174,9 +174,9 @@ export default function ProfileByID() {
   useEffect(() => {
     (async () => {
       try {
-        await loadApplications(1, 20, appsFilter);
+        // await loadApplications(1, 20, appsFilter);
       } catch (e) {
-        setError(e?.message || "Не удалось загрузить отклики");
+        setError(e?.message || "Не удалось загрузить пенисы");
       }
     })();
   }, [appsFilter]);
@@ -372,13 +372,13 @@ export default function ProfileByID() {
 
   const tabs = [
     { id: 'personal', name: 'Профиль', icon: <User className="w-4 h-4" /> },
-    { id: 'applications', name: 'Мои отклики', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'settings', name: 'Настройки', icon: <FileText className="w-4 h-4" /> }
+    // { id: 'applications', name: 'Мои отклики', icon: <Briefcase className="w-4 h-4" /> },
+    // { id: 'settings', name: 'Настройки', icon: <FileText className="w-4 h-4" /> }
   ];
 
   const profileStats = [
     { label: 'Просмотры резюме', value: '234', trend: '+12%' },
-    { label: 'Мои отклики', value: myApplications.length.toString(), trend: `+${myApplications.filter(app => app.status === 'new').length}` },
+    // { label: 'Мои отклики', value: myApplications.length.toString(), trend: `+${myApplications.filter(app => app.status === 'new').length}` },
     { label: 'Рейтинг', value: '4.8', trend: <Star className="w-4 h-4 text-yellow-400 fill-current" /> }
   ];
 
