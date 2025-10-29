@@ -106,9 +106,9 @@ const SinglePost = () => {
           Поделитесь экспертизой и опытом с сообществом WorkPlus.kz
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 flex items-center justify-center">
+          <a href="/blog/create" className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 flex items-center justify-center">
             <BookOpen className="w-5 h-5 mr-2" /> Предложить статью
-          </button>
+          </a>
           <button className="border border-yellow-400/40 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-400/10 flex items-center justify-center">
             Связаться с редакцией
           </button>

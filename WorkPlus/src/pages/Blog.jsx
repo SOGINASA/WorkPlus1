@@ -162,10 +162,10 @@ const BlogPage = () => {
                     {featuredPost.read_time || "—"}
                   </div>
                 </div>
-                <button className="inline-flex items-center text-yellow-400 hover:text-yellow-300 font-medium">
+                <a href={`/blog/post/${featuredPost.id}`} className="inline-flex items-center text-yellow-400 hover:text-yellow-300 font-medium">
                   Читать статью
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -177,7 +177,7 @@ const BlogPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {posts.map((post) => (
-              <article
+              <a href={`/blog/post/${post.id}`}
                 key={post.id}
                 className="bg-white/5 border border-yellow-400/10 rounded-xl p-6"
               >
@@ -198,7 +198,7 @@ const BlogPage = () => {
                   <Calendar className="w-3 h-3 ml-4 mr-1" />
                   {post.created_at?.slice(0, 10)}
                 </div>
-              </article>
+              </a >
             ))}
           </div>
         </div>
