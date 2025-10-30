@@ -40,60 +40,42 @@ def register():
     user_type = data['userType']
     full_name = data.get('fullName', '')
 
-    # Проверка формата
     if not validate_email(email):
         return jsonify({'error': 'Неверный формат email'}), 400
     if len(data['password']) < 6:
         return jsonify({'error': 'Пароль должен содержать минимум 6 символов'}), 400
-
-    # Проверка на существование
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Пользователь с таким email уже существует'}), 400
 
     try:
-        # === 1. Кандидат (упрощённая регистрация) ===
-        if user_type == 'candidate':
-            user = User(
-                email=email,
-                user_type='candidate',
-                is_active=True,
-                is_verified=False,
-            )
-            user.set_password(data['password'])
-            db.session.add(user)
-            db.session.flush()  # чтобы получить user.id
+        # === СОЗДАЁМ пользователя ===
+        user = User(
+            email=email,
+            user_type=user_type,
+            is_active=True,
+            is_verified=False,
+        )
+        user.set_password(data['password'])
+        db.session.add(user)
+        db.session.flush()  # чтобы получить user.id
 
-            # создаём пустой профиль
+        # === 1. Если кандидат — создаём пустой профиль ===
+        if user_type == 'candidate':
             profile = CandidateProfile(user_id=user.id)
             db.session.add(profile)
-            db.session.commit()
 
-            access_token = create_access_token(identity=str(user.id))
-            refresh_token = create_refresh_token(identity=str(user.id))
-
-            return jsonify({
-                'message': 'Регистрация кандидата успешна',
-                'user': user.to_dict(include_sensitive=True),
-                'access_token': access_token,
-                'refresh_token': refresh_token
-            }), 201
-
-        # === 2. Работодатель — используем старую логику ===
-        if user_type == 'employer':
+        # === 2. Если работодатель — создаём компанию при необходимости ===
+        elif user_type == 'employer':
             user.position = data.get('position')
-            
-            # Создаем компанию если указана
+
             if data.get('companyName'):
-                # Проверяем, существует ли уже такая компания
                 existing_company = Company.query.filter_by(
                     name=data['companyName'].strip()
                 ).first()
-                
+
                 if existing_company:
-                    # Используем существующую компанию
                     user.company_id = existing_company.id
                 else:
-                    # Создаем новую компанию с расширенными полями
                     company = Company(
                         name=data['companyName'].strip(),
                         industry=data.get('industry'),
@@ -101,37 +83,30 @@ def register():
                         city=data.get('city', 'Петропавловск'),
                         description=data.get('companyDescription', ''),
                         website=data.get('companyWebsite'),
-                        email=data.get('companyEmail', data.get('companyEmail')),
+                        email=data.get('companyEmail', data.get('email')),
                         phone=data.get('companyPhone', data.get('phone')),
                         address=data.get('companyAddress'),
                         founded_year=data.get('foundedYear'),
-                        
-                        # Контактное лицо
                         contact_name=full_name,
                         contact_position=data.get('position', 'Контактное лицо'),
                         contact_phone=data.get('phone'),
                         contact_email=data.get('companyEmail'),
-                        
-                        # Социальные сети
                         instagram=data.get('instagram'),
                         facebook=data.get('facebook'),
                         linkedin=data.get('linkedin'),
                         telegram=data.get('telegram'),
-                        
-                        # Настройки по умолчанию
                         is_public=data.get('isPublic', True),
                         email_notifications=data.get('emailNotifications', True),
                         sms_notifications=data.get('smsNotifications', True),
                         auto_reply=data.get('autoReply', True)
                     )
                     db.session.add(company)
-                    db.session.flush()  # Получаем ID компании
+                    db.session.flush()
                     user.company_id = company.id
-        
-        db.session.add(user)
+
         db.session.commit()
-        
-        # Создаем токены
+
+        # === Токены ===
         access_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(hours=24),
@@ -141,30 +116,27 @@ def register():
                 'name': user.name
             }
         )
-        
         refresh_token = create_refresh_token(identity=str(user.id))
-        
-        # Формируем ответ с информацией о пользователе
-        user_data = user.to_dict()
-        
-        # Добавляем информацию о компании для работодателя
+
+        # === Ответ ===
+        user_data = user.to_dict(include_sensitive=True)
         if user_type == 'employer' and user.company_id:
             company = Company.query.get(user.company_id)
             if company:
                 user_data['company'] = company.to_dict()
-        
+
         return jsonify({
-            'message': 'Регистрация успешна',
+            'message': f'Регистрация { "кандидата" if user_type == "candidate" else "работодателя" } успешна',
             'user': user_data,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 201
-        
 
     except Exception as e:
         db.session.rollback()
         print(f"Ошибка регистрации: {e}")
         return jsonify({'error': 'Ошибка при создании аккаунта'}), 500
+
 
 
 @auth_bp.route('/login', methods=['POST'])

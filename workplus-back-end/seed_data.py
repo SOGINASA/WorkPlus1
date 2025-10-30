@@ -282,7 +282,7 @@ def seed_users():
         user.is_active = True
         db.session.add(user)
 
-    # Создаем соискателей
+    # Создаем кандидатов и профили
     for candidate_data in candidates_data:
         password = candidate_data.pop('password')
         user = User(**candidate_data)
@@ -290,13 +290,13 @@ def seed_users():
         user.is_verified = True
         user.is_active = True
         db.session.add(user)
+        db.session.flush()
 
-    try:
-        db.session.commit()
-        print(f"✅ Создано {len(employers_data)} работодателей и {len(candidates_data)} соискателей")
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Ошибка при создании пользователей: {e}")
+        profile = CandidateProfile(user_id=user.id)
+        db.session.add(profile)
+
+    db.session.commit()
+    print(f"✅ Создано {len(employers_data)} работодателей и {len(candidates_data)} соискателей")
 
 def seed_jobs():
     """Создание тестовых вакансий (под новую модель Job)"""
@@ -642,160 +642,74 @@ def seed_applications():
 def seed_candidate_profiles():
     """Создание расширенных профилей кандидатов"""
     candidates = User.query.filter_by(user_type='candidate').all()
-    
     if not candidates:
         print("❌ Сначала создайте кандидатов")
         return
 
-    if CandidateProfile.query.count() > 0:
-        print("Профили кандидатов уже существуют")
-        return
+    for user in candidates:
+        profile = CandidateProfile.query.filter_by(user_id=user.id).first()
+        if not profile:
+            continue
 
-    profiles_data = [
-        {
-            'user_id': candidates[0].id,  # Данияр Аскаров
-            'current_position': 'Frontend разработчик',
-            'desired_position': 'Senior Frontend разработчик',
-            'salary_from': 800000,
-            'salary_to': 1200000,
-            'about': 'Опытный Frontend разработчик с 5-летним стажем. Специализируюсь на React, Vue.js и современных технологиях веб-разработки. Имею опыт ведения проектов и менторинга младших разработчиков.',
-            'work_schedule': 'remote',
-            'skills': [
-                {'name': 'React', 'level': 'advanced', 'years_experience': 4},
-                {'name': 'Vue.js', 'level': 'advanced', 'years_experience': 3},
-                {'name': 'TypeScript', 'level': 'intermediate', 'years_experience': 3},
-                {'name': 'Node.js', 'level': 'intermediate', 'years_experience': 2},
-                {'name': 'Docker', 'level': 'beginner', 'years_experience': 1}
-            ],
-            'education': [
-                {
-                    'institution': 'КазНТУ им. К.И. Сатпаева',
-                    'specialty': 'Информационные системы',
-                    'degree': 'Бакалавр',
-                    'start_year': 2013,
-                    'end_year': 2017
-                }
-            ],
-            'work_experience': [
-                {
-                    'company_name': 'ТОО "WebStudio KZ"',
-                    'position': 'Frontend разработчик',
-                    'start_date': date(2019, 6, 1),
-                    'end_date': date(2024, 3, 1),
-                    'is_current': False,
-                    'description': 'Разработка интерфейсов для корпоративных сайтов и веб-приложений',
-                    'employment_type': 'full_time'
-                },
-                {
-                    'company_name': 'ТОО "Цифровые Решения КЗ"',
-                    'position': 'Senior Frontend разработчик',
-                    'start_date': date(2024, 3, 15),
-                    'is_current': True,
-                    'description': 'Ведущий разработчик в команде, менторинг джунов, архитектурные решения',
-                    'employment_type': 'full_time'
-                }
-            ]
-        },
-        {
-            'user_id': candidates[1].id,  # Асель Нурланова
-            'current_position': 'Менеджер по продажам',
-            'desired_position': 'Руководитель отдела продаж',
-            'salary_from': 400000,
-            'salary_to': 600000,
-            'about': 'Целеустремленный менеджер по продажам с 3-летним опытом в B2B сегменте. Показываю стабильный рост продаж, умею работать с крупными клиентами.',
-            'work_schedule': 'full_time',
-            'skills': [
-                {'name': 'B2B продажи', 'level': 'advanced', 'years_experience': 3},
-                {'name': 'CRM системы', 'level': 'intermediate', 'years_experience': 2},
-                {'name': 'Переговоры', 'level': 'advanced', 'years_experience': 3},
-                {'name': 'Презентации', 'level': 'intermediate', 'years_experience': 2}
-            ],
-            'education': [
-                {
-                    'institution': 'КазЭУ им. Т. Рыскулова',
-                    'specialty': 'Маркетинг',
-                    'degree': 'Бакалавр',
-                    'start_year': 2014,
-                    'end_year': 2018
-                }
-            ],
-            'work_experience': [
-                {
-                    'company_name': 'ТОО "ТехноМир"',
-                    'position': 'Менеджер по продажам',
-                    'start_date': date(2021, 2, 1),
-                    'is_current': True,
-                    'description': 'Продажи IT оборудования корпоративным клиентам',
-                    'employment_type': 'full_time'
-                }
-            ]
-        },
-        {
-            'user_id': candidates[2].id,  # Ерлан Молдагалиев
-            'current_position': 'Официант',
-            'desired_position': 'Администратор ресторана',
-            'salary_from': 200000,
-            'salary_to': 300000,
-            'about': 'Молодой и энергичный работник сферы обслуживания. Быстро обучаюсь, ответственно отношусь к работе, стремлюсь к карьерному росту.',
-            'work_schedule': 'full_time',
-            'skills': [
-                {'name': 'Клиентский сервис', 'level': 'intermediate', 'years_experience': 1},
-                {'name': 'Работа в команде', 'level': 'advanced', 'years_experience': 1},
-                {'name': 'Стрессоустойчивость', 'level': 'intermediate', 'years_experience': 1}
-            ],
-            'education': [
-                {
-                    'institution': 'Петропавловский колледж сервиса',
-                    'specialty': 'Организация обслуживания в общественном питании',
-                    'degree': 'Среднее специальное',
-                    'start_year': 2018,
-                    'end_year': 2022
-                }
-            ],
-            'work_experience': [
-                {
-                    'company_name': 'Кафе "Березка"',
-                    'position': 'Официант',
-                    'start_date': date(2023, 1, 15),
-                    'is_current': True,
-                    'description': 'Обслуживание клиентов, прием заказов, работа с кассой',
-                    'employment_type': 'full_time'
-                }
-            ]
-        }
-    ]
+        if user.email == 'daniyar.askarov@gmail.com':
+            profile.desired_position = 'Senior Frontend разработчик'
+            profile.about = 'Опытный разработчик с 5-летним стажем. React, Vue.js, TypeScript.'
+            profile.salary_from = 800000
+            profile.salary_to = 1200000
+            profile.work_schedule = 'remote'
 
-    for profile_data in profiles_data:
-        skills_data = profile_data.pop('skills', [])
-        education_data = profile_data.pop('education', [])
-        experience_data = profile_data.pop('work_experience', [])
-        
-        # Создаем профиль
-        profile = CandidateProfile(**profile_data)
-        db.session.add(profile)
-        db.session.flush()  # Получаем ID профиля
-        
-        # Добавляем навыки
-        for skill_data in skills_data:
-            skill = Skill(candidate_profile_id=profile.id, **skill_data)
-            db.session.add(skill)
-        
-        # Добавляем образование
-        for edu_data in education_data:
-            education = Education(candidate_profile_id=profile.id, **edu_data)
-            db.session.add(education)
-        
-        # Добавляем опыт работы
-        for exp_data in experience_data:
-            experience = WorkExperience(candidate_profile_id=profile.id, **exp_data)
-            db.session.add(experience)
+            db.session.add_all([
+                Skill(candidate_profile_id=profile.id, name='React'),
+                Skill(candidate_profile_id=profile.id, name='TypeScript'),
+                Skill(candidate_profile_id=profile.id, name='Vue.js')
+            ])
+            db.session.add(Education(
+                candidate_profile_id=profile.id,
+                institution='КазНТУ им. Сатпаева',
+                specialty='Информационные системы',
+                degree='Бакалавр',
+                start_year=2013,
+                end_year=2017
+            ))
+            db.session.add(WorkExperience(
+                candidate_profile_id=profile.id,
+                company_name='ТОО "WebStudio KZ"',
+                position='Frontend разработчик',
+                start_date=date(2019, 6, 1),
+                end_date=date(2024, 3, 1),
+                description='Разработка интерфейсов для веб-приложений'
+            ))
 
-    try:
-        db.session.commit()
-        print(f"✅ Создано {len(profiles_data)} расширенных профилей кандидатов")
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Ошибка при создании профилей: {e}")
+        elif user.email == 'assel.nurlanova@mail.ru':
+            profile.desired_position = 'Руководитель отдела продаж'
+            profile.about = '3 года опыта в B2B-продажах. Работаю с корпоративными клиентами.'
+            profile.salary_from = 400000
+            profile.salary_to = 600000
+            profile.work_schedule = 'full_time'
+
+            db.session.add_all([
+                Skill(candidate_profile_id=profile.id, name='B2B продажи'),
+                Skill(candidate_profile_id=profile.id, name='CRM системы'),
+                Skill(candidate_profile_id=profile.id, name='Переговоры')
+            ])
+            db.session.add(Education(
+                candidate_profile_id=profile.id,
+                institution='КазЭУ им. Рыскулова',
+                specialty='Маркетинг',
+                degree='Бакалавр',
+                start_year=2014,
+                end_year=2018
+            ))
+            db.session.add(WorkExperience(
+                candidate_profile_id=profile.id,
+                company_name='ТОО "ТехноМир"',
+                position='Менеджер по продажам',
+                start_date=date(2021, 2, 1),
+                description='Продажи IT-оборудования корпоративным клиентам'
+            ))
+
+    db.session.commit()
+    print("✅ Расширенные профили кандидатов созданы")
 
 def seed_settings():
     """Инициализация настроек системы"""
