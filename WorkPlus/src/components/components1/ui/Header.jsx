@@ -125,7 +125,7 @@ const Header = () => {
                 className={getLinkClasses('/resume-dashboard')}
                 onClick={() => setCurrentPath('/resume-dashboard')}
               >
-                Резюме
+                Отклики
               </a>
             )}
             
