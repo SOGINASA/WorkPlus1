@@ -6,7 +6,7 @@ class JobApiService {
   
   static async getJobs(params = {}) {
     const queryParams = new URLSearchParams(params);
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/jobs?${queryParams}`);
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/jobs?${queryParams}`);
     
     if (!response.ok) {
       throw new Error('Ошибка загрузки вакансий');

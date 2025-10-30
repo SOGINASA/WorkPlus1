@@ -25,7 +25,7 @@ const NotificationsPage = () => {
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [selectedType, setSelectedType] = useState('all'); // all, application, interview, rejection, etc.
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
   // Типы уведомлений
   const notificationTypes = {
