@@ -28,7 +28,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><a href="/jobs" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Поиск вакансий</a></li>
               <li><a href="/create-resume" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Создать резюме</a></li>
-              <li><a href="/resumes" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Мое резюме</a></li>
+              <li><a href="/resume-dashboard" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Мое резюме</a></li>
               <li><a href="/blog" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Карьерные советы</a></li>
             </ul>
           </div>
@@ -37,9 +37,8 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Работодателям</h4>
             <ul className="space-y-2">
-              <li><a href="/post-job" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Разместить вакансию</a></li>
-              <li><a href="/resumes" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Поиск резюме</a></li>
-              <li><a href="/dashboard" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Панель управления</a></li>
+              <li><a href="/create-job" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Разместить вакансию</a></li>
+              <li><a href="/resume-dashboard" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Поиск резюме</a></li>
               <li><a href="/pricing" className="text-gray-400 hover:text-yellow-400 transition-colors text-sm">Тарифы</a></li>
             </ul>
           </div>
