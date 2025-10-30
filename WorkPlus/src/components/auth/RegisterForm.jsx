@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Building, Mail, Phone, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle, Calendar, Users, GraduationCap, MessageSquare, FileText, Link, DollarSign, Award, Languages, Clock, CheckSquare, Globe, AtSign, Settings, Palette } from 'lucide-react';
+import { User, Building, Mail, Lock, Eye, EyeOff, MapPin, Briefcase, CheckCircle, AlertCircle, Phone, Users, GraduationCap, Award, CheckSquare, Globe, AtSign, Settings, Calendar, Languages, Clock, DollarSign, FileText, Link, MessageSquare } from 'lucide-react';
 import { useAuth } from '../api/AuthUtils';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,63 +8,36 @@ const RegisterForm = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState('candidate'); // 'candidate' or 'employer'
   const [formData, setFormData] = useState({
+    // Для кандидата - только email и password
+    email: '',
+    password: '',
+    confirmPassword: '',
+    agreeTerms: false,
+    agreeMarketing: false,
+    
+    // Для работодателя - все поля
     firstName: '',
     lastName: '',
     companyName: '',
-    email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
     city: 'Петропавловск',
     position: '',
     companySize: '',
     industry: '',
-    birth_date: '',
-    gender: '',
-    education_level: '',
-    experience_years: '',
-    skills: '', //через запятую
-    resume_url: '',
-    portfolio_url: '',
-    telegram_username: '',
-    
-    // Новые поля для компании работодателей
     companyDescription: '',
     companyWebsite: '',
     companyEmail: '',
     companyPhone: '',
     companyAddress: '',
     foundedYear: '',
-    
-    // Социальные сети компании
     instagram: '',
     facebook: '',
     linkedin: '',
     telegram: '',
-    
-    // Настройки
     isPublic: true,
     emailNotifications: true,
     smsNotifications: true,
     autoReply: true,
-    
-    // Новые поля для высококвалифицированных кандидатов
-    desired_salary: '',
-    current_salary: '',
-    employment_type: '',
-    work_schedule: '',
-    specialization: '',
-    languages: '',
-    achievements: '',
-    certificates: '',
-    availability: '',
-    relocation_ready: false,
-    remote_ready: false,
-    business_trips_ready: false,
-    profile_visibility: 'public', // public, private, employers_only
-    profile_description: '',
-    agreeTerms: false,
-    agreeMarketing: false
   });
   
   const [showPassword, setShowPassword] = useState(false);
@@ -72,41 +45,10 @@ const RegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getUserFromStorage = () => {
-    try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-      console.error('Ошибка при чтении пользователя из localStorage:', error);
-      return null;
-    }
-  };
-
-  // Функция для сохранения пользователя в localStorage
-  const saveUserToStorage = (user) => {
-    try {
-      localStorage.setItem('user', JSON.stringify(user));
-    } catch (error) {
-      console.error('Ошибка при сохранении пользователя в localStorage:', error);
-    }
-  };
-
   const cities = [
-    'Астана',
-    'Алматы',
-    'Петропавловск',
-    'Костанай',
-    'Актау',
-    'Павлодар',
-    'Кокшетау',
-    'Рудный',
-    'Атырау',
-    'Шымкент',
-    'Караганда',
-    'Тараз',
-    'Усть-Каменогорск',
-    'Семей',
-    'Актобе'
+    'Астана', 'Алматы', 'Петропавловск', 'Костанай', 'Актау', 'Павлодар',
+    'Кокшетау', 'Рудный', 'Атырау', 'Шымкент', 'Караганда', 'Тараз',
+    'Усть-Каменогорск', 'Семей', 'Актобе'
   ];
 
   const industries = [
@@ -121,65 +63,6 @@ const RegisterForm = () => {
     '201-500 сотрудников', '500+ сотрудников'
   ];
 
-  const educationLevels = [
-    'Среднее образование',
-    'Среднее специальное',
-    'Высшее (бакалавр)',
-    'Высшее (магистр)',
-    'Высшее (специалист)',
-    'Кандидат наук',
-    'Доктор наук'
-  ];
-
-  const genderOptions = [
-    'Мужской',
-    'Женский',
-    'Не указывать'
-  ];
-
-  const employmentTypes = [
-    'Полная занятость',
-    'Частичная занятость',
-    'Проектная работа',
-    'Стажировка',
-    'Фриланс',
-    'Подработка'
-  ];
-
-  const workSchedules = [
-    'Полный день',
-    'Гибкий график',
-    'Сменный график',
-    'Удаленная работа',
-    'Вахтовый метод',
-    'Выходные дни'
-  ];
-
-  const specializations = [
-    'Продажи и торговля',
-    'Маркетинг и реклама',
-    'IT и разработка',
-    'Дизайн',
-    'Бухгалтерия и финансы',
-    'HR и управление персоналом',
-    'Логистика',
-    'Производство',
-    'Строительство',
-    'Образование',
-    'Медицина',
-    'Юриспруденция',
-    'Сфера услуг',
-    'Другое'
-  ];
-
-  const availabilityOptions = [
-    'Готов приступить немедленно',
-    'В течение недели',
-    'В течение месяца',
-    'Через 2 недели',
-    'Рассматриваю предложения'
-  ];
-
   const currentYear = new Date().getFullYear();
   const foundedYears = Array.from({length: 50}, (_, i) => currentYear - i);
 
@@ -190,7 +73,6 @@ const RegisterForm = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -199,34 +81,39 @@ const RegisterForm = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Common validation
-    if (!formData.email) newErrors.email = 'Email обязателен';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Некорректный email';
-    
-    if (!formData.phone) newErrors.phone = 'Телефон обязателен';
-    else if (!/^(\+7|7|8)[0-9]{10}$/.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
-      newErrors.phone = 'Введите корректный казахстанский номер телефона';
+    // Общая валидация для обоих типов
+    if (!formData.email) {
+      newErrors.email = 'Email обязателен';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Введите корректный email адрес';
     }
     
-    if (!formData.password) newErrors.password = 'Пароль обязателен';
-    else if (formData.password.length < 6) newErrors.password = 'Пароль должен содержать минимум 6 символов';
+    if (!formData.password) {
+      newErrors.password = 'Пароль обязателен';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Пароль должен содержать минимум 6 символов';
+    }
     
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Пароли не совпадают';
     }
     
-    if (!formData.agreeTerms) newErrors.agreeTerms = 'Необходимо согласиться с условиями';
+    if (!formData.agreeTerms) {
+      newErrors.agreeTerms = 'Необходимо согласиться с условиями';
+    }
 
-    // Type-specific validation
-    if (userType === 'candidate') {
-      if (!formData.firstName) newErrors.firstName = 'Имя обязательно';
-      if (!formData.lastName) newErrors.lastName = 'Фамилия обязательна';
-    } else {
+    // Валидация только для работодателя
+    if (userType === 'employer') {
       if (!formData.companyName) newErrors.companyName = 'Название компании обязательно';
       if (!formData.industry) newErrors.industry = 'Выберите сферу деятельности';
       if (!formData.companySize) newErrors.companySize = 'Выберите размер компании';
       if (!formData.firstName) newErrors.firstName = 'Имя контактного лица обязательно';
       if (!formData.lastName) newErrors.lastName = 'Фамилия контактного лица обязательна';
+      if (!formData.phone) {
+        newErrors.phone = 'Телефон обязателен';
+      } else if (!/^(\+7|7|8)[0-9]{10}$/.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
+        newErrors.phone = 'Введите корректный казахстанский номер телефона';
+      }
     }
 
     setErrors(newErrors);
@@ -240,7 +127,18 @@ const RegisterForm = () => {
     setIsSubmitting(true);
     
     try {
-      const registrationData = { userType, ...formData };
+      // Для кандидата отправляем только email, password, userType
+      const registrationData = userType === 'candidate' 
+        ? {
+            email: formData.email,
+            password: formData.password,
+            userType: 'candidate'
+          }
+        : {
+            userType: 'employer',
+            ...formData
+          };
+      
       const response = await register(registrationData);
       
       console.log('Регистрация успешна:', response);
@@ -255,7 +153,6 @@ const RegisterForm = () => {
     } catch (error) {
       console.error('Ошибка регистрации:', error);
       
-      // Более детальная обработка ошибок
       if (error.message.includes('Failed to fetch')) {
         alert('Не удается подключиться к серверу. Проверьте, что сервер запущен.');
       } else if (error.message.includes('Unexpected token')) {
@@ -344,10 +241,147 @@ const RegisterForm = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-              {/* Company Info for Employers */}
+              {/* УПРОЩЁННАЯ ФОРМА ДЛЯ КАНДИДАТА */}
+              {userType === 'candidate' && (
+                <>
+                  <div className="bg-blue-400/10 border border-blue-400/20 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-blue-300 flex items-start">
+                      <CheckCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Вы сможете заполнить подробный профиль позже в личном кабинете</span>
+                    </p>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                          errors.email ? 'border-red-500' : 'border-gray-700'
+                        }`}
+                        placeholder="example@mail.com"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="mt-1 text-red-400 text-sm flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Пароль *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-12 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                          errors.password ? 'border-red-500' : 'border-gray-700'
+                        }`}
+                        placeholder="Минимум 6 символов"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="mt-1 text-red-400 text-sm flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Подтвердите пароль *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-12 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                          errors.confirmPassword ? 'border-red-500' : 'border-gray-700'
+                        }`}
+                        placeholder="Повторите пароль"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="mt-1 text-red-400 text-sm flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Checkboxes */}
+                  <div className="space-y-3">
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="agreeTerms"
+                        checked={formData.agreeTerms}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                      />
+                      <label className="ml-3 text-sm text-gray-300">
+                        Я согласен с{' '}
+                        <a href="#" className="text-yellow-400 hover:underline">условиями использования</a>
+                        {' '}и{' '}
+                        <a href="#" className="text-yellow-400 hover:underline">политикой конфиденциальности</a>
+                        <span className="text-red-400 ml-1">*</span>
+                      </label>
+                    </div>
+                    {errors.agreeTerms && (
+                      <p className="text-red-400 text-sm flex items-center ml-7">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.agreeTerms}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="agreeMarketing"
+                        checked={formData.agreeMarketing}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                      />
+                      <label className="ml-3 text-sm text-gray-300">
+                        Я хочу получать информацию о новых вакансиях и полезные советы по карьере
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ПОЛНАЯ ФОРМА ДЛЯ РАБОТОДАТЕЛЯ */}
               {userType === 'employer' && (
                 <>
-                  {/* Basic Company Info */}
+                  {/* Company Info */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-yellow-400 flex items-center">
                       <Building className="w-5 h-5 mr-2" />
@@ -361,13 +395,13 @@ const RegisterForm = () => {
                         name="companyName"
                         value={formData.companyName}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                        className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
                           errors.companyName ? 'border-red-500' : 'border-gray-700'
                         }`}
                         placeholder="ТОО «Название компании»"
                       />
                       {errors.companyName && (
-                        <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                        <p className="mt-1 text-red-400 text-sm flex items-center">
                           <AlertCircle className="w-3 h-3 mr-1" />
                           {errors.companyName}
                         </p>
@@ -381,7 +415,7 @@ const RegisterForm = () => {
                         value={formData.companyDescription}
                         onChange={handleInputChange}
                         rows="3"
-                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base resize-none"
+                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
                         placeholder="Краткое описание деятельности компании, миссии и ценностей..."
                       />
                     </div>
@@ -393,7 +427,7 @@ const RegisterForm = () => {
                           name="industry"
                           value={formData.industry}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                          className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
                             errors.industry ? 'border-red-500' : 'border-gray-700'
                           }`}
                         >
@@ -403,7 +437,7 @@ const RegisterForm = () => {
                           ))}
                         </select>
                         {errors.industry && (
-                          <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                          <p className="mt-1 text-red-400 text-sm flex items-center">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             {errors.industry}
                           </p>
@@ -415,7 +449,7 @@ const RegisterForm = () => {
                           name="companySize"
                           value={formData.companySize}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
+                          className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
                             errors.companySize ? 'border-red-500' : 'border-gray-700'
                           }`}
                         >
@@ -425,7 +459,7 @@ const RegisterForm = () => {
                           ))}
                         </select>
                         {errors.companySize && (
-                          <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
+                          <p className="mt-1 text-red-400 text-sm flex items-center">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             {errors.companySize}
                           </p>
@@ -443,7 +477,7 @@ const RegisterForm = () => {
                             name="companyWebsite"
                             value={formData.companyWebsite}
                             onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                             placeholder="https://company.kz"
                           />
                         </div>
@@ -454,7 +488,7 @@ const RegisterForm = () => {
                           name="foundedYear"
                           value={formData.foundedYear}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                         >
                           <option value="">Выберите год</option>
                           {foundedYears.map(year => (
@@ -474,7 +508,7 @@ const RegisterForm = () => {
                             name="companyEmail"
                             value={formData.companyEmail}
                             onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                             placeholder="info@company.kz"
                           />
                         </div>
@@ -488,7 +522,7 @@ const RegisterForm = () => {
                             name="companyPhone"
                             value={formData.companyPhone}
                             onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                             placeholder="+7 (7152) 55-44-33"
                           />
                         </div>
@@ -504,7 +538,7 @@ const RegisterForm = () => {
                           name="companyAddress"
                           value={formData.companyAddress}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                           placeholder="ул. Конституции, 15"
                         />
                       </div>
@@ -614,605 +648,241 @@ const RegisterForm = () => {
                       </div>
                     </div>
                   </div>
-                </>
-              )}
 
-              {/* Personal/Contact Person Info */}
-              <div>
-                <h3 className="text-lg font-semibold text-yellow-400 flex items-center mb-4">
-                  <User className="w-5 h-5 mr-2" />
-                  {userType === 'candidate' ? 'Личная информация' : 'Контактное лицо'}
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Contact Person Info */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {userType === 'candidate' ? 'Имя *' : 'Имя контактного лица *'}
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Введите имя"
-                    />
-                    {errors.firstName && (
-                      <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {errors.firstName}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {userType === 'candidate' ? 'Фамилия *' : 'Фамилия контактного лица *'}
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.lastName ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Введите фамилию"
-                    />
-                    {errors.lastName && (
-                      <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {errors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.email ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="example@mail.com"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Телефон *</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.phone ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="+7 (777) 123-45-67"
-                    />
-                  </div>
-                  {errors.phone && (
-                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Location and Position */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Город</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <select
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                    >
-                      {cities.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    {userType === 'candidate' ? 'Желаемая должность' : 'Должность в компании'}
-                  </label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                      placeholder={userType === 'candidate' ? "Например: продавец-консультант" : "Например: HR-менеджер"}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Candidate-specific fields */}
-              {userType === 'candidate' && (
-                <>
-                  {/* Birth date and Gender */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Дата рождения</label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                        <input
-                          type="date"
-                          name="birth_date"
-                          value={formData.birth_date}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Пол</label>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                        <select
-                          name="gender"
-                          value={formData.gender}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                        >
-                          <option value="">Выберите пол</option>
-                          {genderOptions.map(gender => (
-                            <option key={gender} value={gender}>{gender}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Education and Experience */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Уровень образования</label>
-                      <div className="relative">
-                        <GraduationCap className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                        <select
-                          name="education_level"
-                          value={formData.education_level}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                        >
-                          <option value="">Выберите образование</option>
-                          {educationLevels.map(level => (
-                            <option key={level} value={level}>{level}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Опыт работы (лет)</label>
-                      <input
-                        type="number"
-                        name="experience_years"
-                        value={formData.experience_years}
-                        onChange={handleInputChange}
-                        min="0"
-                        max="60"
-                        className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Skills */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Навыки</label>
-                    <textarea
-                      name="skills"
-                      value={formData.skills}
-                      onChange={handleInputChange}
-                      rows="3"
-                      className="w-full px-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base resize-none"
-                      placeholder="Укажите ваши навыки через запятую (например: продажи, работа с клиентами, Microsoft Office)"
-                    />
-                  </div>
-
-                  {/* Professional Profile Section */}
-                  <div className="bg-gradient-to-r from-yellow-400/5 to-yellow-600/5 border border-yellow-400/20 rounded-lg p-4 md:p-6">
-                    <h4 className="text-lg font-semibold text-yellow-400 mb-4 flex items-center">
-                      <Award className="w-5 h-5 mr-2" />
-                      Профессиональные данные
-                    </h4>
+                    <h3 className="text-lg font-semibold text-yellow-400 flex items-center mb-4">
+                      <User className="w-5 h-5 mr-2" />
+                      Контактное лицо
+                    </h3>
                     
-                    {/* Salary Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Желаемая зарплата (₸)</label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <input
-                            type="number"
-                            name="desired_salary"
-                            value={formData.desired_salary}
-                            onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                            placeholder="150000"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Текущая зарплата (₸)</label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <input
-                            type="number"
-                            name="current_salary"
-                            value={formData.current_salary}
-                            onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                            placeholder="120000"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Employment Type and Schedule */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Тип занятости</label>
-                        <select
-                          name="employment_type"
-                          value={formData.employment_type}
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Имя контактного лица *</label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                        >
-                          <option value="">Выберите тип занятости</option>
-                          {employmentTypes.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">График работы</label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <select
-                            name="work_schedule"
-                            value={formData.work_schedule}
-                            onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                          >
-                            <option value="">Выберите график</option>
-                            {workSchedules.map(schedule => (
-                              <option key={schedule} value={schedule}>{schedule}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Specialization and Languages */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Специализация</label>
-                        <select
-                          name="specialization"
-                          value={formData.specialization}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                        >
-                          <option value="">Выберите специализацию</option>
-                          {specializations.map(spec => (
-                            <option key={spec} value={spec}>{spec}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Языки</label>
-                        <div className="relative">
-                          <Languages className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <input
-                            type="text"
-                            name="languages"
-                            value={formData.languages}
-                            onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                            placeholder="Казахский, Русский, Английский"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Achievements and Certificates */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Достижения</label>
-                        <textarea
-                          name="achievements"
-                          value={formData.achievements}
-                          onChange={handleInputChange}
-                          rows="2"
-                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
-                          placeholder="Награды, признания, успешные проекты"
+                          className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.firstName ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="Введите имя"
                         />
+                        {errors.firstName && (
+                          <p className="mt-1 text-red-400 text-sm flex items-center">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            {errors.firstName}
+                          </p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Сертификаты</label>
-                        <textarea
-                          name="certificates"
-                          value={formData.certificates}
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Фамилия контактного лица *</label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
                           onChange={handleInputChange}
-                          rows="2"
-                          className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
-                          placeholder="Профессиональные сертификаты, курсы"
+                          className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.lastName ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="Введите фамилию"
                         />
-                      </div>
-                    </div>
-
-                    {/* Availability */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Готовность к работе</label>
-                      <select
-                        name="availability"
-                        value={formData.availability}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                      >
-                        <option value="">Выберите готовность</option>
-                        {availabilityOptions.map(option => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Profile Description */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">О себе (краткое описание)</label>
-                      <textarea
-                        name="profile_description"
-                        value={formData.profile_description}
-                        onChange={handleInputChange}
-                        rows="3"
-                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm resize-none"
-                        placeholder="Расскажите о своем опыте, целях и преимуществах"
-                        maxLength="500"
-                      />
-                      <div className="text-xs text-gray-400 mt-1">
-                        {formData.profile_description.length}/500 символов
-                      </div>
-                    </div>
-
-                    {/* Work Preferences */}
-                    <div className="space-y-3 mb-4">
-                      <h5 className="text-sm font-medium text-yellow-400">Готовность к:</h5>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="relocation_ready"
-                            checked={formData.relocation_ready}
-                            onChange={handleInputChange}
-                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
-                          />
-                          <label className="ml-2 text-sm text-gray-300">Переезду</label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="remote_ready"
-                            checked={formData.remote_ready}
-                            onChange={handleInputChange}
-                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
-                          />
-                          <label className="ml-2 text-sm text-gray-300">Удаленной работе</label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="business_trips_ready"
-                            checked={formData.business_trips_ready}
-                            onChange={handleInputChange}
-                            className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
-                          />
-                          <label className="ml-2 text-sm text-gray-300">Командировкам</label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Profile Visibility */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Видимость профиля</label>
-                      <select
-                        name="profile_visibility"
-                        value={formData.profile_visibility}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
-                      >
-                        <option value="public">Публичный - виден всем</option>
-                        <option value="employers_only">Только работодателям</option>
-                        <option value="private">Скрытый - только по ссылке</option>
-                      </select>
-                      <div className="text-xs text-gray-400 mt-1">
-                        Публичный профиль поможет работодателям найти вас
+                        {errors.lastName && (
+                          <p className="mt-1 text-red-400 text-sm flex items-center">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            {errors.lastName}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* URLs */}
+                  {/* Contact Info for Employer */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Ссылка на резюме</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
                       <div className="relative">
-                        <FileText className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                         <input
-                          type="url"
-                          name="resume_url"
-                          value={formData.resume_url}
+                          type="email"
+                          name="email"
+                          value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                          placeholder="https://drive.google.com/..."
+                          className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.email ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="example@mail.com"
+                        />
+                      </div>
+                      {errors.email && (
+                        <p className="mt-1 text-red-400 text-sm flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Телефон *</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.phone ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="+7 (777) 123-45-67"
+                        />
+                      </div>
+                      {errors.phone && (
+                        <p className="mt-1 text-red-400 text-sm flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location and Position */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Город</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                        <select
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                        >
+                          {cities.map(city => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Должность в компании</label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                        <input
+                          type="text"
+                          name="position"
+                          value={formData.position}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          placeholder="Например: HR-менеджер"
                         />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Password Fields for Employer */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Ссылка на портфолио</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Пароль *</label>
                       <div className="relative">
-                        <Link className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                         <input
-                          type="url"
-                          name="portfolio_url"
-                          value={formData.portfolio_url}
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          value={formData.password}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                          placeholder="https://example.com"
+                          className={`w-full pl-10 pr-12 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.password ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="Минимум 6 символов"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
+                      {errors.password && (
+                        <p className="mt-1 text-red-400 text-sm flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.password}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Подтвердите пароль *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          className={`w-full pl-10 pr-12 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                            errors.confirmPassword ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder="Повторите пароль"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      {errors.confirmPassword && (
+                        <p className="mt-1 text-red-400 text-sm flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.confirmPassword}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Checkboxes for Employer */}
+                  <div className="space-y-3">
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="agreeTerms"
+                        checked={formData.agreeTerms}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                      />
+                      <label className="ml-3 text-sm text-gray-300">
+                        Я согласен с{' '}
+                        <a href="#" className="text-yellow-400 hover:underline">условиями использования</a>
+                        {' '}и{' '}
+                        <a href="#" className="text-yellow-400 hover:underline">политикой конфиденциальности</a>
+                        <span className="text-red-400 ml-1">*</span>
+                      </label>
+                    </div>
+                    {errors.agreeTerms && (
+                      <p className="text-red-400 text-sm flex items-center ml-7">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.agreeTerms}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="agreeMarketing"
+                        checked={formData.agreeMarketing}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
+                      />
+                      <label className="ml-3 text-sm text-gray-300">
+                        Я хочу получать информацию о новых кандидатах и советы по найму персонала
+                      </label>
                     </div>
                   </div>
                 </>
               )}
-
-              {/* Telegram username (for both types) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Telegram (необязательно)</label>
-                <div className="relative">
-                  <MessageSquare className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="telegram_username"
-                    value={formData.telegram_username}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base"
-                    placeholder="@username"
-                  />
-                </div>
-              </div>
-
-              {/* Password Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Пароль *</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.password ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Минимум 6 символов"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4 md:h-5 md:w-5" /> : <Eye className="h-4 w-4 md:h-5 md:w-5" />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {errors.password}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Подтвердите пароль *</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-2.5 md:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm md:text-base ${
-                        errors.confirmPassword ? 'border-red-500' : 'border-gray-700'
-                      }`}
-                      placeholder="Повторите пароль"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-300"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4 md:h-5 md:w-5" /> : <Eye className="h-4 w-4 md:h-5 md:w-5" />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="mt-1 text-red-400 text-xs md:text-sm flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Checkboxes */}
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="agreeTerms"
-                    checked={formData.agreeTerms}
-                    onChange={handleInputChange}
-                    className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
-                  />
-                  <label className="ml-3 text-sm text-gray-300">
-                    Я согласен с{' '}
-                    <a href="#" className="text-yellow-400 hover:underline">условиями использования</a>
-                    {' '}и{' '}
-                    <a href="#" className="text-yellow-400 hover:underline">политикой конфиденциальности</a>
-                    <span className="text-red-400 ml-1">*</span>
-                  </label>
-                </div>
-                {errors.agreeTerms && (
-                  <p className="text-red-400 text-xs md:text-sm flex items-center ml-7">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    {errors.agreeTerms}
-                  </p>
-                )}
-                
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="agreeMarketing"
-                    checked={formData.agreeMarketing}
-                    onChange={handleInputChange}
-                    className="mt-1 h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-700 bg-gray-800 rounded"
-                  />
-                  <label className="ml-3 text-sm text-gray-300">
-                    {userType === 'candidate' 
-                      ? 'Я хочу получать информацию о новых вакансиях и полезные советы по карьере'
-                      : 'Я хочу получать информацию о новых кандидатах и советы по найму персонала'
-                    }
-                  </label>
-                </div>
-              </div>
 
               {/* Submit Button */}
               <button
@@ -1254,11 +924,11 @@ const RegisterForm = () => {
                 <div className="mt-6 p-4 bg-gradient-to-r from-green-400/10 to-blue-400/10 rounded-lg border border-green-400/20">
                   <h4 className="font-semibold text-green-400 mb-2 flex items-center">
                     <CheckSquare className="w-4 h-4 mr-2" />
-                    Высококвалифицированный профиль
+                    Быстрая регистрация
                   </h4>
                   <p className="text-sm text-gray-300">
-                    Заполните расширенную информацию о себе, чтобы работодатели могли найти вас сами. 
-                    Укажите достижения, сертификаты и желаемые условия работы.
+                    Зарегистрируйтесь за 30 секунд! Детальный профиль можно заполнить позже в личном кабинете. 
+                    Чем подробнее профиль, тем больше предложений от работодателей.
                   </p>
                 </div>
               )}

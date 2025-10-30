@@ -175,7 +175,7 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
             <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mr-3">
               <Briefcase className="w-5 h-5 text-black" />
             </div>
-            <span className="text-lg font-bold text-white">WorkPlus</span>
+            <a href='/' className="text-lg font-bold text-white">WorkPlus</a>
           </div>
           <button
             onClick={onClose}
@@ -194,7 +194,7 @@ const AdminSidebar = ({ isCollapsed = false, currentPath, onNavigate, isMobile =
               <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center mr-3">
                 <Briefcase className="w-5 h-5 text-black" />
               </div>
-              <span className="text-lg font-bold text-white">WorkPlus</span>
+              <a href='/' className="text-lg font-bold text-white">WorkPlus</a>
               <span className="ml-2 px-2 py-1 bg-yellow-400/20 border border-yellow-400/30 text-yellow-400 text-xs rounded-full">
                 Admin
               </span>

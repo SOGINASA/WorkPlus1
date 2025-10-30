@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from models import Job, JobApplication, db, User, Company
+from models import CandidateProfile, Job, JobApplication, db, User, Company
 from datetime import datetime, timedelta
 import re
 
@@ -28,121 +28,57 @@ def validate_phone(phone):
 def register():
     """Регистрация пользователя"""
     data = request.get_json()
-    
     if not data:
         return jsonify({'error': 'Данные не предоставлены'}), 400
-    
-    # Валидация обязательных полей
+
     required_fields = ['email', 'password', 'userType']
-    missing_fields = [field for field in required_fields if not data.get(field)]
-    
-    if missing_fields:
-        return jsonify({
-            'error': 'Отсутствуют обязательные поля',
-            'missing_fields': missing_fields
-        }), 400
-    
-    # Дополнительная валидация в зависимости от типа пользователя
-    user_type = data.get('userType')
-    if user_type == 'candidate':
-        candidate_required = ['firstName', 'lastName']
-        missing_candidate = [field for field in candidate_required if not data.get(field)]
-        if missing_candidate:
-            return jsonify({
-                'error': 'Для соискателей обязательны имя и фамилия',
-                'missing_fields': missing_candidate
-            }), 400
-    elif user_type == 'employer':
-        employer_required = ['firstName', 'lastName', 'companyName', 'industry', 'companySize']
-        missing_employer = [field for field in employer_required if not data.get(field)]
-        if missing_employer:
-            return jsonify({
-                'error': 'Для работодателей обязательны имя, фамилия, название компании, сфера деятельности и размер компании',
-                'missing_fields': missing_employer
-            }), 400
-    
-    # Валидация email
-    if not validate_email(data['email']):
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({'error': f"Отсутствуют обязательные поля: {', '.join(missing)}"}), 400
+
+    email = data['email'].strip().lower()
+    user_type = data['userType']
+    full_name = data.get('fullName', '')
+
+    # Проверка формата
+    if not validate_email(email):
         return jsonify({'error': 'Неверный формат email'}), 400
-    
-    # Валидация типа пользователя
-    if user_type not in ['candidate', 'employer']:
-        return jsonify({'error': 'Неверный тип пользователя'}), 400
-    
-    # Валидация телефона если указан
-    if data.get('phone') and not validate_phone(data['phone']):
-        return jsonify({'error': 'Неверный формат номера телефона'}), 400
-    
-    # Валидация пароля
     if len(data['password']) < 6:
         return jsonify({'error': 'Пароль должен содержать минимум 6 символов'}), 400
-    
-    # Проверка совпадения паролей (если confirmPassword передается)
-    if data.get('confirmPassword') and data['password'] != data['confirmPassword']:
-        return jsonify({'error': 'Пароли не совпадают'}), 400
-    
-    # Валидация согласия с условиями
-    if not data.get('agreeTerms'):
-        return jsonify({'error': 'Необходимо согласиться с условиями использования'}), 400
-    
-    # Валидация даты рождения (если указана)
-    birth_date = None
-    if data.get('birth_date'):
-        try:
-            from datetime import datetime
-            birth_date = datetime.strptime(data['birth_date'], '%Y-%m-%d').date()
-        except ValueError:
-            return jsonify({'error': 'Неверный формат даты рождения'}), 400
-    
-    # Валидация опыта работы (если указан)
-    experience_years = None
-    if data.get('experience_years'):
-        try:
-            experience_years = int(data['experience_years'])
-            if experience_years < 0 or experience_years > 60:
-                return jsonify({'error': 'Опыт работы должен быть от 0 до 60 лет'}), 400
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Неверное значение опыта работы'}), 400
-    
-    # Валидация URL-ов (если указаны)
-    from urllib.parse import urlparse
-    for url_field in ['resume_url', 'portfolio_url']:
-        if data.get(url_field):
-            parsed = urlparse(data[url_field])
-            if not parsed.scheme or not parsed.netloc:
-                return jsonify({'error': f'Неверный формат ссылки для поля {url_field}'}), 400
-    
-    # Проверка уникальности email
-    existing_user = User.query.filter_by(email=data['companyEmail'].lower()).first()
-    if existing_user:
+
+    # Проверка на существование
+    if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Пользователь с таким email уже существует'}), 400
-    
+
     try:
-        # Создаем пользователя
-        full_name = f"{data.get('firstName', '')} {data.get('lastName', '')}".strip()
-        
-        user = User(
-            email=data['companyEmail'].lower(),
-            name=full_name,
-            phone=data.get('phone'),
-            city=data.get('city', 'Петропавловск'),
-            user_type=user_type,
-            telegram_username=data.get('telegram_username'),
-            birth_date=birth_date,
-            gender=data.get('gender'),
-            education_level=data.get('education_level'),
-            experience_years=experience_years,
-            resume_url=data.get('resume_url'),
-            portfolio_url=data.get('portfolio_url')
-        )
-        user.set_password(data['password'])
-        
-        # Обработка навыков для соискателя
-        if user_type == 'candidate' and data.get('skills'):
-            # Используем метод модели для правильного сохранения навыков
-            user.set_skills_list(data['skills'])
-        
-        # Дополнительные поля для работодателя
+        # === 1. Кандидат (упрощённая регистрация) ===
+        if user_type == 'candidate':
+            user = User(
+                email=email,
+                user_type='candidate',
+                is_active=True,
+                is_verified=False,
+            )
+            user.set_password(data['password'])
+            db.session.add(user)
+            db.session.flush()  # чтобы получить user.id
+
+            # создаём пустой профиль
+            profile = CandidateProfile(user_id=user.id)
+            db.session.add(profile)
+            db.session.commit()
+
+            access_token = create_access_token(identity=str(user.id))
+            refresh_token = create_refresh_token(identity=str(user.id))
+
+            return jsonify({
+                'message': 'Регистрация кандидата успешна',
+                'user': user.to_dict(include_sensitive=True),
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }), 201
+
+        # === 2. Работодатель — используем старую логику ===
         if user_type == 'employer':
             user.position = data.get('position')
             
@@ -223,11 +159,13 @@ def register():
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 201
-    
+        
+
     except Exception as e:
         db.session.rollback()
         print(f"Ошибка регистрации: {e}")
         return jsonify({'error': 'Ошибка при создании аккаунта'}), 500
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():

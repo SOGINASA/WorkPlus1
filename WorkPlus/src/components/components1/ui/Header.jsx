@@ -121,11 +121,11 @@ const Header = () => {
             {/* Показываем резюме только для соискателей */}
             {(isCandidate || isAdmin || !isAuthenticated()) && (
               <a 
-                href="/resume-dashboard" 
-                className={getLinkClasses('/resume-dashboard')}
-                onClick={() => setCurrentPath('/resume-dashboard')}
+                href="/blog" 
+                className={getLinkClasses('/blog')}
+                onClick={() => setCurrentPath('/blog')}
               >
-                Резюме
+                Блог
               </a>
             )}
             

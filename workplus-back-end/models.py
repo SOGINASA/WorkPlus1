@@ -14,7 +14,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     
     # Основная информация
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20))
     city = db.Column(db.String(50))
     user_type = db.Column(db.String(20), nullable=False)  # candidate, employer, admin
@@ -755,52 +755,35 @@ class Analytics(db.Model):
         }
 
 class CandidateProfile(db.Model):
-    """Расширенный профиль кандидата"""
     __tablename__ = 'candidate_profiles'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
-    
-    # Личная информация
+
     birth_date = db.Column(db.Date)
     current_position = db.Column(db.String(200))
     desired_position = db.Column(db.String(200))
-    
-    # Зарплатные ожидания
     salary_from = db.Column(db.Integer)
     salary_to = db.Column(db.Integer)
     salary_currency = db.Column(db.String(3), default='KZT')
-    
-    # Опыт работы
     experience_years = db.Column(db.Integer, default=0)
-    work_schedule = db.Column(db.String(50), default='full_time')  # full_time, part_time, remote, hybrid
-    
-    # Описание
+    work_schedule = db.Column(db.String(50), default='full_time')
+    ready_to_relocate = db.Column(db.Boolean, default=False)
     about = db.Column(db.Text)
-    
-    # Настройки приватности
     is_public = db.Column(db.Boolean, default=True)
     show_contacts = db.Column(db.Boolean, default=True)
-    
-    # Настройки уведомлений
     email_notifications = db.Column(db.Boolean, default=True)
     sms_notifications = db.Column(db.Boolean, default=False)
     job_alerts = db.Column(db.Boolean, default=True)
-    
-    # Файлы
     resume_file = db.Column(db.String(255))
-    
-    # Метаданные
-    profile_views = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Связи
+
     user = db.relationship('User', backref=db.backref('candidate_profile', uselist=False))
     skills = db.relationship('Skill', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
     education = db.relationship('Education', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
     work_experience = db.relationship('WorkExperience', backref='candidate_profile', lazy='dynamic', cascade='all, delete-orphan')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -813,6 +796,7 @@ class CandidateProfile(db.Model):
             'salary_currency': self.salary_currency,
             'experience_years': self.experience_years,
             'work_schedule': self.work_schedule,
+            'ready_to_relocate': self.ready_to_relocate,
             'about': self.about,
             'is_public': self.is_public,
             'show_contacts': self.show_contacts,
@@ -820,9 +804,8 @@ class CandidateProfile(db.Model):
             'sms_notifications': self.sms_notifications,
             'job_alerts': self.job_alerts,
             'resume_file': self.resume_file,
-            'profile_views': self.profile_views,
-            'last_updated': self.last_updated.isoformat(),
-            'created_at': self.created_at.isoformat()
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 class Skill(db.Model):
