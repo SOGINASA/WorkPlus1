@@ -87,6 +87,8 @@ const emptyProfile = {
   emailNotifications: true,
   smsNotifications: false,
   jobAlerts: true,
+  telegram_username: "",
+  portfolio_url: "",
 };
 
 export default function CandidateProfile() {
@@ -156,6 +158,8 @@ export default function CandidateProfile() {
         emailNotifications: profile.email_notifications !== false,
         smsNotifications: !!profile.sms_notifications,
         jobAlerts: profile.job_alerts !== false,
+        telegram_username: profile.telegram_username || "",
+        portfolio_url: profile.portfolio_url || "",
       }));
 
       await loadApplications(1, 20, appsFilter);
@@ -212,7 +216,7 @@ export default function CandidateProfile() {
         desired_position: profileData.desiredPosition,
         salary_from: profileData.salary_from ? Number(profileData.salary_from) : null,
         salary_to: profileData.salary_to ? Number(profileData.salary_to) : null,
-        experience_years: profileData.experience_years || null,
+        experience_years: profileData.experience_years ? Number(profileData.experience_years) : null,
         work_schedule: profileData.workSchedule,
         skills: profileData.skills,
         education: profileData.education,
@@ -222,6 +226,8 @@ export default function CandidateProfile() {
         email_notifications: !!profileData.emailNotifications,
         sms_notifications: !!profileData.smsNotifications,
         job_alerts: !!profileData.jobAlerts,
+        telegram_username: profileData.telegram_username,
+        portfolio_url: profileData.portfolio_url,
       };
 
       await CandidateService.updateProfile(payload);
@@ -261,10 +267,6 @@ export default function CandidateProfile() {
     }).catch(() => {
       prompt('Скопируйте ссылку на профиль:', profileUrl);
     });
-  };
-
-  const downloadResume = () => {
-    alert('Резюме скачано!');
   };
 
   const withdrawApplication = async (applicationId) => {
@@ -309,9 +311,10 @@ export default function CandidateProfile() {
       id: Date.now(),
       institution: '',
       specialty: '',
-      start_date: '',
-      end_date: '',
-      type: 'Высшее'
+      start_year: '',
+      end_year: '',
+      degree: 'Высшее',
+      is_current: false
     };
     setProfileData(prev => ({
       ...prev,
@@ -344,7 +347,8 @@ export default function CandidateProfile() {
       position: '',
       start_date: '',
       end_date: '',
-      description: ''
+      description: '',
+      is_current: false
     };
     setProfileData(prev => ({
       ...prev,
@@ -441,7 +445,7 @@ export default function CandidateProfile() {
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                     {profileData.name || 'Имя не указано'}
                   </h1>
-                  <p className="text-xl text-gray-300 mb-2">{profileData.currentPosition || 'Должность не указана'}</p>
+                  {/* <p className="text-xl text-gray-300 mb-2">{profileData.currentPosition || 'Должность не указана'}</p> */}
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                     {profileData.city && (
                       <div className="flex items-center">
@@ -482,13 +486,6 @@ export default function CandidateProfile() {
                       <Globe className="w-4 h-4 mr-2 text-yellow-400" />
                       Поделиться
                     </button>
-                    {/* <button
-                      onClick={downloadResume}
-                      className="px-4 py-2.5 bg-white/10 border border-yellow-400/20 text-white rounded-xl font-medium hover:border-yellow-400/40 transition-all flex items-center"
-                    >
-                      <Download className="w-4 h-4 mr-2 text-yellow-400" />
-                      Скачать
-                    </button> */}
                   </>
                 ) : (
                   <>
@@ -572,7 +569,114 @@ export default function CandidateProfile() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Зарплата до</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ФИО</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="name"
+                        value={profileData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="Иванов Иван Иванович"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">{profileData.name || '—'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Телефон</label>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={profileData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="+7 (777) 123-45-67"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">{profileData.phone || '—'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Город</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="city"
+                        value={profileData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="Алматы"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">{profileData.city || '—'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Telegram</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="telegram_username"
+                        value={profileData.telegram_username}
+                        onChange={(e) => handleInputChange('telegram_username', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="@username"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">
+                        {profileData.telegram_username ? `@${profileData.telegram_username.replace('@', '')}` : '—'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Портфолио</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        name="portfolio_url"
+                        value={profileData.portfolio_url}
+                        onChange={(e) => handleInputChange('portfolio_url', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="https://myportfolio.com"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">
+                        {profileData.portfolio_url ? (
+                          <a href={profileData.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
+                            {profileData.portfolio_url}
+                          </a>
+                        ) : '—'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Опыт работы (лет)</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        name="experience_years"
+                        value={profileData.experience_years}
+                        onChange={(e) => handleInputChange('experience_years', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="5"
+                        min="0"
+                      />
+                    ) : (
+                      <p className="text-white text-lg font-medium">
+                        {profileData.experience_years ? `${profileData.experience_years} лет` : '—'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Желаемая зарплата</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -580,6 +684,7 @@ export default function CandidateProfile() {
                         value={profileData.salary_to}
                         onChange={(e) => handleInputChange('salary_to', e.target.value)}
                         className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="500000"
                       />
                     ) : (
                       <p className="text-green-400 text-lg font-medium">
@@ -677,21 +782,23 @@ export default function CandidateProfile() {
                                 />
                                 <div className="grid grid-cols-2 gap-3">
                                   <input
-                                    type="date"
-                                    value={edu.start_date || ''}
-                                    onChange={(e) => updateEducation(edu.id, 'start_date', e.target.value)}
+                                    type="number"
+                                    value={edu.start_year || ''}
+                                    onChange={(e) => updateEducation(edu.id, 'start_year', e.target.value)}
+                                    placeholder="Год начала"
                                     className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                   />
                                   <input
-                                    type="date"
-                                    value={edu.end_date || ''}
-                                    onChange={(e) => updateEducation(edu.id, 'end_date', e.target.value)}
+                                    type="number"
+                                    value={edu.end_year || ''}
+                                    onChange={(e) => updateEducation(edu.id, 'end_year', e.target.value)}
+                                    placeholder="Год окончания"
                                     className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                   />
                                 </div>
                                 <select
-                                  value={edu.type || 'Высшее'}
-                                  onChange={(e) => updateEducation(edu.id, 'type', e.target.value)}
+                                  value={edu.degree || 'Высшее'}
+                                  onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
                                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                 >
                                   <option value="Среднее">Среднее</option>
@@ -707,7 +814,7 @@ export default function CandidateProfile() {
                                 <p className="text-gray-300 mb-3">{edu.specialty || '—'}</p>
                                 <div className="flex items-center text-sm text-gray-400">
                                   <Calendar className="w-4 h-4 mr-2 text-yellow-400" />
-                                  {edu.start_date ? fmtDate(edu.start_date) : '—'} — {edu.end_date ? fmtDate(edu.end_date) : 'наст. время'} • {edu.type || '—'}
+                                  {edu.start_year || '—'} — {edu.end_year || 'наст. время'} • {edu.degree || '—'}
                                 </div>
                               </>
                             )}

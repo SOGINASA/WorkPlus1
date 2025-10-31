@@ -723,6 +723,7 @@ def get_employer_applicants():
             
             applicants.append({
                 'id': application.id,
+                'candidateId': application.candidate_id,
                 'name': candidate.name,
                 'position': job.title,
                 'vacancyId': job.id,
@@ -735,11 +736,7 @@ def get_employer_applicants():
                 ),
                 
                 # experience: превращаем число в строку "N лет/год/года"
-                'experience': (
-                    f"{candidate.experience_years} год" if candidate.experience_years == 1 else
-                    f"{candidate.experience_years} года" if candidate.experience_years in [2,3,4] else
-                    f"{candidate.experience_years} лет" if candidate.experience_years else 'Не указано'
-                ),
+                'experience': candidate.experience_years,
                 
                 # salary → expected_salary
                 'salary': str(application.expected_salary) if application.expected_salary else None,

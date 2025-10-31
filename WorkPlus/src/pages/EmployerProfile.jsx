@@ -757,7 +757,7 @@ const EmployerProfile = () => {
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-semibold mr-4">
-                                  {applicant.name.charAt(0)}
+                                  {applicant.name ? applicant.name.charAt(0) : ''}
                                 </div>
                                 <div>
                                   <h3 className="text-lg font-semibold text-white">{applicant.name}</h3>
@@ -834,7 +834,7 @@ const EmployerProfile = () => {
                               <Eye className="w-4 h-4 mr-1" />
                               Профиль
                             </button> */}
-                            <a href={profile_link(applicant.id)} className="flex items-center px-3 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 transition-all text-sm">
+                            <a href={profile_link(applicant.candidateId)} className="flex items-center px-3 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 transition-all text-sm">
                               <Eye className="w-4 h-4 mr-1" />
                               Подробнее
                             </a>

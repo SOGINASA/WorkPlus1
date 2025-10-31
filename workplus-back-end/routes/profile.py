@@ -53,7 +53,7 @@ def _split_name(full_name: str):
 def _safe_parse_skills(raw):
     """
     user.skills может быть JSON-строкой ["JS","React"] или
-    просто строкой "JS, React" — вернём list[str].
+    просто строкой "JS, React" – вернём list[str].
     """
     if not raw:
         return []
@@ -67,9 +67,9 @@ def _safe_parse_skills(raw):
                 return [str(x).strip() for x in data if str(x).strip()]
         except Exception:
             pass
-        # иначе — разделим по запятым/точкам с запятой
+        # иначе – разделим по запятым/точкам с запятой
         return [x.strip() for x in raw.replace(";", ",").split(",") if x.strip()]
-    # что-то иное — отдадим как строку
+    # что-то иное – отдадим как строку
     return [str(raw).strip()]
 
 # Позволяем preflight (OPTIONS) без редиректов и ошибок
@@ -86,7 +86,7 @@ def profile_handler():
 
 
 # ==========================
-# Профиль — получить
+# Профиль – получить
 # ==========================
 @profile_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -100,7 +100,7 @@ def get_profile():
         # Разбиваем name на first/last для совместимости
         first_name, last_name = _split_name(user.name)
 
-        # Базовый профиль — заполняем ВСЕ доступные поля из users
+        # Базовый профиль – заполняем ВСЕ доступные поля из users
         profile = {
             "id": user.id,
             "email": user.email,
@@ -132,7 +132,7 @@ def get_profile():
             "email_notifications": user.email_notifications,
             "sms_notifications": user.sms_notifications,
 
-            # Аватары отключены — возвращаем None
+            # Аватары отключены – возвращаем None
             "avatar": None,
 
             # Служебные даты
@@ -141,13 +141,13 @@ def get_profile():
             "last_login": user.last_login.isoformat() if user.last_login else None,
         }
 
-        # Если это кандидат — дополняем/перекрываем из CandidateProfile
+        # Если это кандидат – дополняем/перекрываем из CandidateProfile
         if user.user_type == "candidate":
             cp = CandidateProfile.query.filter_by(user_id=user_id).first()
             if cp:
                 profile.update(
                     {
-                        # Если в CP есть дата рождения/опыт — они важнее
+                        # Если в CP есть дата рождения/опыт – они важнее
                         "birth_date": cp.birth_date.isoformat() if cp.birth_date else profile.get("birth_date"),
                         "current_position": cp.current_position,
                         "desired_position": cp.desired_position,
@@ -159,7 +159,7 @@ def get_profile():
                         "work_schedule": cp.work_schedule,
                         "about": cp.about,
                         "is_public": cp.is_public,
-                        # уведомления — если в CP явно заданы, перекрываем user.*
+                        # уведомления – если в CP явно заданы, перекрываем user.*
                         "email_notifications": (
                             cp.email_notifications if cp.email_notifications is not None else profile.get("email_notifications")
                         ),
@@ -173,6 +173,7 @@ def get_profile():
                         "skills": [s.name for s in cp.skills.order_by(Skill.name.asc()).all()],
                         "education": [
                             {
+                                "id": e.id,
                                 "institution": e.institution,
                                 "specialty": e.specialty,
                                 "degree": e.degree,
@@ -186,6 +187,7 @@ def get_profile():
                         ],
                         "work_experience": [
                             {
+                                "id": w.id,
                                 "company": w.company_name,
                                 "position": w.position,
                                 "start_date": w.start_date.isoformat() if w.start_date else None,
@@ -223,7 +225,7 @@ def get_profile_by_id(user_id):
         # Разбиваем name на first/last для совместимости
         first_name, last_name = _split_name(user.name)
 
-        # Базовый профиль — заполняем ВСЕ доступные поля из users
+        # Базовый профиль – заполняем ВСЕ доступные поля из users
         profile = {
             "id": user.id,
             "email": user.email,
@@ -255,7 +257,7 @@ def get_profile_by_id(user_id):
             "email_notifications": user.email_notifications,
             "sms_notifications": user.sms_notifications,
 
-            # Аватары отключены — возвращаем None
+            # Аватары отключены – возвращаем None
             "avatar": None,
 
             # Служебные даты
@@ -264,13 +266,13 @@ def get_profile_by_id(user_id):
             "last_login": user.last_login.isoformat() if user.last_login else None,
         }
 
-        # Если это кандидат — дополняем/перекрываем из CandidateProfile
+        # Если это кандидат – дополняем/перекрываем из CandidateProfile
         if user.user_type == "candidate":
             cp = CandidateProfile.query.filter_by(user_id=user_id).first()
             if cp:
                 profile.update(
                     {
-                        # Если в CP есть дата рождения/опыт — они важнее
+                        # Если в CP есть дата рождения/опыт – они важнее
                         "birth_date": cp.birth_date.isoformat() if cp.birth_date else profile.get("birth_date"),
                         "current_position": cp.current_position,
                         "desired_position": cp.desired_position,
@@ -282,7 +284,7 @@ def get_profile_by_id(user_id):
                         "work_schedule": cp.work_schedule,
                         "about": cp.about,
                         "is_public": cp.is_public,
-                        # уведомления — если в CP явно заданы, перекрываем user.*
+                        # уведомления – если в CP явно заданы, перекрываем user.*
                         "email_notifications": (
                             cp.email_notifications if cp.email_notifications is not None else profile.get("email_notifications")
                         ),
@@ -296,6 +298,7 @@ def get_profile_by_id(user_id):
                         "skills": [s.name for s in cp.skills.order_by(Skill.name.asc()).all()],
                         "education": [
                             {
+                                "id": e.id,
                                 "institution": e.institution,
                                 "specialty": e.specialty,
                                 "degree": e.degree,
@@ -309,6 +312,7 @@ def get_profile_by_id(user_id):
                         ],
                         "work_experience": [
                             {
+                                "id": w.id,
                                 "company": w.company_name,
                                 "position": w.position,
                                 "start_date": w.start_date.isoformat() if w.start_date else None,
@@ -335,7 +339,7 @@ def get_profile_by_id(user_id):
 
 
 # ==========================
-# Профиль — обновить
+# Профиль – обновить
 # ==========================
 @profile_bp.route("/", methods=["PUT"])
 @jwt_required()
@@ -348,15 +352,40 @@ def update_profile():
 
         data = request.get_json(silent=True) or {}
 
-        # Обновляем имя (first + last) и контакты
+        # ========== ОБНОВЛЯЕМ ТАБЛИЦУ USER ==========
+        
+        # 1. ФИО (name) - синхронизируем с фронтом
         fname = (data.get("firstName") or data.get("first_name") or "").strip()
         lname = (data.get("lastName") or data.get("last_name") or "").strip()
-        full_name = (fname + " " + lname).strip() or user.name
+        full_name = (fname + " " + lname).strip() or data.get("name", "").strip() or user.name
         user.name = full_name
-        user.phone = data.get("phone", user.phone)
-        user.city = data.get("city", user.city)
+        
+        # 2. Контактные данные
+        if "phone" in data:
+            user.phone = data.get("phone", "").strip() or None
+        if "city" in data:
+            user.city = data.get("city", "").strip() or None
+        
+        # 3. Telegram и портфолио
+        if "telegram_username" in data or "telegramUsername" in data:
+            tg = data.get("telegram_username") or data.get("telegramUsername")
+            user.telegram_username = tg.strip() if tg else None
+            
+        if "portfolio_url" in data or "portfolioUrl" in data:
+            portfolio = data.get("portfolio_url") or data.get("portfolioUrl")
+            user.portfolio_url = portfolio.strip() if portfolio else None
 
-        # Кандидатский профиль
+        if "experience_years" in data or "experienceYears" in data:
+            exp_val = data.get("experience_years") or data.get("experienceYears")
+            user.experience_years = _to_int_or_default(exp_val, user.experience_years or 0)
+
+        if "salary_from" in data:
+            user.salary_from = _to_int_or_none(data.get("salary_from"))
+        if "salary_to" in data:
+            user.salary_to = _to_int_or_none(data.get("salary_to"))
+
+        # ========== ОБНОВЛЯЕМ CANDIDATEPROFILE (если кандидат) ==========
+        
         if user.user_type == "candidate":
             cp = CandidateProfile.query.filter_by(user_id=user_id).first()
             if not cp:
@@ -365,27 +394,50 @@ def update_profile():
                 db.session.flush()
 
             # Маппинг полей из фронта -> БД
-            cp.birth_date = _parse_date(data.get("birthDate")) or cp.birth_date
-            cp.current_position = data.get("currentPosition", cp.current_position)
-            cp.desired_position = data.get("desiredPosition", cp.desired_position)
-            cp.salary_from = _to_int_or_none(data.get("salary_from"))
-            cp.salary_to = _to_int_or_none(data.get("salary_to"))
-            cp.experience_years = _to_int_or_default(data.get("experience_years"), cp.experience_years or 0)
+            if "birthDate" in data or "birth_date" in data:
+                cp.birth_date = _parse_date(data.get("birthDate") or data.get("birth_date")) or cp.birth_date
+                
+            if "currentPosition" in data or "current_position" in data:
+                cp.current_position = data.get("currentPosition") or data.get("current_position")
+                
+            if "desiredPosition" in data or "desired_position" in data:
+                cp.desired_position = data.get("desiredPosition") or data.get("desired_position")
+                
+            if "salary_from" in data:
+                cp.salary_from = _to_int_or_none(data.get("salary_from"))
+            if "salary_to" in data:
+                cp.salary_to = _to_int_or_none(data.get("salary_to"))
+                
+            # НОВОЕ: experience_years из CP (пользователь вводит сам)
+            if "experience_years" in data or "experienceYears" in data:
+                exp_val = data.get("experience_years") or data.get("experienceYears")
+                cp.experience_years = _to_int_or_default(exp_val, cp.experience_years or 0)
+                
             # Нормализуем формат расписания
-            ws = data.get("workSchedule") or cp.work_schedule
+            ws = data.get("workSchedule") or data.get("work_schedule") or cp.work_schedule
             if ws in ("full-time", "full_time"):
                 cp.work_schedule = "full_time"
             elif ws in ("part-time", "part_time"):
                 cp.work_schedule = "part_time"
             else:
                 cp.work_schedule = ws
-            cp.about = data.get("about", cp.about)
-            cp.is_public = bool(data.get("isPublic", cp.is_public))
-            cp.email_notifications = bool(data.get("emailNotifications", cp.email_notifications))
-            cp.sms_notifications = bool(data.get("smsNotifications", cp.sms_notifications))
-            cp.job_alerts = bool(data.get("jobAlerts", cp.job_alerts))
+                
+            if "about" in data:
+                cp.about = data.get("about")
+                
+            if "isPublic" in data or "is_public" in data:
+                cp.is_public = bool(data.get("isPublic") or data.get("is_public", cp.is_public))
+                
+            if "emailNotifications" in data or "email_notifications" in data:
+                cp.email_notifications = bool(data.get("emailNotifications") or data.get("email_notifications", cp.email_notifications))
+                
+            if "smsNotifications" in data or "sms_notifications" in data:
+                cp.sms_notifications = bool(data.get("smsNotifications") or data.get("sms_notifications", cp.sms_notifications))
+                
+            if "jobAlerts" in data or "job_alerts" in data:
+                cp.job_alerts = bool(data.get("jobAlerts") or data.get("job_alerts", cp.job_alerts))
 
-            # Навыки — перезаписываем
+            # Навыки – перезаписываем
             if isinstance(data.get("skills"), list):
                 Skill.query.filter_by(candidate_profile_id=cp.id).delete()
                 for raw in data["skills"]:
@@ -393,7 +445,7 @@ def update_profile():
                     if name:
                         db.session.add(Skill(candidate_profile_id=cp.id, name=name))
 
-            # Образование — перезаписываем
+            # Образование – перезаписываем
             if isinstance(data.get("education"), list):
                 Education.query.filter_by(candidate_profile_id=cp.id).delete()
                 for item in data["education"]:
@@ -413,7 +465,7 @@ def update_profile():
                         )
                     )
 
-            # Опыт работы — перезаписываем
+            # Опыт работы – перезаписываем
             if isinstance(data.get("workExperience"), list):
                 WorkExperience.query.filter_by(candidate_profile_id=cp.id).delete()
                 for item in data["workExperience"]:
@@ -440,7 +492,7 @@ def update_profile():
 
 
 # ==========================
-# Резюме — загрузка и скачивание
+# Резюме – загрузка и скачивание
 # ==========================
 @profile_bp.route("/resume", methods=["POST"])
 @jwt_required()
@@ -728,7 +780,7 @@ def export_profile_data():
 
 
 # ==========================
-# Аватары отключены — заглушки
+# Аватары отключены – заглушки
 # ==========================
 @profile_bp.route("/avatar", methods=["POST"])
 @jwt_required()
