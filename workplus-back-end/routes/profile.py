@@ -9,6 +9,7 @@ import os
 import uuid
 
 from models import (
+    ProfileView,
     db,
     User,
     Company,
@@ -707,7 +708,7 @@ def get_profile_statistics():
 
         applications_sent = applications_q.count()
         responses_received = applications_q.filter(JobApplication.responded_at.isnot(None)).count()
-        profile_views = cp.profile_views if cp else 0
+        profile_views = ProfileView.query.filter_by(candidate_id=user_id).count()
         avg_hr_score = (
             db.session.query(func.avg(JobApplication.hr_score))
             .filter(JobApplication.candidate_id == user_id, JobApplication.hr_score.isnot(None))
