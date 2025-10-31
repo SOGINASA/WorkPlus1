@@ -86,6 +86,8 @@ const emptyProfile = {
   emailNotifications: true,
   smsNotifications: false,
   jobAlerts: true,
+  telegram_username: "",
+  portfolio_url: "",
 };
 
 export default function ProfileByID() {
@@ -157,6 +159,8 @@ export default function ProfileByID() {
         emailNotifications: profile.email_notifications !== false,
         smsNotifications: !!profile.sms_notifications,
         jobAlerts: profile.job_alerts !== false,
+        telegram_username: profile.telegram_username || "",
+        portfolio_url: profile.portfolio_url || "",
       }));
 
       // await loadApplications(1, 20, appsFilter);
@@ -571,21 +575,58 @@ export default function ProfileByID() {
                   </span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* ФИО */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Зарплата до</label>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        name="salary_to"
-                        value={profileData.salary_to}
-                        onChange={(e) => handleInputChange('salary_to', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      />
-                    ) : (
-                      <p className="text-green-400 text-lg font-medium">
-                        {profileData.salary_to ? `${parseInt(profileData.salary_to).toLocaleString()} ₸` : '—'}
-                      </p>
-                    )}
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ФИО</label>
+                    <p className="text-white text-lg font-medium">{profileData.name || '—'}</p>
+                  </div>
+
+                  {/* Телефон */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Телефон</label>
+                    <p className="text-white text-lg font-medium">{profileData.phone || '—'}</p>
+                  </div>
+
+                  {/* Город */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Город</label>
+                    <p className="text-white text-lg font-medium">{profileData.city || '—'}</p>
+                  </div>
+
+                  {/* Telegram */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Telegram</label>
+                    <p className="text-white text-lg font-medium">
+                      {profileData.telegram_username ? `@${profileData.telegram_username.replace('@', '')}` : '—'}
+                    </p>
+                  </div>
+
+                  {/* Портфолио */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Портфолио</label>
+                    <p className="text-white text-lg font-medium">
+                      {profileData.portfolio_url ? (
+                        <a href={profileData.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">
+                          {profileData.portfolio_url}
+                        </a>
+                      ) : '—'}
+                    </p>
+                  </div>
+
+                  {/* Опыт работы */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Опыт работы (лет)</label>
+                    <p className="text-white text-lg font-medium">
+                      {profileData.experience_years ? `${profileData.experience_years} лет` : '—'}
+                    </p>
+                  </div>
+
+                  {/* Желаемая зарплата */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Желаемая зарплата</label>
+                    <p className="text-green-400 text-lg font-medium">
+                      {profileData.salary_to ? `${parseInt(profileData.salary_to).toLocaleString()} ₸` : '—'}
+                    </p>
                   </div>
                 </div>
               </div>
