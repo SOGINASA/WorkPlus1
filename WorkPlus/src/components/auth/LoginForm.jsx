@@ -127,7 +127,7 @@ const LoginForm = () => {
 
         {/* Main Form Card */}
         <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-2xl shadow-xl overflow-hidden">
-          {/* User Type Tabs */}
+          {/* User Type Tabs
           <div className="flex">
             <button
               onClick={() => setActiveTab('jobseeker')}
@@ -155,7 +155,7 @@ const LoginForm = () => {
                 <span>Работодатель</span>
               </div>
             </button>
-          </div>
+          </div> */}
 
           {/* Form */}
           <div className="p-8">
