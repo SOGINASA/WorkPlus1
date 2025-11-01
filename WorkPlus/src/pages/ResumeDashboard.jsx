@@ -1,167 +1,182 @@
+// src/pages/ApplicationsDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  Send, Eye, Trash2, Filter, Clock, Users, MapPin, 
-  Calendar, Award, Briefcase, DollarSign, Building,
-  CheckCircle, XCircle, AlertCircle, MessageSquare,
-  TrendingUp, Search, RefreshCw, ExternalLink, X
+  Briefcase, Building, MapPin, DollarSign, Calendar, Clock, 
+  Search, Filter, Eye, MessageSquare, X, CheckCircle, 
+  AlertCircle, FileText, Users, TrendingUp, Star,
+  ChevronLeft, ChevronRight, Award, Settings
 } from 'lucide-react';
-import * as CandidateService from '../components/api/CandidateApiService';
+import * as CandidateService from '../components/api/CandidateService';
+
+// ==================== HELPERS ====================
+const fmtDate = (iso) => {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('ru-RU');
+  } catch {
+    return iso;
+  }
+};
+
+const statusBadge = (status) => {
+  switch (status) {
+    case "new":
+    case "pending":
+      return "bg-yellow-400/10 text-yellow-400 border-yellow-400/30";
+    case "approved":
+    case "accepted":
+    case "hired":
+      return "bg-green-400/10 text-green-400 border-green-400/30";
+    case "rejected":
+      return "bg-red-400/10 text-red-400 border-red-400/30";
+    case "interview":
+      return "bg-blue-400/10 text-blue-400 border-blue-400/30";
+    case "viewed":
+      return "bg-purple-400/10 text-purple-400 border-purple-400/30";
+    case "withdrawn":
+      return "bg-gray-500/10 text-gray-400 border-gray-500/30";
+    default:
+      return "bg-gray-500/10 text-gray-400 border-gray-500/30";
+  }
+};
+
+const statusText = (status) => {
+  switch (status) {
+    case "new":
+    case "pending":
+      return "Рассматривается";
+    case "approved":
+    case "accepted":
+      return "Одобрено";
+    case "rejected":
+      return "Отклонено";
+    case "interview":
+      return "Собеседование";
+    case "viewed":
+      return "Просмотрено";
+    case "hired":
+      return "Вы приняты";
+    case "withdrawn":
+      return "Отозван";
+    default:
+      return "Статус не указан";
+  }
+};
 
 const ApplicationsDashboard = () => {
-  // ========== STATE ==========
-  const [activeTab, setActiveTab] = useState('all');
+  // ==================== STATE ====================
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [applications, setApplications] = useState([]);
-  const [statistics, setStatistics] = useState({
-    profileViews: 0,
-    applicationsSent: 0,
-    responsesReceived: 0,
-    rating: 0
-  });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pages: 1,
-    total: 0,
-    has_prev: false,
-    has_next: false
-  });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
-  // ========== ЗАГРУЗКА ДАННЫХ ==========
-  const loadApplications = async (page = 1, status = '') => {
+  // Мои отклики на вакансии
+  const [myApplications, setMyApplications] = useState([]);
+  const [applicationsPage, setApplicationsPage] = useState(1);
+  const [applicationsPagination, setApplicationsPagination] = useState(null);
+
+  // ==================== ЗАГРУЗКА ДАННЫХ ====================
+  useEffect(() => {
+    loadMyApplications();
+  }, [activeTab, applicationsPage]);
+
+  const loadMyApplications = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await CandidateService.getApplications({
-        page,
+
+      const appsRes = await CandidateService.getApplications({
+        page: applicationsPage,
         perPage: 20,
-        status: status === 'all' ? '' : status
+        status: activeTab !== 'all' ? activeTab : undefined
       });
 
-      setApplications(response.applications || []);
-      setPagination(response.pagination || {
-        page: 1,
-        pages: 1,
-        total: 0,
-        has_prev: false,
-        has_next: false
-      });
+      // Маппинг полей из API
+      const apps = (appsRes.applications || []).map((a) => ({
+        id: a.id,
+        vacancyTitle: a.vacancy_title,
+        companyName: a.company_name,
+        appliedDate: a.applied_date,
+        status: a.status,
+        salary: a.salary,
+        location: a.location,
+        response: a.response,
+        responseDate: a.response_date,
+        companyLogo: a.company_logo || null,
+        priority: a.priority || null,
+        jobId: a.job_id,
+      }));
+
+      setMyApplications(apps);
+      setApplicationsPagination(appsRes.pagination || null);
     } catch (err) {
-      setError(err.error || 'Не удалось загрузить отклики');
-      console.error('Ошибка загрузки откликов:', err);
+      console.error('Error loading applications:', err);
+      setError(err.message || 'Ошибка загрузки данных');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadStatistics = async () => {
+  // ==================== ОБРАБОТЧИКИ ====================
+  const handleWithdrawApplication = async (applicationId) => {
+    if (!confirm('Вы уверены, что хотите отозвать отклик?')) return;
+
     try {
-      const stats = await CandidateService.getStatistics();
-      setStatistics(stats);
+      await CandidateService.withdrawApplication(applicationId);
+      await loadMyApplications();
     } catch (err) {
-      console.error('Ошибка загрузки статистики:', err);
+      alert(err.message || 'Ошибка при отзыве отклика');
     }
   };
 
-  useEffect(() => {
-    loadApplications(1, activeTab);
-    loadStatistics();
-  }, [activeTab]);
-
-  // ========== ОБРАБОТЧИКИ ==========
-  const handleWithdrawApplication = async () => {
-    if (!selectedApplication) return;
-
-    try {
-      await CandidateService.withdrawApplication(selectedApplication.id);
-      setShowWithdrawModal(false);
-      setSelectedApplication(null);
-      // Перезагружаем список
-      await loadApplications(pagination.page, activeTab);
-      await loadStatistics();
-    } catch (err) {
-      alert(err.error || 'Не удалось отозвать отклик');
-    }
+  // ==================== СТАТИСТИКА ====================
+  const stats = {
+    total: myApplications.length,
+    new: myApplications.filter(a => a.status === 'new').length,
+    interview: myApplications.filter(a => a.status === 'interview').length,
+    accepted: myApplications.filter(a => a.status === 'approved' || a.status === 'hired').length,
   };
 
-  const handleRefresh = () => {
-    loadApplications(pagination.page, activeTab);
-    loadStatistics();
-  };
-
-  // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      new: { bg: 'bg-yellow-400/10', text: 'text-yellow-400', border: 'border-yellow-400/30', label: 'На рассмотрении' },
-      viewed: { bg: 'bg-purple-400/10', text: 'text-purple-400', border: 'border-purple-400/30', label: 'Просмотрено' },
-      interview: { bg: 'bg-blue-400/10', text: 'text-blue-400', border: 'border-blue-400/30', label: 'Собеседование' },
-      hired: { bg: 'bg-green-400/10', text: 'text-green-400', border: 'border-green-400/30', label: 'Приняты' },
-      rejected: { bg: 'bg-red-400/10', text: 'text-red-400', border: 'border-red-400/30', label: 'Отклонено' },
-      approved: { bg: 'bg-green-400/10', text: 'text-green-400', border: 'border-green-400/30', label: 'Одобрено' }
-    };
-
-    const config = statusConfig[status] || statusConfig.new;
-    return (
-      <span className={`px-3 py-1.5 rounded-lg border ${config.bg} ${config.text} ${config.border} text-sm font-medium`}>
-        {config.label}
-      </span>
-    );
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'new': return <Clock className="w-5 h-5" />;
-      case 'viewed': return <Eye className="w-5 h-5" />;
-      case 'interview': return <Users className="w-5 h-5" />;
-      case 'hired': return <CheckCircle className="w-5 h-5" />;
-      case 'rejected': return <XCircle className="w-5 h-5" />;
-      case 'approved': return <CheckCircle className="w-5 h-5" />;
-      default: return <AlertCircle className="w-5 h-5" />;
-    }
-  };
-
-  // Фильтрация по поиску
-  const filteredApplications = applications.filter(app => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      app.vacancyTitle?.toLowerCase().includes(query) ||
-      app.companyName?.toLowerCase().includes(query) ||
-      app.location?.toLowerCase().includes(query)
-    );
+  // ==================== ФИЛЬТРАЦИЯ ====================
+  const filteredApplications = myApplications.filter(app => {
+    if (activeTab === 'all') return true;
+    return app.status === activeTab;
   });
 
-  // ========== ТАБЫ ==========
-  const tabs = [
-    { id: 'all', label: 'Все отклики', count: statistics.applicationsSent },
-    { id: 'new', label: 'На рассмотрении', icon: <Clock className="w-4 h-4" /> },
-    { id: 'viewed', label: 'Просмотрено', icon: <Eye className="w-4 h-4" /> },
-    { id: 'interview', label: 'Собеседование', icon: <Users className="w-4 h-4" /> },
-    { id: 'hired', label: 'Приняты', icon: <CheckCircle className="w-4 h-4" /> },
-    { id: 'rejected', label: 'Отклонено', icon: <XCircle className="w-4 h-4" /> }
-  ];
+  // ==================== РЕНДЕР ====================
+  if (loading && myApplications.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mx-auto"></div>
+          <p className="mt-4 text-gray-400">Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && myApplications.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 max-w-md w-full">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-white text-center mb-2">Ошибка</h3>
+          <p className="text-gray-400 text-center">{error}</p>
+          <button 
+            onClick={loadMyApplications}
+            className="mt-4 w-full px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-300 transition-colors font-medium"
+          >
+            Попробовать снова
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Hero Section */}
+    <div>
+      {/* Hero Section with gradient background */}
       <section className="relative py-12 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent"></div>
         
@@ -170,314 +185,235 @@ const ApplicationsDashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Мои отклики</h1>
-              <p className="text-gray-300">Отслеживайте статус ваших откликов на вакансии</p>
+              <p className="text-gray-300">Отслеживайте статус своих откликов на вакансии</p>
             </div>
             
-            <button 
-              onClick={handleRefresh}
-              className="flex items-center px-4 py-2 bg-white/10 border border-gray-600 text-white rounded-lg hover:bg-white/15 transition-all mt-4 md:mt-0"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Обновить
-            </button>
-          </div>
-
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6 hover:border-yellow-400/40 transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm">Всего откликов</span>
-                <Send className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">{statistics.applicationsSent}</div>
-              <div className="flex items-center text-green-400 text-sm">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +{statistics.responsesReceived} ответов
-              </div>
-            </div>
-
-            <div className="bg-white/5 backdrop-blur-sm border border-purple-400/20 rounded-xl p-6 hover:border-purple-400/40 transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm">Просмотров профиля</span>
-                <Eye className="w-5 h-5 text-purple-400" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">{statistics.profileViews}</div>
-              <div className="text-gray-400 text-sm">За весь период</div>
-            </div>
-
-            <div className="bg-white/5 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 hover:border-blue-400/40 transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm">Получено ответов</span>
-                <MessageSquare className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">{statistics.responsesReceived}</div>
-              <div className="text-gray-400 text-sm">
-                {statistics.applicationsSent > 0 
-                  ? `${Math.round((statistics.responsesReceived / statistics.applicationsSent) * 100)}% откликов` 
-                  : '0% откликов'}
-              </div>
-            </div>
-
-            <div className="bg-white/5 backdrop-blur-sm border border-green-400/20 rounded-xl p-6 hover:border-green-400/40 transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm">Средний балл</span>
-                <Award className="w-5 h-5 text-green-400" />
-              </div>
-              <div className="text-3xl font-bold text-white mb-1">{statistics.rating.toFixed(1)}</div>
-              <div className="text-gray-400 text-sm">Оценка HR-специалистов</div>
+            <div className="flex gap-3 mt-4 md:mt-0">
+              <button 
+                onClick={() => window.location.href = '/jobs'}
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Найти вакансии
+              </button>
             </div>
           </div>
 
-          {/* Search and Filter */}
-          <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Поиск по вакансии, компании или городу..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                />
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-yellow-400/20 border border-yellow-400/30 rounded-full flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-yellow-400" />
+                </div>
+                <span className="text-2xl font-bold text-yellow-400">{stats.total}</span>
               </div>
+              <h3 className="text-white font-medium">Всего откликов</h3>
+              <p className="text-gray-400 text-sm">За все время</p>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-blue-400/20 border border-blue-400/30 rounded-full flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-400" />
+                </div>
+                <span className="text-2xl font-bold text-blue-400">{stats.new}</span>
+              </div>
+              <h3 className="text-white font-medium">На рассмотрении</h3>
+              <p className="text-gray-400 text-sm">Ожидают ответа</p>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-purple-400/20 border border-purple-400/30 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-purple-400" />
+                </div>
+                <span className="text-2xl font-bold text-purple-400">{stats.interview}</span>
+              </div>
+              <h3 className="text-white font-medium">Собеседования</h3>
+              <p className="text-gray-400 text-sm">Приглашены на интервью</p>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-green-400/20 border border-green-400/30 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+                <span className="text-2xl font-bold text-green-400">{stats.accepted}</span>
+              </div>
+              <h3 className="text-white font-medium">Одобрено</h3>
+              <p className="text-gray-400 text-sm">Успешные отклики</p>
             </div>
           </div>
+        </div>
+      </section>
 
+      {/* Applications Section */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white/2">
+        <div className="max-w-7xl mx-auto">
           {/* Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {tabs.map(tab => (
+          <div className="flex space-x-1 mb-8 bg-gray-800/50 p-1 rounded-lg w-fit">
+            {[
+              { key: 'all', label: 'Все', count: myApplications.length },
+              { key: 'new', label: 'Рассматривается', count: myApplications.filter(a => a.status === 'new').length },
+              { key: 'viewed', label: 'Просмотрено', count: myApplications.filter(a => a.status === 'viewed').length },
+              { key: 'interview', label: 'Собеседование', count: myApplications.filter(a => a.status === 'interview').length },
+              { key: 'approved', label: 'Одобрено', count: myApplications.filter(a => a.status === 'approved').length },
+              { key: 'rejected', label: 'Отклонено', count: myApplications.filter(a => a.status === 'rejected').length },
+            ].map(tab => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black'
-                    : 'bg-white/5 border border-gray-700 text-gray-300 hover:bg-white/10'
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setApplicationsPage(1);
+                }}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-yellow-400 text-black'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
                 }`}
               >
-                {tab.icon && <span className="mr-2">{tab.icon}</span>}
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id ? 'bg-black/20' : 'bg-yellow-400/20 text-yellow-400'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
+                {tab.label} ({tab.count})
               </button>
             ))}
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
-                <p className="text-red-400">{error}</p>
-              </div>
-            </div>
-          )}
-
           {/* Applications List */}
-          <div className="space-y-4">
-            {loading ? (
-              <div className="text-center py-12">
-                <RefreshCw className="w-8 h-8 text-yellow-400 animate-spin mx-auto mb-4" />
-                <p className="text-gray-400">Загрузка откликов...</p>
+          {filteredApplications.length === 0 ? (
+            <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-12 text-center">
+              <div className="w-16 h-16 bg-yellow-400/20 border border-yellow-400/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="w-8 h-8 text-yellow-400" />
               </div>
-            ) : filteredApplications.length === 0 ? (
-              <div className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-12 text-center">
-                <Send className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Откликов пока нет</h3>
-                <p className="text-gray-400 mb-6">
-                  {searchQuery 
-                    ? 'По вашему запросу ничего не найдено'
-                    : 'Начните откликаться на вакансии, и они появятся здесь'
-                  }
-                </p>
-                <a
-                  href="/jobs"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
-                >
-                  <Briefcase className="w-5 h-5 mr-2" />
-                  Найти вакансии
-                </a>
-              </div>
-            ) : (
-              filteredApplications.map((application) => (
+              <h3 className="text-xl font-semibold text-white mb-2">Откликов не найдено</h3>
+              <p className="text-gray-400 mb-6">
+                {activeTab !== 'all'
+                  ? `Нет откликов с таким статусом`
+                  : 'Начните откликаться на вакансии, чтобы они появились здесь'}
+              </p>
+              <a
+                href="/jobs"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black rounded-lg font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                Найти вакансии
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredApplications.map((application) => (
                 <div
                   key={application.id}
-                  className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl p-6 hover:border-yellow-400/30 transition-all"
+                  className="bg-white/5 backdrop-blur-sm border border-yellow-400/10 rounded-xl overflow-hidden hover:border-yellow-400/30 transition-all group"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                    {/* Left: Company Logo + Info */}
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Company Logo */}
-                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-xl flex items-center justify-center flex-shrink-0 border border-yellow-400/20">
-                        {application.companyLogo ? (
-                          <img 
-                            src={application.companyLogo} 
-                            alt={application.companyName}
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        ) : (
-                          <Building className="w-8 h-8 text-yellow-400" />
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4 mb-2">
-                          <div className="flex-1">
-                            <h3 className="text-xl font-semibold text-white mb-1 hover:text-yellow-400 transition-colors">
-                              <a href={`/jobs/${application.jobId}`} className="flex items-center gap-2">
+                  <div className="p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between">
+                      {/* Левая часть - Информация о вакансии */}
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-xl font-semibold text-white group-hover:text-yellow-400 transition-colors">
                                 {application.vacancyTitle}
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            </h3>
-                            <p className="text-gray-400 flex items-center gap-2">
-                              <Building className="w-4 h-4" />
-                              {application.companyName}
-                            </p>
+                              </h3>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
+                              <span className="flex items-center gap-1">
+                                <Building className="w-4 h-4 text-yellow-400" />
+                                <span className="text-gray-300">{application.companyName}</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 ml-4">
+                            <span className={`px-3 py-1.5 rounded-xl text-xs font-medium border ${statusBadge(application.status)}`}>
+                              <CheckCircle className="w-3 h-3 inline-block mr-1" />
+                              {statusText(application.status)}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Details */}
-                        <div className="flex flex-wrap gap-3 text-sm text-gray-400 mb-4">
-                          {application.salary && (
-                            <span className="flex items-center px-3 py-1.5 bg-green-400/10 border border-green-400/20 rounded-lg">
-                              <DollarSign className="w-4 h-4 mr-1 text-green-400" />
-                              <span className="text-green-400 font-medium">{application.salary} ₸</span>
-                            </span>
-                          )}
-                          {application.location && (
-                            <span className="flex items-center px-3 py-1.5 bg-blue-400/10 border border-blue-400/20 rounded-lg">
-                              <MapPin className="w-4 h-4 mr-1 text-blue-400" />
-                              <span className="text-blue-400">{application.location}</span>
-                            </span>
-                          )}
-                          <span className="flex items-center px-3 py-1.5 bg-purple-400/10 border border-purple-400/20 rounded-lg">
-                            <Calendar className="w-4 h-4 mr-1 text-purple-400" />
-                            <span className="text-purple-400">{formatDate(application.appliedDate)}</span>
-                          </span>
+                        {/* Детали */}
+                        <div className="space-y-2 mb-4">
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            {application.salary && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-400/10 border border-yellow-400/20 rounded-lg">
+                                <DollarSign className="w-4 h-4 text-green-400" />
+                                <span className="text-green-400 font-medium">{application.salary} ₸</span>
+                              </div>
+                            )}
+                            {application.location && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-gray-300">
+                                <MapPin className="w-4 h-4 text-yellow-400" />
+                                {application.location}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-gray-300">
+                              <Calendar className="w-4 h-4 text-yellow-400" />
+                              {fmtDate(application.appliedDate)}
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Response from employer */}
+                        {/* Ответ работодателя */}
                         {application.response && (
                           <div className="bg-blue-400/10 border border-blue-400/20 rounded-xl p-4">
                             <div className="flex items-center mb-2">
                               <MessageSquare className="w-4 h-4 mr-2 text-blue-400" />
                               <span className="text-sm text-gray-300">
-                                Ответ от {formatDate(application.responseDate)}
+                                Ответ от {fmtDate(application.responseDate)}
                               </span>
                             </div>
-                            <p className="text-white text-sm leading-relaxed">{application.response}</p>
+                            <p className="text-white text-sm">{application.response}</p>
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    {/* Right: Status + Actions */}
-                    <div className="flex flex-col items-end gap-3 lg:ml-4">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(application.status)}
-                        {getStatusBadge(application.status)}
-                      </div>
-
+                      {/* Правая часть - Действия */}
                       {application.status === 'new' && (
-                        <button
-                          onClick={() => {
-                            setSelectedApplication(application);
-                            setShowWithdrawModal(true);
-                          }}
-                          className="flex items-center px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg hover:bg-red-500/20 transition-all text-sm"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Отозвать
-                        </button>
-                      )}
-
-                      {application.priority && (
-                        <span className="flex items-center px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-yellow-400 text-xs">
-                          <Award className="w-3 h-3 mr-1" />
-                          Приоритет
-                        </span>
+                        <div className="mt-4 lg:mt-0 lg:ml-6">
+                          <button
+                            onClick={() => handleWithdrawApplication(application.id)}
+                            className="px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all text-sm flex items-center"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Отозвать
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {/* Pagination */}
-          {!loading && filteredApplications.length > 0 && (pagination.has_prev || pagination.has_next) && (
-            <div className="mt-8 flex items-center justify-between">
+          {/* Пагинация */}
+          {applicationsPagination && applicationsPagination.pages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
               <button
-                disabled={!pagination.has_prev}
-                onClick={() => loadApplications(pagination.page - 1, activeTab)}
-                className="px-6 py-3 bg-white/10 border border-yellow-400/20 text-white rounded-xl font-medium hover:border-yellow-400/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setApplicationsPage(p => Math.max(1, p - 1))}
+                disabled={!applicationsPagination.has_prev}
+                className="px-4 py-2 bg-white/5 border border-yellow-400/20 text-white rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                ← Назад
+                <ChevronLeft className="w-5 h-5" />
               </button>
-              <div className="text-gray-400">
-                Страница {pagination.page} из {pagination.pages}
-              </div>
+
+              <span className="text-gray-300 px-4">
+                Страница {applicationsPage} из {applicationsPagination.pages}
+              </span>
+
               <button
-                disabled={!pagination.has_next}
-                onClick={() => loadApplications(pagination.page + 1, activeTab)}
-                className="px-6 py-3 bg-white/10 border border-yellow-400/20 text-white rounded-xl font-medium hover:border-yellow-400/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setApplicationsPage(p => p + 1)}
+                disabled={!applicationsPagination.has_next}
+                className="px-4 py-2 bg-white/5 border border-yellow-400/20 text-white rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                Вперёд →
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           )}
         </div>
       </section>
-
-      {/* Withdraw Modal */}
-      {showWithdrawModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border border-red-400/20 rounded-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-500/20 border border-red-400/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8 text-red-400" />
-              </div>
-              
-              <h3 className="text-xl font-bold text-white mb-2">Отозвать отклик?</h3>
-              <p className="text-gray-300 mb-2">
-                Вы уверены, что хотите отозвать отклик на вакансию:
-              </p>
-              <p className="text-white font-semibold mb-4">
-                "{selectedApplication.vacancyTitle}" в {selectedApplication.companyName}?
-              </p>
-              <p className="text-gray-400 text-sm mb-6">
-                Это действие нельзя будет отменить.
-              </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowWithdrawModal(false);
-                    setSelectedApplication(null);
-                  }}
-                  className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all"
-                >
-                  Отмена
-                </button>
-                <button
-                  onClick={handleWithdrawApplication}
-                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-                >
-                  Отозвать
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
