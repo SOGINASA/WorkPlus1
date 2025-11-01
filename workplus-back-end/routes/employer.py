@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Job, Company, User, JobApplication, Analytics, Settings
+from models import CandidateProfile, db, Job, Company, User, JobApplication, Analytics, Settings
 from datetime import datetime, timedelta
 from sqlalchemy import desc
 
@@ -881,3 +881,47 @@ def toggle_vacancy_status():
         db.session.rollback()
         print(f"Ошибка переключения статуса вакансии: {e}")
         return jsonify({'error': 'Ошибка при обновлении статуса вакансии'}), 500
+    
+
+@employer_bp.route('/users', methods=['GET'])
+def get_all_users():
+    """Получить список всех пользователей, соединяя модель User и CandidateProfile"""
+    try:
+        users = db.session.query(User, CandidateProfile).join(
+            CandidateProfile, User.id == CandidateProfile.user_id
+        ).filter(User.user_type == 'candidate').all()
+        
+        result = []
+        for user, profile in users:
+            result.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'user_type': user.user_type,
+                'birth_date': profile.birth_date,
+                'current_position': profile.current_position,
+                'desired_position': profile.desired_position,
+                'salary_from': profile.salary_from,
+                'salary_to': profile.salary_to,
+                'salary_currency': profile.salary_currency,
+                'experience_years': profile.experience_years,
+                'work_schedule': profile.work_schedule,
+                'ready_to_relocate': profile.ready_to_relocate,
+                'about': profile.about,
+                'is_public': profile.is_public,
+                'show_contacts': profile.show_contacts,
+                'email_notifications': profile.email_notifications,
+                'sms_notifications': profile.sms_notifications,
+                'job_alerts': profile.job_alerts,
+                'resume_file': profile.resume_file,
+                'last_updated': profile.last_updated.isoformat()
+            })
+        
+        return jsonify({
+            'users': result
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Ошибка при получении списка пользователей: {e}")
+        return jsonify({'error': 'Ошибка при получении списка пользователей'}), 500
